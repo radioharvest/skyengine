@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">skyscroll</string>
+    <string name="button_start_render_one">Start Render One</string>
+    <string name="title_activity_render_one">Render One</string>
+    <string name="button_start_render_two">Start Render Two</string>
+    <string name="title_activity_render_two">Render Two</string>
+    <string name="button_start_render_demo">Start Demo</string>
+    <string name="title_activity_render_demo">Render Demo</string>
+</resources>
