@@ -23,27 +23,31 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     private float[] mMVPMatrix = new float[16];
 
     private float mAngle = 0.0f;
-    private float mDistance = 5.0f;
+    private float mDistance = 15.0f;
     private float mHeight = 0.0f;
+    private float mInertia = 0.0f;
 
-    private float mMinHeight = 0.0f;
-    private float mMaxHeight = 5.0f;
+    private float mMinHeight = 1.0f;
+    private float mMaxHeight = 45.0f;
 
     private final FloatBuffer mCubePositions;
     private final FloatBuffer mCubeColors;
-    private final FloatBuffer mCubeNormals;
+    private final FloatBuffer mConnections;
 
     private int mMVPMatrixHandler;
     private int mPositionHandler;
+    private int mConnectionHandler;
     private int mColorHandler;
 
     private int mPerVertexProgramHandler;
+    private int mLineVertexProgramHandler;
 
     private final int mBytesPerFloat = 4;
     private final int mPositionDataSize = 3;
+    private final int mConnectionDataSize = 3;
     private final int mColorDataSize = 4;
 
-    private Vector3 camPos = new Vector3(0.0f, 4.0f, -0.5f);
+    private Vector3 camPos = new Vector3(0.0f, 1.0f, -0.5f);
     private Vector3 look = new Vector3(0.0f, 0.0f, -mDistance);
 
     public DemoRenderer() {
@@ -53,154 +57,191 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
                 //Remember counter-clockwise orientation of vertices in OpenGL
 
                 // Front face
-                -1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
+                -5.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, -5.0f,
+                5.0f, 2.0f, 0.0f,
+                0.0f, 3.0f, 5.0f,
 
                 // Right face
-                1.0f, 1.0f, 1.0f,
-                1.0f, -1.0f, 1.0f,
-                1.0f, 1.0f, -1.0f,
-                1.0f, -1.0f, 1.0f,
-                1.0f, -1.0f, -1.0f,
-                1.0f, 1.0f, -1.0f,
+                4.33f, 5.0f, 2.5f,
+                -2.5f, 6.0f, 4.33f,
+                -4.33f, 7.0f, -2.5f,
+                2.5f, 8.0f, -4.33f,
 
                 // Back face
-                1.0f, 1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                -1.0f, 1.0f, -1.0f,
-                1.0f, -1.0f, -1.0f,
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, 1.0f, -1.0f,
+                2.5f, 10.0f, 4.33f,
+                -4.33f, 11.0f, 2.5f,
+                -2.5f, 12.0f, -4.33f,
+                4.33f, 13.0f, -2.5f,
 
                 // Left face
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, 1.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,
-                -1.0f, -1.0f, 1.0f,
-                -1.0f, 1.0f, 1.0f,
+                0.0f, 15.0f, 5.0f,
+                -5.0f, 16.0f, 0.0f,
+                0.0f, 17.0f, -5.0f,
+                5.0f, 18.0f, 0.0f,
 
-                // Top face
-                -1.0f, 1.0f, -1.0f,
-                -1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, -1.0f,
-                -1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, 1.0f,
-                1.0f, 1.0f, -1.0f,
+                // Front face
+                -5.0f, 20.0f, 0.0f,
+                0.0f, 21.0f, -5.0f,
+                5.0f, 22.0f, 0.0f,
+                0.0f, 23.0f, 5.0f,
 
-                // Bottom face
-                1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,
-                1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f, 1.0f,
-                -1.0f, -1.0f, -1.0f,
+                // Right face
+                4.33f, 25.0f, 2.5f,
+                -2.5f, 26.0f, 4.33f,
+                -4.33f, 27.0f, -2.5f,
+                2.5f, 28.0f, -4.33f,
+
+                // Back face
+                2.5f, 30.0f, 4.33f,
+                -4.33f, 31.0f, 2.5f,
+                -2.5f, 32.0f, -4.33f,
+                4.33f, 33.0f, -2.5f,
+
+                // Left face
+                0.0f, 35.0f, 5.0f,
+                -5.0f, 36.0f, 0.0f,
+                0.0f, 37.0f, -5.0f,
+                5.0f, 38.0f, 0.0f,
+        };
+
+        final float[] connectionsData = {
+                -5.0f, 0.0f, 0.0f,
+                4.33f, 5.0f, 2.5f,
+
+                0.0f, 1.0f, -5.0f,
+                -2.5f, 6.0f, 4.33f,
+
+                5.0f, 2.0f, 0.0f,
+                -4.33f, 7.0f, -2.5f,
+
+                0.0f, 3.0f, 5.0f,
+                2.5f, 8.0f, -4.33f,
+
+                // Right face
+                4.33f, 5.0f, 2.5f,
+                2.5f, 10.0f, 4.33f,
+
+                -2.5f, 6.0f, 4.33f,
+                -4.33f, 11.0f, 2.5f,
+
+                -4.33f, 7.0f, -2.5f,
+                -2.5f, 12.0f, -4.33f,
+
+                2.5f, 8.0f, -4.33f,
+                4.33f, 13.0f, -2.5f,
+
+                // Back face
+                2.5f, 10.0f, 4.33f,
+                0.0f, 15.0f, 5.0f,
+
+                -4.33f, 11.0f, 2.5f,
+                -5.0f, 16.0f, 0.0f,
+
+                -2.5f, 12.0f, -4.33f,
+                0.0f, 17.0f, -5.0f,
+
+                4.33f, 13.0f, -2.5f,
+                5.0f, 18.0f, 0.0f,
+
+                // Left face
+                0.0f, 15.0f, 5.0f,
+                -5.0f, 20.0f, 0.0f,
+
+                -5.0f, 16.0f, 0.0f,
+                0.0f, 21.0f, -5.0f,
+
+                0.0f, 17.0f, -5.0f,
+                5.0f, 22.0f, 0.0f,
+
+                5.0f, 18.0f, 0.0f,
+                0.0f, 23.0f, 5.0f,
+
+                // Front face
+                -5.0f, 20.0f, 0.0f,
+                4.33f, 25.0f, 2.5f,
+
+                0.0f, 21.0f, -5.0f,
+                -2.5f, 26.0f, 4.33f,
+
+                5.0f, 22.0f, 0.0f,
+                -4.33f, 27.0f, -2.5f,
+
+                0.0f, 23.0f, 5.0f,
+                2.5f, 28.0f, -4.33f,
+
+                // Right face
+                4.33f, 25.0f, 2.5f,
+                2.5f, 30.0f, 4.33f,
+
+                -2.5f, 26.0f, 4.33f,
+                -4.33f, 31.0f, 2.5f,
+
+                -4.33f, 27.0f, -2.5f,
+                -2.5f, 32.0f, -4.33f,
+
+                2.5f, 28.0f, -4.33f,
+                4.33f, 33.0f, -2.5f,
+
+                // Back face
+                2.5f, 30.0f, 4.33f,
+                0.0f, 35.0f, 5.0f,
+
+                -4.33f, 31.0f, 2.5f,
+                -5.0f, 36.0f, 0.0f,
+
+                -2.5f, 32.0f, -4.33f,
+                0.0f, 37.0f, -5.0f,
+
+                4.33f, 33.0f, -2.5f,
+                5.0f, 38.0f, 0.0f,
         };
 
         // R, G, B, Alpha
         final float[] cubeColorData = {
                 // Front face (red)
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
-                1.0f, 0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
                 // Right face (green)
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
-                0.0f, 1.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                // Back face (blue)
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
-                0.0f, 0.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                // Left face (yellow)
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
-                1.0f, 1.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                // Top face (cyan)
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
-                0.0f, 1.0f, 1.0f, 1.0f,
+                // Front face (red)
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                // Bottom face (magenta)
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f,
-                1.0f, 0.0f, 1.0f, 1.0f
-        };
+                // Right face (green)
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-        // X, Y, Z
-        final float[] cubeNormalData = {
-                // Front face
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
-                0.0f, 0.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                // Right face
-                1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-                1.0f, 0.0f, 0.0f,
-
-                // Back face
-                0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, -1.0f,
-                0.0f, 0.0f, -1.0f,
-
-                // Left face
-                -1.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f,
-                -1.0f, 0.0f, 0.0f,
-
-                // Top face
-                0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-
-                // Bottom face
-                0.0f, -1.0f, 0.0f,
-                0.0f, -1.0f, 0.0f,
-                0.0f, -1.0f, 0.0f,
-                0.0f, -1.0f, 0.0f,
-                0.0f, -1.0f, 0.0f,
-                0.0f, -1.0f, 0.0f
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
         };
 
         mCubePositions = ByteBuffer.allocateDirect(cubePositionData.length * mBytesPerFloat)
@@ -211,9 +252,9 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mCubeColors.put(cubeColorData).position(0);
 
-        mCubeNormals = ByteBuffer.allocateDirect(cubeNormalData.length * mBytesPerFloat)
+        mConnections = ByteBuffer.allocateDirect(connectionsData.length * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mCubeNormals.put(cubeNormalData).position(0);
+        mConnections.put(connectionsData).position(0);
     }
 
 
@@ -243,17 +284,23 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         else this.mHeight = height;
     }
 
+    public float getInertia() {
+        return mInertia;
+    }
+
+    public void setInertia(float inertia) {
+        this.mInertia = inertia;
+    }
+
 
     protected String getVertexShader() {
         final String vertexShader =
-                        "uniform mat4 u_MVPMatrix;\n" +
-                        "attribute vec4 a_Position;\n" +
-                        "attribute vec4 a_Color;\n" +
-                        "varying vec4 v_Color;\n" +
-                        "void main() {\n" +
-                        "    v_Color = a_Color;\n" +
-                        "    gl_Position = u_MVPMatrix * a_Position;\n" +
-                        "}";
+                "uniform mat4 u_MVPMatrix;\n" +
+                "attribute vec4 a_Position;\n" +
+                "void main() {\n" +
+                "    gl_Position = u_MVPMatrix * a_Position;\n" +
+                "    gl_PointSize = 15.0;\n" +
+                "}";
 
         return  vertexShader;
     }
@@ -261,10 +308,9 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     protected String getFragmentShader() {
         final String fragmentShader =
                 "precision mediump float;\n" +
-                        "varying vec4 v_Color;\n" +
-                        "void main() {\n" +
-                        "    gl_FragColor = v_Color;\n" +
-                        "}";
+                "void main() {\n" +
+                "    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);\n" +
+                "}";
         return fragmentShader;
     }
 
@@ -329,16 +375,17 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     }
 
 
-    private void drawCube() {
+    private void drawTree() {
         // Pass in the position information
         mCubePositions.position(0);
         GLES20.glVertexAttribPointer(mPositionHandler, mPositionDataSize, GLES20.GL_FLOAT, false, 0, mCubePositions);
         GLES20.glEnableVertexAttribArray(mPositionHandler);
 
+        /*
         // Pass in the color information
         mCubeColors.position(0);
         GLES20.glVertexAttribPointer(mColorHandler, mColorDataSize, GLES20.GL_FLOAT, false, 0, mCubeColors);
-        GLES20.glEnableVertexAttribArray(mColorHandler);
+        GLES20.glEnableVertexAttribArray(mColorHandler);*/
 
         // This multiplies the view matrix by the model matrix, and stores the result in the MVP matrix
         // (which currently contains model * view).
@@ -351,7 +398,21 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
 
         // Draw the cube
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 36);
+        GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 32);
+    }
+
+    private void drawConnections() {
+        mConnections.position(0);
+        GLES20.glVertexAttribPointer(mConnectionHandler, mConnectionDataSize, GLES20.GL_FLOAT, false, 0, mConnections);
+        GLES20.glEnableVertexAttribArray(mConnectionHandler);
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
+
+        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);
     }
 
 
@@ -375,7 +436,28 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         final int fragmentShaderHandler = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
 
         mPerVertexProgramHandler = createAndLinkProgram(vertexShaderHandler, fragmentShaderHandler,
-                new String[] {"a_Position", "a_Color"});
+                new String[] {"a_Position"});
+
+        final String lineVertexShader =
+                "uniform mat4 uMVPMatrix;" +
+
+                "attribute vec4 vPosition;" +
+                "void main() {" +
+                // the matrix must be included as a modifier of gl_Position
+                "  gl_Position = uMVPMatrix * vPosition;" +
+                "}";
+
+        final String lineFragmentShader =
+                "precision mediump float;" +
+                "uniform vec4 vColor;" +
+                "void main() {" +
+                "  gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);;" +
+                "}";
+
+        final int pointVertexShaderHandler = compileShader(GLES20.GL_VERTEX_SHADER, lineVertexShader);
+        final int pointFragmentShaderHandler = compileShader(GLES20.GL_FRAGMENT_SHADER, lineFragmentShader);
+        mLineVertexProgramHandler = createAndLinkProgram(pointVertexShaderHandler, pointFragmentShaderHandler,
+                new String[] {"a_Position"});
     }
 
     @Override
@@ -388,7 +470,7 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         final float bottom = -1.0f;
         final float top = 1.0f;
         final float near = 1.0f;
-        final float far = 10.0f;
+        final float far = 30.0f;
 
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, near, far);
     }
@@ -407,9 +489,16 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
 
         // Draw cube
         Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -5.0f);
-        drawCube();
+        Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -mDistance);
+        drawTree();
 
+        drawConnections();
+
+        mAngle = mAngle + mInertia;
+        //mInertia = mInertia - 0.1f;
+        if (mAngle >= 360.0f) mAngle = mAngle - 360.0f;
+        if (mAngle <= -360.0f) mAngle = mAngle + 360.0f;
+        if (mInertia < 0) mInertia = 0.0f;
         double angle = Math.toRadians(mAngle);
 
         //TODO: whatthefuck is this minus?

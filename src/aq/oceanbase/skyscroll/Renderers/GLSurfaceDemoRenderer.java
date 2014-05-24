@@ -32,8 +32,8 @@ public class GLSurfaceDemoRenderer extends GLSurfaceView {
                 float dx = x - mPreviousX;
                 float dy = y - mPreviousY;
 
-                mRenderer.setAngle(mRenderer.getAngle() + (dx * TOUCH_SCALE_FACTOR));
-                mRenderer.setHeight(mRenderer.getHeight() + dy/100);
+                mRenderer.setInertia(dx * TOUCH_SCALE_FACTOR);
+                mRenderer.setHeight(mRenderer.getHeight() + dy/40);
         }
 
         mPreviousX = x;
