@@ -4,7 +4,8 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
-import aq.oceanbase.skyscroll.math.Vector3;
+import aq.oceanbase.skyscroll.math.Vector2f;
+import aq.oceanbase.skyscroll.math.Vector3f;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -25,7 +26,8 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     private float mAngle = 0.0f;
     private float mDistance = 15.0f;
     private float mHeight = 0.0f;
-    private float mInertia = 0.0f;
+
+    private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
 
     private float mMinHeight = 1.0f;
     private float mMaxHeight = 45.0f;
@@ -47,8 +49,8 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     private final int mConnectionDataSize = 3;
     private final int mColorDataSize = 4;
 
-    private Vector3 camPos = new Vector3(0.0f, 1.0f, -0.5f);
-    private Vector3 look = new Vector3(0.0f, 0.0f, -mDistance);
+    private Vector3f camPos = new Vector3f(0.0f, 1.0f, -0.5f);
+    private Vector3f look = new Vector3f(0.0f, 0.0f, -mDistance);
 
     public DemoRenderer() {
 
@@ -284,12 +286,13 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         else this.mHeight = height;
     }
 
-    public float getInertia() {
-        return mInertia;
+    public Vector2f getMomentum() {
+        return mMomentum;
     }
 
-    public void setInertia(float inertia) {
-        this.mInertia = inertia;
+    public void setMomentum(Vector2f momentum) {
+        this.mMomentum.x = momentum.x;
+        this.mMomentum.y = momentum.y;
     }
 
 
@@ -494,11 +497,36 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
 
         drawConnections();
 
-        mAngle = mAngle + mInertia;
-        //mInertia = mInertia - 0.1f;
+        //Log.d("Demo", new StringBuilder().append("Display momentum: ").append(mMomentum.x).toString());
+
+
+        //TODO: move it to class?
+        if (mMomentum.x != 0.0f) {
+            if (mMomentum.x > 0.0f) {
+                mMomentum.x = mMomentum.x - 1.7f;
+                if (mMomentum.x < 0) mMomentum.x = 0.0f;
+            }
+            if (mMomentum.x < 0.0f) {
+                mMomentum.x = mMomentum.x + 1.7f;
+                if (mMomentum.x > 0) mMomentum.x = 0.0f;
+            }
+            mAngle = mAngle + mMomentum.x;
+        }
+        if (mMomentum.y != 0.0f) {
+            if (mMomentum.y > 0.0f) {
+                mMomentum.y = mMomentum.y - 0.1f;
+                if (mMomentum.y < 0) mMomentum.y = 0.0f;
+            }
+            if (mMomentum.y < 0.0f) {
+                mMomentum.y = mMomentum.y + 0.1f;
+                if (mMomentum.y > 0) mMomentum.y = 0.0f;
+            }
+            mHeight = mHeight + mMomentum.y;
+        }
+
         if (mAngle >= 360.0f) mAngle = mAngle - 360.0f;
         if (mAngle <= -360.0f) mAngle = mAngle + 360.0f;
-        if (mInertia < 0) mInertia = 0.0f;
+
         double angle = Math.toRadians(mAngle);
 
         //TODO: whatthefuck is this minus?

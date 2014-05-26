@@ -5,8 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.MotionEvent;
-import aq.oceanbase.skyscroll.math.Vector3;
+import aq.oceanbase.skyscroll.math.Vector3f;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -14,9 +13,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.lang.Math;
-
-import static android.util.FloatMath.cos;
-import static android.util.FloatMath.sin;
 
 public class RendererTwo implements GLSurfaceView.Renderer {
 
@@ -61,8 +57,8 @@ public class RendererTwo implements GLSurfaceView.Renderer {
     //private float[] camPos = new float[] {0.0f, 0.0f, -0.5f};
     //private float[] look = new float[] {0.0f, 0.0f, -distance};
 
-    private Vector3 camPos = new Vector3(0.0f, 4.0f, -0.5f);
-    private Vector3 look = new Vector3(0.0f, 0.0f, -mDistance);
+    private Vector3f camPos = new Vector3f(0.0f, 4.0f, -0.5f);
+    private Vector3f look = new Vector3f(0.0f, 0.0f, -mDistance);
 
     public RendererTwo() {
 
