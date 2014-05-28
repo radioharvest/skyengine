@@ -51,6 +51,8 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
 
     private Vector3f camPos = new Vector3f(0.0f, 1.0f, -0.5f);
     private Vector3f look = new Vector3f(0.0f, 0.0f, -mDistance);
+    //private Vector3f look = new Vector3f(0.0f, 0.0f, 0.0f);
+
 
     public DemoRenderer() {
 
@@ -296,6 +298,17 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     }
 
 
+    public void zoom(float distance) {
+        Log.e("Span", new StringBuilder().append("Distance: ").append(distance).toString());
+
+        if (Math.abs(distance) > 0.1) mDistance = mDistance - distance; //offset added
+        if (mDistance < 7.0f) mDistance = 7.0f;
+        if (mDistance > 25.f) mDistance = 25.0f;
+
+        Log.e("Span", new StringBuilder().append("mDistance: ").append(mDistance).toString());
+    }
+
+
     protected String getVertexShader() {
         final String vertexShader =
                 "uniform mat4 u_MVPMatrix;\n" +
@@ -493,6 +506,8 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         // Draw cube
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -mDistance);
+        //Matrix.translateM(mModelMatrix, 0, 0.0f, 0.0f, -camPos.z);
+
         drawTree();
 
         drawConnections();
@@ -532,6 +547,7 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         //TODO: whatthefuck is this minus?
         camPos.x = (float)Math.sin(-angle)*mDistance;
         camPos.z = (float)(Math.cos(angle)*mDistance - mDistance);
+        look.z = -mDistance;
 
         Matrix.setLookAtM(mViewMatrix, 0, camPos.x, camPos.y + mHeight, camPos.z, look.x, look.y + mHeight, look.z, 0.0f, 1.0f, 0.0f);
     }
