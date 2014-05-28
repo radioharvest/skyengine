@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll;
+package aq.oceanbase.skyscroll.legacy;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -6,8 +6,7 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import aq.oceanbase.skyscroll.Renderers.GLSurfaceDemoRenderer;
-import aq.oceanbase.skyscroll.Renderers.GLSurfaceRendererTwo;
+import aq.oceanbase.skyscroll.legacy.GLSurfaceDemoRenderer;
 
 
 public class DemoRenderActivity extends Activity {

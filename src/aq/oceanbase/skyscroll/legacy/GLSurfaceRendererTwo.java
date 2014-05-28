@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.Renderers;
+package aq.oceanbase.skyscroll.legacy;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;

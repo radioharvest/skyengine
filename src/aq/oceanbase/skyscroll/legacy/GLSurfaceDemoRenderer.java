@@ -1,10 +1,8 @@
-package aq.oceanbase.skyscroll.Renderers;
+package aq.oceanbase.skyscroll.legacy;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
-import android.support.v4.view.ScaleGestureDetectorCompat;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import aq.oceanbase.skyscroll.math.Vector2f;

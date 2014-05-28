@@ -1,13 +1,12 @@
-package aq.oceanbase.skyscroll;
+package aq.oceanbase.skyscroll.legacy;
 
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import aq.oceanbase.skyscroll.Renderers.RendererOne;
+import aq.oceanbase.skyscroll.legacy.RendererOne;
 
 
 public class RenderActivityOne extends Activity {

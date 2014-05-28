@@ -14,14 +14,14 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".RenderActivityOne"
+                android:name=".legacy.RenderActivityOne"
                 android:label="@string/title_activity_render_one"
                 android:parentActivityName=".MainActivity" >
                 <meta-data
                         android:name="android.support.PARENT_ACTIVITY"
                         android:value="aq.oceanbase.skyscroll.MainActivity"/>
         </activity>
-        <activity android:name=".RenderActivityTwo"/>
-        <activity android:name=".DemoRenderActivity"/>
+        <activity android:name=".legacy.RenderActivityTwo"/>
+        <activity android:name=".legacy.DemoRenderActivity"/>
     </application>
 </manifest>
