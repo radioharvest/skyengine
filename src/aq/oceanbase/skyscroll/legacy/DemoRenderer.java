@@ -4,6 +4,7 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
+import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.math.Vector2f;
 import aq.oceanbase.skyscroll.math.Vector3f;
 
@@ -301,7 +302,7 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
     public void zoom(float distance) {
         Log.e("Span", new StringBuilder().append("Distance: ").append(distance).toString());
 
-        if (Math.abs(distance) > 0.1) mDistance = mDistance - distance; //offset added
+        if (Math.abs(distance) > 0.01) mDistance = mDistance - distance; //offset added
         if (mDistance < 7.0f) mDistance = 7.0f;
         if (mDistance > 25.f) mDistance = 25.0f;
 
@@ -445,8 +446,11 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         //Matrix.setLookAtM(mViewMatrix, 0, eyeX, eyeY, eyeZ, lookX, lookY, lookZ, upX, upY, upZ);
         Matrix.setLookAtM(mViewMatrix, 0, camPos.x, camPos.y + mHeight, camPos.z, look.x, look.y + mHeight, look.z, upX, upY, upZ);
 
-        final String vertexShader = getVertexShader();
-        final String fragmentShader = getFragmentShader();
+        //final String vertexShader = getVertexShader();
+        //final String fragmentShader = getFragmentShader();
+
+        final String vertexShader = ShaderLoader.getShader("/legacy/shaders/vertexShaderDemo.glsl");
+        final String fragmentShader = ShaderLoader.getShader("/legacy/shaders/fragmentShaderDemo.glsl");
 
         final int vertexShaderHandler = compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);
         final int fragmentShaderHandler = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
@@ -493,6 +497,9 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
 
     @Override
     public void onDrawFrame(GL10 unused) {
+
+        //ShaderLoader loader = new ShaderLoader();
+        //Log.e("Shader", ShaderLoader.getShader("/shaders/fragmentShader01.glsl"));
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
@@ -545,9 +552,10 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         double angle = Math.toRadians(mAngle);
 
         //TODO: whatthefuck is this minus?
+        look.z = -mDistance;
         camPos.x = (float)Math.sin(-angle)*mDistance;
         camPos.z = (float)(Math.cos(angle)*mDistance - mDistance);
-        look.z = -mDistance;
+
 
         Matrix.setLookAtM(mViewMatrix, 0, camPos.x, camPos.y + mHeight, camPos.z, look.x, look.y + mHeight, look.z, 0.0f, 1.0f, 0.0f);
     }
