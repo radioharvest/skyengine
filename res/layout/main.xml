@@ -20,5 +20,9 @@
             android:layout_height="wrap_content"
             android:text="@string/button_start_render_demo"
             android:onClick="startDemo" />
+    <Button android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="Start Game"
+            android:onClick="startGame" />
 </LinearLayout>
 
