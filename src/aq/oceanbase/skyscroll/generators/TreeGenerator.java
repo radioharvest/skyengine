@@ -17,6 +17,18 @@ public class TreeGenerator {
     private Random generator;
     private long seed;
 
+
+    private float[] nodesPositionData;
+    private float[] linesPositionData;
+
+    private float[] nodesColorData;
+    private float[] linesColorData;
+
+
+    //<editor-fold desc="Constructors">
+
+    public TreeGenerator() {};
+
     public TreeGenerator(float height, float radius, int nodesAmount) {
         this.height = height;
         this.radius = radius;
@@ -85,6 +97,174 @@ public class TreeGenerator {
         this.seed = seed;
     }
 
+    //</editor-fold>
+
+
+    //<editor-fold desc="Getters">
+
+    public float[] getNodesPositionData() {
+        //return this.nodePositionData;
+        float[] data = {
+                //Remember counter-clockwise orientation of vertices in OpenGL
+
+                // Front face
+                -5.0f, 0.0f, 0.0f,
+                0.0f, 1.0f, -5.0f,
+                5.0f, 2.0f, 0.0f,
+                0.0f, 3.0f, 5.0f,
+
+                // Right face
+                4.33f, 5.0f, 2.5f,
+                -2.5f, 6.0f, 4.33f,
+                -4.33f, 7.0f, -2.5f,
+                2.5f, 8.0f, -4.33f,
+
+                // Back face
+                2.5f, 10.0f, 4.33f,
+                -4.33f, 11.0f, 2.5f,
+                -2.5f, 12.0f, -4.33f,
+                4.33f, 13.0f, -2.5f,
+
+                // Left face
+                0.0f, 15.0f, 5.0f,
+                -5.0f, 16.0f, 0.0f,
+                0.0f, 17.0f, -5.0f,
+                5.0f, 18.0f, 0.0f,
+
+                // Front face
+                -5.0f, 20.0f, 0.0f,
+                0.0f, 21.0f, -5.0f,
+                5.0f, 22.0f, 0.0f,
+                0.0f, 23.0f, 5.0f,
+
+                // Right face
+                4.33f, 25.0f, 2.5f,
+                -2.5f, 26.0f, 4.33f,
+                -4.33f, 27.0f, -2.5f,
+                2.5f, 28.0f, -4.33f,
+
+                // Back face
+                2.5f, 30.0f, 4.33f,
+                -4.33f, 31.0f, 2.5f,
+                -2.5f, 32.0f, -4.33f,
+                4.33f, 33.0f, -2.5f,
+
+                // Left face
+                0.0f, 35.0f, 5.0f,
+                -5.0f, 36.0f, 0.0f,
+                0.0f, 37.0f, -5.0f,
+                5.0f, 38.0f, 0.0f,
+        };
+        return data;
+    }
+
+    public float[] getLinesPositionData() {
+        //return this.connectionsPositionData;
+        float[] data = {
+                -5.0f, 0.0f, 0.0f,
+                4.33f, 5.0f, 2.5f,
+
+                0.0f, 1.0f, -5.0f,
+                -2.5f, 6.0f, 4.33f,
+
+                5.0f, 2.0f, 0.0f,
+                -4.33f, 7.0f, -2.5f,
+
+                0.0f, 3.0f, 5.0f,
+                2.5f, 8.0f, -4.33f,
+
+                // Right face
+                4.33f, 5.0f, 2.5f,
+                2.5f, 10.0f, 4.33f,
+
+                -2.5f, 6.0f, 4.33f,
+                -4.33f, 11.0f, 2.5f,
+
+                -4.33f, 7.0f, -2.5f,
+                -2.5f, 12.0f, -4.33f,
+
+                2.5f, 8.0f, -4.33f,
+                4.33f, 13.0f, -2.5f,
+
+                // Back face
+                2.5f, 10.0f, 4.33f,
+                0.0f, 15.0f, 5.0f,
+
+                -4.33f, 11.0f, 2.5f,
+                -5.0f, 16.0f, 0.0f,
+
+                -2.5f, 12.0f, -4.33f,
+                0.0f, 17.0f, -5.0f,
+
+                4.33f, 13.0f, -2.5f,
+                5.0f, 18.0f, 0.0f,
+
+                // Left face
+                0.0f, 15.0f, 5.0f,
+                -5.0f, 20.0f, 0.0f,
+
+                -5.0f, 16.0f, 0.0f,
+                0.0f, 21.0f, -5.0f,
+
+                0.0f, 17.0f, -5.0f,
+                5.0f, 22.0f, 0.0f,
+
+                5.0f, 18.0f, 0.0f,
+                0.0f, 23.0f, 5.0f,
+
+                // Front face
+                -5.0f, 20.0f, 0.0f,
+                4.33f, 25.0f, 2.5f,
+
+                0.0f, 21.0f, -5.0f,
+                -2.5f, 26.0f, 4.33f,
+
+                5.0f, 22.0f, 0.0f,
+                -4.33f, 27.0f, -2.5f,
+
+                0.0f, 23.0f, 5.0f,
+                2.5f, 28.0f, -4.33f,
+
+                // Right face
+                4.33f, 25.0f, 2.5f,
+                2.5f, 30.0f, 4.33f,
+
+                -2.5f, 26.0f, 4.33f,
+                -4.33f, 31.0f, 2.5f,
+
+                -4.33f, 27.0f, -2.5f,
+                -2.5f, 32.0f, -4.33f,
+
+                2.5f, 28.0f, -4.33f,
+                4.33f, 33.0f, -2.5f,
+
+                // Back face
+                2.5f, 30.0f, 4.33f,
+                0.0f, 35.0f, 5.0f,
+
+                -4.33f, 31.0f, 2.5f,
+                -5.0f, 36.0f, 0.0f,
+
+                -2.5f, 32.0f, -4.33f,
+                0.0f, 37.0f, -5.0f,
+
+                4.33f, 33.0f, -2.5f,
+                5.0f, 38.0f, 0.0f,
+        };
+        return data;
+    }
+
+    public float[] getNodesColorData() {
+        return this.nodesColorData;
+    }
+
+    public float[] getLinesColorData() {
+        return this.linesColorData;
+    }
+
+    //</editor-fold>
+
+
     public void buildLevelDensity() {
         //TODO: check the seed value
         if (seed != 0) generator = new Random(seed);
@@ -109,6 +289,5 @@ public class TreeGenerator {
         float[] nodeArray = {};
         return nodeArray;
     }
-
 
 }

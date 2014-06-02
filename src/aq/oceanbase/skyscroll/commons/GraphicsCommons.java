@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.render;
+package aq.oceanbase.skyscroll.commons;
 
 import android.opengl.GLES20;
 import android.util.Log;

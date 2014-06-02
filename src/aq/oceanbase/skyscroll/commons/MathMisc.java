@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.math;
+package aq.oceanbase.skyscroll.commons;
 
 public class MathMisc {
     public static float decrementConvergingValue(float value, float decrement) {
