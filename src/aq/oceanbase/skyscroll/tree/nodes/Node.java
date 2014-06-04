@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.nodes;
+package aq.oceanbase.skyscroll.tree.nodes;
 
 public class Node {
 
@@ -15,4 +15,11 @@ public class Node {
     private double inConnections[];
 
     private double outConnections[];
+
+
+    public Node(float x, float y, float z) {
+        this.posX = x;
+        this.posY = y;
+        this.posZ = z;
+    }
 }

@@ -3,6 +3,7 @@ package aq.oceanbase.skyscroll.render;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.SystemClock;
 import android.util.Log;
 import aq.oceanbase.skyscroll.commons.GraphicsCommons;
 import aq.oceanbase.skyscroll.generators.TreeGenerator;
@@ -39,6 +40,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     private int mMVPMatrixHandler;
     private int mNodesPositionHandler;
     private int mLinesPositionHandler;
+    private int mNodeColorHandler;
 
     //FloatBuffers
     private FloatBuffer mNodesPositions;
@@ -51,6 +53,12 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
     //Touch variables
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
+
+    //Time variables
+    private long mSwitchTime;
+
+    //Iterators
+    private int mNodeIterator = 0;
 
     //Constraints
     private float mMinHeight = 0.0f;
@@ -148,21 +156,47 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
 
     private void drawNodes() {
+        float[] color;
+
         GLES20.glUseProgram(mNodeShaderProgram);
 
         mMVPMatrixHandler = GLES20.glGetUniformLocation(mNodeShaderProgram, "u_MVPMatrix");
         mNodesPositionHandler = GLES20.glGetAttribLocation(mNodeShaderProgram, "a_Position");
+        mNodeColorHandler = GLES20.glGetAttribLocation(mNodeShaderProgram, "a_Color");
 
-        mNodesPositions.position(0);
-        GLES20.glVertexAttribPointer(mNodesPositionHandler, mPositionDataSize, GLES20.GL_FLOAT, false, 0, mNodesPositions);
-        GLES20.glEnableVertexAttribArray(mNodesPositionHandler);
+        if (SystemClock.uptimeMillis() - mSwitchTime >= 1000) {
+            mSwitchTime = SystemClock.uptimeMillis();
+            mNodeIterator = mNodeIterator + 1;
+            if (mNodeIterator >= 32) mNodeIterator = 0;
+            Log.e("Draw", new StringBuilder().append(mNodeIterator).toString());
+        }
 
         Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
-
         GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
 
-        GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 32);
+        for (int i = 0; i < 32; i++) {
+
+
+            /*mNodesPositions.position(0);
+            GLES20.glVertexAttribPointer(mNodesPositionHandler, mPositionDataSize, GLES20.GL_FLOAT, false, 0, mNodesPositions);
+            GLES20.glEnableVertexAttribArray(mNodesPositionHandler);*/
+
+            int el = i*3;
+
+            GLES20.glVertexAttrib3f(mNodesPositionHandler, mNodesPositions.get(el), mNodesPositions.get(el+1), mNodesPositions.get(el+2));
+            GLES20.glDisableVertexAttribArray(mNodesPositionHandler);
+
+            if (i == mNodeIterator) color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+            else color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+
+            GLES20.glVertexAttrib4f(mNodeColorHandler, color[0], color[1], color[2], color[3]);
+            GLES20.glDisableVertexAttribArray(mNodeColorHandler);
+
+            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
+        }
+
+
     }
 
     private void drawLines() {
@@ -196,6 +230,8 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
+        mSwitchTime = SystemClock.uptimeMillis();
+
         //TODO: set up starting view angle
         Matrix.setLookAtM(mViewMatrix, 0,
                 camPos.x, camPos.y, camPos.z,
@@ -210,7 +246,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         mNodeShaderProgram = GraphicsCommons.
                 createAndLinkProgram(nodeVertexShader, nodeFragmentShader,
-                        new String[] {"a_Position"});
+                        new String[] {"a_Position", "a_Color"});
 
         final String lineVertexShaderSource = ShaderLoader.getShader("/shaders/lines/lineVertexShader.glsl");
         final String lineFragmentShaderSource = ShaderLoader.getShader("/shaders/lines/lineFragmentShader.glsl");
