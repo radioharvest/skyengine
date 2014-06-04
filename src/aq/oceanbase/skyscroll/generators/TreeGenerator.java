@@ -1,5 +1,8 @@
 package aq.oceanbase.skyscroll.generators;
 
+import aq.oceanbase.skyscroll.tree.nodes.Node;
+
+import java.util.ArrayList;
 import java.util.Random;
 
 public class TreeGenerator {
@@ -260,6 +263,53 @@ public class TreeGenerator {
 
     public float[] getLinesColorData() {
         return this.linesColorData;
+    }
+
+    public Node[] getNodes() {
+        ArrayList<Node> tempNodes = new ArrayList<Node>();
+
+        tempNodes.add(new Node(-5.0f, 0.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 1.0f, -5.0f));
+        tempNodes.add(new Node(5.0f, 2.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 3.0f, 5.0f));
+
+        tempNodes.add(new Node(4.33f, 5.0f, 2.5f));
+        tempNodes.add(new Node(-2.5f, 6.0f, 4.33f));
+        tempNodes.add(new Node(-4.33f, 7.0f, -2.5f));
+        tempNodes.add(new Node(2.5f, 8.0f, -4.33f));
+
+        tempNodes.add(new Node(2.5f, 10.0f, 4.33f));
+        tempNodes.add(new Node(-4.33f, 11.0f, 2.5f));
+        tempNodes.add(new Node(-2.5f, 12.0f, -4.33f));
+        tempNodes.add(new Node(4.33f, 13.0f, -2.5f));
+
+        tempNodes.add(new Node(0.0f, 15.0f, 5.0f));
+        tempNodes.add(new Node(-5.0f, 16.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 17.0f, -5.0f));
+        tempNodes.add(new Node(5.0f, 18.0f, 0.0f));
+
+        tempNodes.add(new Node(-5.0f, 20.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 21.0f, -5.0f));
+        tempNodes.add(new Node(5.0f, 22.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 23.0f, 5.0f));
+
+        tempNodes.add(new Node(4.33f, 25.0f, 2.5f));
+        tempNodes.add(new Node(-2.5f, 26.0f, 4.33f));
+        tempNodes.add(new Node(-4.33f, 27.0f, -2.5f));
+        tempNodes.add(new Node(2.5f, 28.0f, -4.33f));
+
+        tempNodes.add(new Node(2.5f, 30.0f, 4.33f));
+        tempNodes.add(new Node(-4.33f, 31.0f, 2.5f));
+        tempNodes.add(new Node(-2.5f, 32.0f, -4.33f));
+        tempNodes.add(new Node(4.33f, 33.0f, -2.5f));
+
+        tempNodes.add(new Node(0.0f, 35.0f, 5.0f));
+        tempNodes.add(new Node(-5.0f, 36.0f, 0.0f));
+        tempNodes.add(new Node(0.0f, 37.0f, -5.0f));
+        tempNodes.add(new Node(5.0f, 38.0f, 0.0f));
+
+        return tempNodes.toArray(new Node[] {});
+        //return nodes;
     }
 
     //</editor-fold>

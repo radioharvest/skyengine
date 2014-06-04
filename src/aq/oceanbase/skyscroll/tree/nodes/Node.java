@@ -2,11 +2,13 @@ package aq.oceanbase.skyscroll.tree.nodes;
 
 public class Node {
 
-    private float posX;
-    private float posY;
-    private float posZ;
+    public float posX;
+    public float posY;
+    public float posZ;
 
     private String type;
+
+    private String state;
 
     private int difficulty;
 

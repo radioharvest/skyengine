@@ -1,18 +1,22 @@
 package aq.oceanbase.skyscroll.render;
 
+import android.app.Activity;
+import android.app.ActivityManager;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import aq.oceanbase.skyscroll.activities.MainRendererActivity;
 import aq.oceanbase.skyscroll.math.Vector2f;
 
 public class GLSurfaceMainRenderer extends GLSurfaceView {
 
     private final MainRenderer mRenderer;
 
+
     //CONSTANTS
-    private final float ROTATION_SCALE_FACTOR = 180.0f/320;
+    private final float ROTATION_SCALE_FACTOR = 180.0f/360;
     private final float HEIGHT_SCALE_FACTOR = 1/30.0f;
     private final float ZOOM_FACTOR = 1/30.0f;
 
@@ -70,11 +74,15 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         float x = e.getX();
         float y = e.getY();
 
+        mRenderer.setTouchScreenCoords(x, y);
+
+
         mScaleDetector.onTouchEvent(e);
 
         switch (e.getAction()) {
 
             case MotionEvent.ACTION_DOWN:
+                mRenderer.setTouched(true);
                 mode = DRAG;
                 break;
 
@@ -89,24 +97,29 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
                         mDelta.y = (y - mPrevious.y)*HEIGHT_SCALE_FACTOR;
                     }
 
-                    Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
+
+                    if (mDelta.nonZero()) {
+                        Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
+                        mRenderer.setMomentum(mDelta);
+                    }
+
+                    Log.e("Touch", new StringBuilder().append("mDelta.x: ").append(mDelta.x).toString());
                     Log.e("Touch", "ACTION MOVE");
                     mRenderer.setAngle(mRenderer.getAngle() + mDelta.x);
                     mRenderer.setHeight(mRenderer.getHeight() + mDelta.y);
                     //REMEMBER THE BREAK OP
+                    break;
                 }
 
 
             case MotionEvent.ACTION_UP:
                 Log.e("Touch", "ACTION UP");
                 mode = NONE;
+                mRenderer.setTouched(false);
 
-                if (mDelta.nonZero()) {
-                    Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
-                    mRenderer.setMomentum(mDelta);
-                    mDelta.x = 0.0f;
-                    mDelta.y = 0.0f;
-                }
+                mDelta.x = 0.0f;
+                mDelta.y = 0.0f;
+
                 break;
         }
 

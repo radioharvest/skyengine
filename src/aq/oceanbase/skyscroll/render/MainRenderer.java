@@ -1,32 +1,51 @@
 package aq.oceanbase.skyscroll.render;
 
-import android.opengl.GLES20;
-import android.opengl.GLSurfaceView;
-import android.opengl.Matrix;
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.content.Loader;
+import android.content.pm.ActivityInfo;
+import android.opengl.*;
 import android.os.SystemClock;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import aq.oceanbase.skyscroll.activities.MainRendererActivity;
 import aq.oceanbase.skyscroll.commons.GraphicsCommons;
 import aq.oceanbase.skyscroll.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.commons.MathMisc;
 import aq.oceanbase.skyscroll.math.Vector2f;
 import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.tree.nodes.Node;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.Random;
 
 public class MainRenderer  implements GLSurfaceView.Renderer {
 
     //Constants and sizes
-    final int mBytesPerFloat = 4;
-    final int mPositionDataSize = 3;
+    private final int mBytesPerFloat = 4;
+    private final int mPositionDataSize = 3;
+    private int mScreenWidth;
+    private int mScreenHeight;
+
+    //Constraints
+    private float mMinHeight = 0.0f;
+    private float mMaxHeight = 30.0f;
+    private float mMinDist = 8.0f;
+    private float mMaxDist = 20.0f;
 
     //Rendering settings
     final float mNearPlane = 1.0f;
     final float mFarPlane = 30.0f;
+
+    //Camera parameters
+    private Vector3f camPos = new Vector3f(0.0f, 0.0f, 0.0f);
+    private Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
+    private Vector3f look = new Vector3f(0.0f, 0.0f, -1.0f);
 
     //Matrices
     private float[] mModelMatrix = new float[16];
@@ -46,6 +65,9 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     private FloatBuffer mNodesPositions;
     private FloatBuffer mLinesPositions;
 
+    //Arrays
+    private Node mNodes[];
+
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
     private float mHeight = 0.0f;
@@ -53,23 +75,14 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
     //Touch variables
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
+    private Vector2f mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
+    private boolean mTouched = false;
 
     //Time variables
     private long mSwitchTime;
 
     //Iterators
-    private int mNodeIterator = 0;
-
-    //Constraints
-    private float mMinHeight = 0.0f;
-    private float mMaxHeight = 30.0f;
-    private float mMinDist = 8.0f;
-    private float mMaxDist = 20.0f;
-
-    //Camera parameters
-    private Vector3f camPos = new Vector3f(0.0f, 0.0f, -mDistance);
-    private Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
-    private Vector3f look = new Vector3f(0.0f, 0.0f, -1.0f);
+    private int mSelectedNode = 0;
 
     public MainRenderer() {
         Log.e("RunDebug", "Renderer constructor stage passed");
@@ -83,8 +96,24 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         mLinesPositions = ByteBuffer.allocateDirect(linesPositionData.length * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mLinesPositions.put(linesPositionData).position(0);
+
+        mNodes = generator.getNodes();
     }
 
+
+    public void setScreenMetrics(int height, int width) {
+        this.mScreenHeight = height;
+        this.mScreenWidth = width;
+    }
+
+    public void setTouchScreenCoords(float x, float y) {
+        this.mTouchScreenCoords.x = x;
+        this.mTouchScreenCoords.y = y;
+    }
+
+    public void setTouched(boolean status) {
+        this.mTouched = status;
+    }
 
     public float getAngle() {
         return this.mAngle;
@@ -166,9 +195,9 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         if (SystemClock.uptimeMillis() - mSwitchTime >= 1000) {
             mSwitchTime = SystemClock.uptimeMillis();
-            mNodeIterator = mNodeIterator + 1;
-            if (mNodeIterator >= 32) mNodeIterator = 0;
-            Log.e("Draw", new StringBuilder().append(mNodeIterator).toString());
+            mSelectedNode = new Random().nextInt(32);
+            //if (mSelectedNode >= 32) mSelectedNode = 0;
+            //Log.e("Draw", new StringBuilder().append(mSelectedNode).toString());
         }
 
         Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
@@ -176,18 +205,10 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
 
         for (int i = 0; i < 32; i++) {
-
-
-            /*mNodesPositions.position(0);
-            GLES20.glVertexAttribPointer(mNodesPositionHandler, mPositionDataSize, GLES20.GL_FLOAT, false, 0, mNodesPositions);
-            GLES20.glEnableVertexAttribArray(mNodesPositionHandler);*/
-
-            int el = i*3;
-
-            GLES20.glVertexAttrib3f(mNodesPositionHandler, mNodesPositions.get(el), mNodesPositions.get(el+1), mNodesPositions.get(el+2));
+            GLES20.glVertexAttrib3f(mNodesPositionHandler, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
             GLES20.glDisableVertexAttribArray(mNodesPositionHandler);
 
-            if (i == mNodeIterator) color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+            if (i == mSelectedNode) color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
             else color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
 
             GLES20.glVertexAttrib4f(mNodeColorHandler, color[0], color[1], color[2], color[3]);
@@ -257,6 +278,8 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         mLineShaderProgram = GraphicsCommons.
                 createAndLinkProgram(lineVertexShader, lineFragmentShader,
                         new String[]{"a_Position"});
+
+        Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
     }
 
     @Override
@@ -270,7 +293,11 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         final float bottom = -1.0f;
         final float top = 1.0f;
 
+        mScreenWidth = width;
+        mScreenHeight = height;
+
         Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
+        Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
     }
 
     @Override
@@ -293,6 +320,26 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         updateHeight();
         updateCameraPosition();
+
+        if (mTouched) {
+
+            float[] output = new float[4];
+            float[] result = new float[4];
+            int[] viewMatrix = new int[] {0, 0, mScreenHeight, mScreenWidth};
+
+            GLU.gluUnProject(mTouchScreenCoords.x, mTouchScreenCoords.y, 0.0f, mMVPMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, output, 0);
+            Matrix.multiplyMV(result, 0, mMVPMatrix, 0, output, 0);
+
+            Vector3f near = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
+
+            GLU.gluUnProject(mTouchScreenCoords.x, mTouchScreenCoords.y, 1.0f, mMVPMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, output, 0);
+            Matrix.multiplyMV(result, 0, mMVPMatrix, 0, output, 0);
+
+            Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
+
+            Log.e("Draw", new StringBuilder().append("Near coords: ").append(near.x).append(", ").append(near.y).append(", ").append(near.z).toString());
+            Log.e("Draw", new StringBuilder().append("Far coords: ").append(far.x).append(", ").append(far.y).append(", ").append(far.z).toString());
+        }
 
         Matrix.setLookAtM(mViewMatrix, 0,
                 camPos.x, camPos.y, camPos.z,
