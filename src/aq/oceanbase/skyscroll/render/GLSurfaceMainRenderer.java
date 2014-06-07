@@ -5,6 +5,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import aq.oceanbase.skyscroll.activities.MainRendererActivity;
@@ -29,17 +30,16 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
     private Vector2f mDelta = new Vector2f(0.0f, 0.0f);
 
     private ScaleGestureDetector mScaleDetector;
+    private GestureDetector mTapDetector;
+
     private final ScaleGestureDetector.OnScaleGestureListener mScaleGestureListener
             = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
 
-        private float beginSpan;
         private float lastSpan;
-        //private float totalSpan;
 
         @Override
         public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
             lastSpan = scaleGestureDetector.getCurrentSpan();
-            //lastSpan = beginSpan;
             return true;
         }
 
@@ -55,7 +55,18 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
             return true;
         }
     };
+    private final GestureDetector.OnGestureListener mTapGestureListener
+            = new GestureDetector.SimpleOnGestureListener() {
 
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent e) {
+            Log.e("Touch", "Tapped");
+            //mRenderer.castTouchRay(e.getX(), e.getY());
+            mRenderer.setTouchScreenCoords(e.getX(), e.getY());
+
+            return true;
+        }
+    };
 
 
     public GLSurfaceMainRenderer (Context context) {
@@ -63,6 +74,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         Log.e("RunDebug", "GLSurface stage passed");
 
         mScaleDetector = new ScaleGestureDetector(context, mScaleGestureListener);
+        mTapDetector = new GestureDetector(context, mTapGestureListener);
 
         setEGLContextClientVersion(2);
         mRenderer = new MainRenderer();
@@ -74,10 +86,11 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         float x = e.getX();
         float y = e.getY();
 
-        mRenderer.setTouchScreenCoords(x, y);
+        //mRenderer.setTouchScreenCoords(x, y);
 
 
         mScaleDetector.onTouchEvent(e);
+        mTapDetector.onTouchEvent(e);
 
         switch (e.getAction()) {
 
@@ -99,21 +112,21 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
 
                     if (mDelta.nonZero()) {
-                        Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
+                        //Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
                         mRenderer.setMomentum(mDelta);
                     }
 
-                    Log.e("Touch", new StringBuilder().append("mDelta.x: ").append(mDelta.x).toString());
-                    Log.e("Touch", "ACTION MOVE");
-                    mRenderer.setAngle(mRenderer.getAngle() + mDelta.x);
-                    mRenderer.setHeight(mRenderer.getHeight() + mDelta.y);
+                    //Log.e("Touch", new StringBuilder().append("mDelta.x: ").append(mDelta.x).toString());
+                    //Log.e("Touch", "ACTION MOVE");
+                    if (Math.abs(mDelta.x) >= 0.01) mRenderer.setAngle(mRenderer.getAngle() + mDelta.x);
+                    if (Math.abs(mDelta.y) >= 0.01) mRenderer.setHeight(mRenderer.getHeight() + mDelta.y);
                     //REMEMBER THE BREAK OP
                     break;
                 }
 
 
             case MotionEvent.ACTION_UP:
-                Log.e("Touch", "ACTION UP");
+                //Log.e("Touch", "ACTION UP");
                 mode = NONE;
                 mRenderer.setTouched(false);
 
