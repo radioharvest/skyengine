@@ -8,6 +8,8 @@ public class Vector3f {
     public float y;
     public float z;
 
+    private float length;
+
     public Vector3f(float x, float y, float z) {
         this.x = x;
         this.y = y;
@@ -24,8 +26,12 @@ public class Vector3f {
         Log.e(tag, new StringBuilder().append(name + ": X: ").append(this.x).append(" Y: ").append(this.y).append(" Z: ").append(this.z).toString());
     }
 
-    public float[] toArray() {
-        return new float[] {x, y, z};
+    public float[] toArray3f() {
+        return new float[] {this.x, this.y, this.z};
+    }
+
+    public float[] toArray4f() {
+        return new float[] {this.x, this.y, this.z, 1.0f};
     }
 
     public boolean nonZero() {
@@ -33,20 +39,21 @@ public class Vector3f {
         else return false;
     }
 
-    public Vector3f subtractV(Vector3f op) {
-        this.x = this.x - op.x;
-        this.y = this.y - op.y;
-        this.z = this.z - op.z;
-
-        return this;
+    public float length() {
+        this.length = (float) Math.sqrt( (this.x*this.x + this.y*this.y + this.z*this.z ) );
+        return this.length;
     }
 
     public Vector3f addV(Vector3f op) {
-        this.x = this.x + op.x;
-        this.y = this.y + op.y;
-        this.z = this.z + op.z;
+        return new Vector3f(this.x + op.x, this.y + op.y, this.z + op.z);
+    }
 
-        return this;
+    public Vector3f subtractV(Vector3f op) {
+        return new Vector3f(this.x - op.x, this.y - op.y, this.z - op.z);
+    }
+
+    public Vector3f multiplyS(float scalar) {
+        return new Vector3f(this.x*scalar, this.y*scalar, this.z*scalar);
     }
 
     public Vector3f rotate(float a, float origX, float origY, float origZ) {
@@ -63,10 +70,12 @@ public class Vector3f {
         Matrix.rotateM(rotationMatrix, 0, a, origX, origY, origZ);
         Matrix.multiplyMV(outVec, 0, rotationMatrix, 0, inVec, 0);
 
-        this.x = outVec[0];
-        this.y = outVec[1];
-        this.z = outVec[2];
-
-        return this;
+        return new Vector3f(outVec[0], outVec[1], outVec[2]);
     }
+
+    public Vector3f normalize() {
+        length();
+        return new Vector3f(this.x/this.length, this.y/this.length, this.z/this.length);
+    }
+
 }

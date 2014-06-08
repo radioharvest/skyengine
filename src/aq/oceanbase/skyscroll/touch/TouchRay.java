@@ -1,5 +1,6 @@
 package aq.oceanbase.skyscroll.touch;
 
+import android.util.Log;
 import aq.oceanbase.skyscroll.math.Vector3f;
 
 public class TouchRay {
@@ -19,31 +20,52 @@ public class TouchRay {
     }
 
     public TouchRay(Vector3f nearPoint, Vector3f farPoint, float rad) {
-        this.near = nearPoint;
-        this.far = farPoint;
+        this.near = new Vector3f(nearPoint);
+        this.far = new Vector3f(farPoint);
         this.radius = rad;
+
+        this.near.print("Touch", "created-near");
+        this.far.print("Touch", "created-far");
         buildRay();
-    }
-
-    public float[] getPositionArray() {
-        float[] positions = new float[] {near.x, near.y, near.z, far.x, far.y, far.z};
-        return positions;
-    }
-
-    public boolean notNull() {
-        if (near.nonZero() && far.nonZero()) return true;
-        else return false;
     }
 
     private void buildRay() {
         delta = far.subtractV(near);
+        far.print("Touch", "FAR AFTER DELTA");
 
+        delta.print("Touch", "RAYDELTA");
+        Log.e("Touch", new StringBuilder().append(delta.length()).toString());
         float up = Math.max(near.y, far.y) + radius;
         float down = Math.min(near.y, far.y) - radius;
         float right = Math.max(near.x, far.x) + radius;
         float left = Math.min(near.x, far.x) - radius;
         bBoxMax = new Vector3f(right, up, near.z);      //if Z coord detection will be used reconsidering status of
         bBoxMin = new Vector3f(left, down, far.z);      //max and min Z is needed
+    }
+
+    public float[] getPositionArray() {
+        return new float[] {near.x, near.y, near.z, far.x, far.y, far.z};
+    }
+
+    public float[] getNearPointF() {
+        return new float[] {near.x, near.y, near.z};
+    }
+
+    public float[] getFarPointF() {
+        return new float[] {far.x, far.y, far.z};
+    }
+
+    public Vector3f getNearPointV() {
+        return this.near;
+    }
+
+    public Vector3f getFarPointV() {
+        return this.far;
+    }
+
+    public boolean notNull() {
+        if (near.nonZero() && far.nonZero()) return true;
+        else return false;
     }
 
 
