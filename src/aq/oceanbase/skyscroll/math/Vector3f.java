@@ -8,7 +8,7 @@ public class Vector3f {
     public float y;
     public float z;
 
-    private float length;
+    private float length = -1;
 
     public Vector3f(float x, float y, float z) {
         this.x = x;
@@ -22,10 +22,6 @@ public class Vector3f {
         this.z = vect.z;
     }
 
-    public void print(String tag, String name) {
-        Log.e(tag, new StringBuilder().append(name + ": X: ").append(this.x).append(" Y: ").append(this.y).append(" Z: ").append(this.z).toString());
-    }
-
     public float[] toArray3f() {
         return new float[] {this.x, this.y, this.z};
     }
@@ -34,14 +30,31 @@ public class Vector3f {
         return new float[] {this.x, this.y, this.z, 1.0f};
     }
 
+    public void print(String tag, String name) {
+        Log.e(tag, new StringBuilder().append(name + ": X: ").append(this.x).append(" Y: ").append(this.y).append(" Z: ").append(this.z).toString());
+    }
+
     public boolean nonZero() {
         if (x != 0.0f || y!= 0.0f || z!= 0.0f) return true;
         else return false;
     }
 
+    public void calculateLength() {
+        this.length = (float) Math.sqrt( this.lengthSqr() );
+    }
+
     public float length() {
-        this.length = (float) Math.sqrt( (this.x*this.x + this.y*this.y + this.z*this.z ) );
+        if (this.length == -1) calculateLength();
         return this.length;
+    }
+
+    public float lengthSqr() {
+        return (this.x*this.x + this.y*this.y + this.z*this.z);
+    }
+
+    public Vector3f normalize() {
+        if (this.length == -1) calculateLength();
+        return new Vector3f(this.x/this.length, this.y/this.length, this.z/this.length);
     }
 
     public Vector3f addV(Vector3f op) {
@@ -52,8 +65,12 @@ public class Vector3f {
         return new Vector3f(this.x - op.x, this.y - op.y, this.z - op.z);
     }
 
-    public Vector3f multiplyS(float scalar) {
+    public Vector3f multiplySf(float scalar) {
         return new Vector3f(this.x*scalar, this.y*scalar, this.z*scalar);
+    }
+
+    public float dotV(Vector3f op) {
+        return (this.x*op.x + this.y*op.y + this.z*op.z);
     }
 
     public Vector3f rotate(float a, float origX, float origY, float origZ) {
@@ -73,9 +90,8 @@ public class Vector3f {
         return new Vector3f(outVec[0], outVec[1], outVec[2]);
     }
 
-    public Vector3f normalize() {
-        length();
-        return new Vector3f(this.x/this.length, this.y/this.length, this.z/this.length);
+    public float projectOnV(Vector3f op) {
+        return this.dotV(op.normalize());
     }
 
 }

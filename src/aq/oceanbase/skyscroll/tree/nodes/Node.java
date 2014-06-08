@@ -6,9 +6,8 @@ public class Node {
 
     public static final int IDLE = 1;
     public static final int OPEN = 2;
-    public static final int SELECTED = 3;
-    public static final int WRONG = 4;
-    public static final int RIGHT = 5;
+    public static final int WRONG = 3;
+    public static final int RIGHT = 4;
 
     public float posX;
     public float posY;
@@ -17,6 +16,7 @@ public class Node {
     private String type;
 
     private int state;
+    private boolean selected;
 
     private int difficulty;
 
@@ -49,12 +49,16 @@ public class Node {
     }
 
     public boolean isSelected() {
-        if (state == SELECTED) return true;
+        if (this.selected) return true;
         else return false;
     }
 
-    public void setSelected() {
-        this.state = SELECTED;
+    public void select() {
+        this.selected = true;
+    }
+
+    public void deselect() {
+        this.selected = false;
     }
 
     public void setIdle() {

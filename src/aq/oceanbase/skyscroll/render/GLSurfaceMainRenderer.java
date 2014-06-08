@@ -1,14 +1,11 @@
 package aq.oceanbase.skyscroll.render;
 
-import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.Context;
 import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import aq.oceanbase.skyscroll.activities.MainRendererActivity;
 import aq.oceanbase.skyscroll.math.Vector2f;
 
 public class GLSurfaceMainRenderer extends GLSurfaceView {
@@ -95,7 +92,6 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         switch (e.getAction()) {
 
             case MotionEvent.ACTION_DOWN:
-                mRenderer.setTouched(true);
                 mode = DRAG;
                 break;
 
@@ -128,7 +124,6 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
             case MotionEvent.ACTION_UP:
                 //Log.e("Touch", "ACTION UP");
                 mode = NONE;
-                mRenderer.setTouched(false);
 
                 mDelta.x = 0.0f;
                 mDelta.y = 0.0f;

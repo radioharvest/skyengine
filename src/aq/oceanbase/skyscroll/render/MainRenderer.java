@@ -18,8 +18,10 @@ import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.Random;
 
+
+
+//TODO: check scope of all variables
 public class MainRenderer  implements GLSurfaceView.Renderer {
 
     //Constants and sizes
@@ -73,15 +75,13 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //Touch variables
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
     private Vector2f mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-    private boolean mTouched = false;
-    private Vector2f mTouch = new Vector2f(0, 0);
     private TouchRay mTouchRay = new TouchRay(0, 0, 0, 0, 0, 0, 0);
 
     //Time variables
     private long mSwitchTime;
 
-    //Iterators
-    private int mSelectedNode = 0;
+    //Nodes
+    private int mSelectedNode;
 
     public MainRenderer() {
         Log.e("RunDebug", "Renderer constructor stage passed");
@@ -112,10 +112,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         this.mTouchScreenCoords.y = y;
     }
 
-    public void setTouched(boolean status) {
-        this.mTouched = status;
-    }
-
     public float getAngle() {
         return this.mAngle;
     }
@@ -142,6 +138,51 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //</editor-fold>
 
 
+    //<editor-fold desc="Updaters">
+    public void zoom(float distance) {
+        if (Math.abs(distance) > 0.1) mDistance = mDistance - distance;
+        if (mDistance <= mMinDist) mDistance = mMinDist;
+        else if (mDistance > mMaxDist) mDistance = mMaxDist;
+    }
+
+    private void updateMomentum() {
+        //Log.e("NavDebug", new StringBuilder().append("mMomentum.x: ").append(mMomentum.x).toString());
+        //Log.e("NavDebug", new StringBuilder().append("mMomentum.y: ").append(mMomentum.y).toString());
+
+        if (mMomentum.x != 0.0f) {
+            mMomentum.x = MathMisc.decrementConvergingValue(mMomentum.x, 1.7f);
+        }
+
+        if (mMomentum.y != 0.0f) {
+            mMomentum.y = MathMisc.decrementConvergingValue(mMomentum.y, 0.1f);
+        }
+    }
+
+    private void updateAngle() {
+        //Log.e("NavDebug", new StringBuilder().append("mAngle: ").append(mAngle).toString());
+
+        mAngle = mAngle + mMomentum.x;
+        if (mAngle >= 360.0f) mAngle = mAngle - 360.0f;
+        if (mAngle <= -360.0f) mAngle = mAngle + 360.0f;
+    }
+
+    private void updateHeight() {
+        //Log.e("NavDebug", new StringBuilder().append("mHeight: ").append(mHeight).toString());
+
+        mHeight = mHeight + mMomentum.y;
+        if (mHeight > mMaxHeight) mHeight = mMaxHeight;
+        if (mHeight < mMinHeight) mHeight = mMinHeight;
+    }
+
+    private void updateCameraPosition() {
+        //Log.e("NavDebug", new StringBuilder().append("camPos.z: ").append(camPos.z).toString());
+        camPos.z = mDistance;
+        camPos.y = mHeight;
+        look.y = mHeight;
+    }
+    //</editor-fold>
+
+
     private void drawNodes() {
         float[] color;
 
@@ -150,13 +191,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         mMVPMatrixHandler = GLES20.glGetUniformLocation(mNodeShaderProgram, "u_MVPMatrix");
         mNodesPositionHandler = GLES20.glGetAttribLocation(mNodeShaderProgram, "a_Position");
         mNodeColorHandler = GLES20.glGetAttribLocation(mNodeShaderProgram, "a_Color");
-
-        if (SystemClock.uptimeMillis() - mSwitchTime >= 1000) {
-            mSwitchTime = SystemClock.uptimeMillis();
-            mSelectedNode = new Random().nextInt(32);
-            //if (mSelectedNode >= 32) mSelectedNode = 0;
-            //Log.e("Draw", new StringBuilder().append(mSelectedNode).toString());
-        }
 
         Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
         Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
@@ -258,182 +292,44 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     }
 
 
-    public void castTouchRayOld(float touchX, float touchY) {
-        float[] output = new float[4];
-        float[] result = new float[4];
-        float[] MVMatrix = new float[16];
-        int[] viewMatrix = {0, 0, mScreenWidth, mScreenHeight};
-
-        //Matrix.setIdentityM(MVMatrix, 0);
-
-        //Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-
-        float winX = touchX;
-        float winY = (float)mScreenHeight - touchY;
-
-        Log.e("Touch", new StringBuilder().append("X: ").append(touchX).append(" ").append(winX).toString());
-
-        GLU.gluUnProject(winX, winY, 0.0f, mModelMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, result, 0);
-        //GLU.gluUnProject(winX, winY, 0.0f, MVMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, output, 0);
-        //Matrix.multiplyMV(result, 0, MVMatrix, 0, output, 0);
-
-        Vector3f near = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
-        near.print("Touch", "near");
-
-        GLU.gluUnProject(winX, winY, 0.9f, mModelMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, result, 0);
-        //GLU.gluUnProject(winX, winY, 0.9f, MVMatrix, 0, mProjectionMatrix, 0, viewMatrix, 0, output, 0);
-        //Matrix.multiplyMV(result, 0, MVMatrix, 0, output, 0);
-
-        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
-        far.print("Touch", "far");
-
-        //near.y = near.y + mHeight;
-        far.y = far.y + mHeight;
-
-
-        /*near.z = near.z + (mDistance+mNearPlane);
-        far.z = far.z + (mDistance+mNearPlane);*/
-
-        Log.e("Touch", new StringBuilder().append("Near coords: ").append(near.x).append(", ").append(near.y).append(", ").append(near.z).toString());
-        Log.e("Touch", new StringBuilder().append("Far coords: ").append(far.x).append(", ").append(far.y).append(", ").append(far.z).toString());
-        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);
-        camRotated.print("Touch", "camRotated");
-
-        mTouchRay = new TouchRay(near, far, 2.0f);
-
-        /*Log.e("Touch", new StringBuilder().append("Projection Matrix:").toString());
-        Log.e("Touch", new StringBuilder().append(mProjectionMatrix[0]).append(" ").append(mProjectionMatrix[1]).append(" ").append(mProjectionMatrix[2]).append(" ").append(mProjectionMatrix[3]).toString());
-        Log.e("Touch", new StringBuilder().append(mProjectionMatrix[4]).append(" ").append(mProjectionMatrix[5]).append(" ").append(mProjectionMatrix[6]).append(" ").append(mProjectionMatrix[7]).toString());
-        Log.e("Touch", new StringBuilder().append(mProjectionMatrix[8]).append(" ").append(mProjectionMatrix[9]).append(" ").append(mProjectionMatrix[10]).append(" ").append(mProjectionMatrix[11]).toString());
-        Log.e("Touch", new StringBuilder().append(mProjectionMatrix[12]).append(" ").append(mProjectionMatrix[13]).append(" ").append(mProjectionMatrix[14]).append(" ").append(mProjectionMatrix[15]).toString());
-        */
-        mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-
-        Log.e("Draw", new StringBuilder().append("CamPos: ").append(camPos.x).append(" ").append(camPos.y).append(" ").append(camPos.z).toString());
-    }
-
-    public void castTouchRayNew(float touchX, float touchY) {
-        float[] output = new float[4];
-        float[] result = new float[4];
-        float[] MVMatrix = new float[16];
-        int[] view = {0, 0, mScreenWidth, mScreenHeight};
-
-
-
-        //Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        Matrix.setIdentityM(MVMatrix, 0);
-
-        float winX = touchX;
-        float winY = (float)mScreenHeight - touchY;
-
-        GLU.gluUnProject(winX, winY, 1.0f, mModelMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);
-        //Matrix.multiplyMV(result, 0, MVMatrix, 0, output, 0);
-
-        Vector3f point = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
-        point.print("Touch", "point");
-        //Log.e("Touch", new StringBuilder().append("CamPos: X: ").append(camPos.x).append(" Y: ").append(camPos.y).append(" Z: ").append(camPos.z).toString());
-        camPos.print("Touch", "CamPos");
-
-        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);
-        camRotated.print("Touch", "camRotated");
-
-        /*point.subtractV(camRotated);
-        point.print("Touch", "point-subtracted");
-
-        point = point.normalize().multiplyS(mFrustumDepthFactor);
-        point.print("Touch", "point-norm-multi");
-
-        //point.multiplyS(mFrustumDepthFactor);
-
-        /*point.multiplyS(mFrustumDepthFactor);
-        point.print("Touch", "point-multiplied");*/
-
-        mTouchRay = new TouchRay(camRotated, point, 2.0f);
-        mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-    }
-
     public void castTouchRay(float touchX, float touchY) {
         float[] result = new float[4];
         float[] MVMatrix = new float[16];
         int[] view = {0, 0, mScreenWidth, mScreenHeight};
 
-
-
-        //Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        Matrix.setIdentityM(MVMatrix, 0);
+        Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
 
         float winX = touchX;
         float winY = (float)mScreenHeight - touchY;
 
-        GLU.gluUnProject(winX, winY, 0.0f, mModelMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);
-        Vector3f near = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
+        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);      //get point on the far plane
+        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
 
-        GLU.gluUnProject(winX, winY, 1.0f, mModelMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);
-        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);
+        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
 
-        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);
-        camRotated.print("Touch", "camRotated");
-
-        near = near.addV(camRotated);
-        far = far.addV(camRotated);
-        //far.addV(camRotated);
-
-        near.print("Touch", "near");
-        far.print("Touch", "far");
-
-        mTouchRay = new TouchRay(near, far, 2.0f);
+        mTouchRay = new TouchRay(camRotated, far, 1.0f);
         mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
     }
 
-    private void findSelectedNodes() {
+    private void findSelected() {
+        if (mSelectedNode != -1) mNodes[mSelectedNode].deselect();
+        int sel = -1;
         for (int i = 0; i < mNodes.length; i++) {
-            if (mTouchRay.insideBox(mNodes[i].getPosV())) mNodes[i].setSelected();
-            else mNodes[i].setIdle();
+            Vector3f curPos = mNodes[i].getPosV();
+            if (mTouchRay.onRay(curPos)) {
+                if (sel == -1) sel = i;
+                else if (!mTouchRay.closestSelected(mNodes[sel].getPosV(), curPos)) sel = i;
+            }
+        }
+
+        if (sel != -1) {
+            mNodes[sel].select();
+            mSelectedNode = sel;
+        } else  {
+            mSelectedNode = -1;
         }
     }
 
-
-    public void zoom(float distance) {
-        if (Math.abs(distance) > 0.1) mDistance = mDistance - distance;
-        if (mDistance <= mMinDist) mDistance = mMinDist;
-        else if (mDistance > mMaxDist) mDistance = mMaxDist;
-    }
-
-    private void updateMomentum() {
-        //Log.e("NavDebug", new StringBuilder().append("mMomentum.x: ").append(mMomentum.x).toString());
-        //Log.e("NavDebug", new StringBuilder().append("mMomentum.y: ").append(mMomentum.y).toString());
-
-        if (mMomentum.x != 0.0f) {
-            mMomentum.x = MathMisc.decrementConvergingValue(mMomentum.x, 1.7f);
-        }
-
-        if (mMomentum.y != 0.0f) {
-            mMomentum.y = MathMisc.decrementConvergingValue(mMomentum.y, 0.1f);
-        }
-    }
-
-    private void updateAngle() {
-        //Log.e("NavDebug", new StringBuilder().append("mAngle: ").append(mAngle).toString());
-
-        mAngle = mAngle + mMomentum.x;
-        if (mAngle >= 360.0f) mAngle = mAngle - 360.0f;
-        if (mAngle <= -360.0f) mAngle = mAngle + 360.0f;
-    }
-
-    private void updateHeight() {
-        //Log.e("NavDebug", new StringBuilder().append("mHeight: ").append(mHeight).toString());
-
-        mHeight = mHeight + mMomentum.y;
-        if (mHeight > mMaxHeight) mHeight = mMaxHeight;
-        if (mHeight < mMinHeight) mHeight = mMinHeight;
-    }
-
-    private void updateCameraPosition() {
-        //Log.e("NavDebug", new StringBuilder().append("camPos.z: ").append(camPos.z).toString());
-        camPos.z = mDistance;
-        camPos.y = mHeight;
-        look.y = mHeight;
-    }
 
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
@@ -497,8 +393,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         updateMomentum();
         updateAngle();
-        /*Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);*/
+
         if (mTouchRay.notNull()){
             drawPoint(mTouchRay.getFarPointV());
             drawRay();
@@ -507,12 +402,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);
 
-
-
         drawTree();
-
-
-
 
         updateHeight();
         updateCameraPosition();
@@ -522,9 +412,9 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
 
-        if (mTouchScreenCoords.nonZero()){
+        if (mTouchScreenCoords.nonZero()) {
             castTouchRay(mTouchScreenCoords.x, mTouchScreenCoords.y);
-            findSelectedNodes();
+            findSelected();
         }
 
     }

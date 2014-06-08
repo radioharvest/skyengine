@@ -7,6 +7,7 @@ public class TouchRay {
     private Vector3f near;
     private Vector3f far;
     private Vector3f delta;
+    private Vector3f deltaNorm;
     private float radius;
 
     private Vector3f bBoxMax;    //Bounding Box Up-Right coordinates
@@ -24,17 +25,16 @@ public class TouchRay {
         this.far = new Vector3f(farPoint);
         this.radius = rad;
 
-        this.near.print("Touch", "created-near");
-        this.far.print("Touch", "created-far");
+        //this.near.print("Touch", "created-near");
+        //this.far.print("Touch", "created-far");
         buildRay();
     }
 
     private void buildRay() {
         delta = far.subtractV(near);
-        far.print("Touch", "FAR AFTER DELTA");
+        delta.calculateLength();
+        deltaNorm = delta.normalize();
 
-        delta.print("Touch", "RAYDELTA");
-        Log.e("Touch", new StringBuilder().append(delta.length()).toString());
         float up = Math.max(near.y, far.y) + radius;
         float down = Math.min(near.y, far.y) - radius;
         float right = Math.max(near.x, far.x) + radius;
@@ -43,6 +43,8 @@ public class TouchRay {
         bBoxMin = new Vector3f(left, down, far.z);      //max and min Z is needed
     }
 
+
+    //<editor-fold desc="Getters">
     public float[] getPositionArray() {
         return new float[] {near.x, near.y, near.z, far.x, far.y, far.z};
     }
@@ -63,11 +65,16 @@ public class TouchRay {
         return this.far;
     }
 
+    public float getSqrDistTo(Vector3f input) {
+        return input.subtractV(this.near).lengthSqr();
+    }
+    //</editor-fold>
+
+
     public boolean notNull() {
         if (near.nonZero() && far.nonZero()) return true;
         else return false;
     }
-
 
     public boolean insideBox(Vector3f point) {
         if ( (bBoxMin.x <= point.x && point.x <= bBoxMax.x) &&
@@ -76,10 +83,18 @@ public class TouchRay {
         else return false;
     }
 
-    public boolean insideBox(float x, float y, float z) {
-        if ( (bBoxMin.x <= x && x <= bBoxMax.x) &&
-             (bBoxMin.y <= y && y <= bBoxMax.y) ) return true;
-             //(bBoxMin.z <= z && z <= bBoxMax.z) ) return true;
+    public boolean onRay(Vector3f input) {
+        if (!this.insideBox(input)) return false;
+        input = input.subtractV(this.near);
+        float projection = input.projectOnV(this.delta);
+        float intersectionSqr = this.radius*this.radius - input.lengthSqr() + projection*projection;
+
+        if (intersectionSqr >= 0) return true;
+        else return false;
+    }
+
+    public boolean closestSelected(Vector3f sel, Vector3f vect) {
+        if (this.getSqrDistTo(sel) < this.getSqrDistTo(vect)) return true;
         else return false;
     }
 }
