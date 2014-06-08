@@ -76,15 +76,15 @@ public class TouchRay {
         else return false;
     }
 
-    public boolean insideBox(Vector3f point) {
+    public boolean pointInsideBox(Vector3f point) {
         if ( (bBoxMin.x <= point.x && point.x <= bBoxMax.x) &&
              (bBoxMin.y <= point.y && point.y <= bBoxMax.y) ) return true;
              //(bBoxMin.z <= point.z && point.z <= bBoxMax.z) ) return true;
         else return false;
     }
 
-    public boolean onRay(Vector3f input) {
-        if (!this.insideBox(input)) return false;
+    public boolean pointOnRay(Vector3f input) {
+        if (!this.pointInsideBox(input)) return false;
         input = input.subtractV(this.near);
         float projection = input.projectOnV(this.delta);
         float intersectionSqr = this.radius*this.radius - input.lengthSqr() + projection*projection;

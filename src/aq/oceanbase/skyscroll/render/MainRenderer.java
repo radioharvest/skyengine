@@ -183,6 +183,55 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //</editor-fold>
 
 
+    //<editor-fold desc="Selection">
+    private TouchRay castTouchRay(float touchX, float touchY) {
+        float[] result = new float[4];
+        float[] MVMatrix = new float[16];
+        int[] view = {0, 0, mScreenWidth, mScreenHeight};
+
+        Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+
+        float winX = touchX;
+        float winY = (float)mScreenHeight - touchY;
+
+        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);      //get point on the far plane
+        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
+
+        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
+
+        return new TouchRay(camRotated, far, 1.0f);
+    }
+
+    private int findSelectedNode(TouchRay tRay) {
+        int sel = -1;
+        for (int i = 0; i < mNodes.length; i++) {
+            Vector3f curPos = mNodes[i].getPosV();
+            if (tRay.pointOnRay(curPos)) {
+                if (sel == -1) sel = i;
+                else if (!tRay.closestSelected(mNodes[sel].getPosV(), curPos)) sel = i;
+            }
+        }
+
+        return sel;
+    }
+
+    public void selectNode(float x, float y) {
+        TouchRay ray = castTouchRay(x, y);
+
+        if (mSelectedNode != -1) mNodes[mSelectedNode].deselect();
+        int selected = findSelectedNode(ray);
+
+        if (selected != -1) {
+            mNodes[selected].select();
+            mSelectedNode = selected;
+        } else  {
+            mSelectedNode = -1;
+        }
+
+    }
+    //</editor-fold>
+
+
     private void drawNodes() {
         float[] color;
 
@@ -236,7 +285,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         drawNodes();
     }
 
-    private void drawRay() {
+    private void drawRay(TouchRay tRay) {
         GLES20.glUseProgram(mLineShaderProgram);
 
         mMVPMatrixHandler = GLES20.glGetUniformLocation(mLineShaderProgram, "u_MVPMatrix");
@@ -244,11 +293,11 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         //float[] rayPositions = mTouchRay.getPositionArray();
         //final FloatBuffer rayPositionsBuffer = ByteBuffer.allocateDirect(rayPositions.length * mBytesPerFloat)
-        float[] posArray = mTouchRay.getPositionArray();
+        float[] posArray = tRay.getPositionArray();
         final FloatBuffer rayPositions = ByteBuffer.allocateDirect(posArray.length * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
 
-        mTouchRay.getFarPointV().print("Draw", "FarPoint");
+        tRay.getFarPointV().print("Draw", "FarPoint");
         rayPositions.put(posArray);
 
         rayPositions.position(0);
@@ -289,45 +338,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glDisableVertexAttribArray(mNodeColorHandler);
         GLES20.glDrawArrays(GLES20.GL_POINTS, 0, 1);
 
-    }
-
-
-    public void castTouchRay(float touchX, float touchY) {
-        float[] result = new float[4];
-        float[] MVMatrix = new float[16];
-        int[] view = {0, 0, mScreenWidth, mScreenHeight};
-
-        Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-
-        float winX = touchX;
-        float winY = (float)mScreenHeight - touchY;
-
-        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);      //get point on the far plane
-        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
-
-        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
-
-        mTouchRay = new TouchRay(camRotated, far, 1.0f);
-        mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-    }
-
-    private void findSelected() {
-        if (mSelectedNode != -1) mNodes[mSelectedNode].deselect();
-        int sel = -1;
-        for (int i = 0; i < mNodes.length; i++) {
-            Vector3f curPos = mNodes[i].getPosV();
-            if (mTouchRay.onRay(curPos)) {
-                if (sel == -1) sel = i;
-                else if (!mTouchRay.closestSelected(mNodes[sel].getPosV(), curPos)) sel = i;
-            }
-        }
-
-        if (sel != -1) {
-            mNodes[sel].select();
-            mSelectedNode = sel;
-        } else  {
-            mSelectedNode = -1;
-        }
     }
 
 
@@ -394,11 +404,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         updateMomentum();
         updateAngle();
 
-        if (mTouchRay.notNull()){
-            drawPoint(mTouchRay.getFarPointV());
-            drawRay();
-        }
-
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);
 
@@ -412,10 +417,10 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
 
-        if (mTouchScreenCoords.nonZero()) {
+        /*if (mTouchScreenCoords.nonZero()) {
             castTouchRay(mTouchScreenCoords.x, mTouchScreenCoords.y);
-            findSelected();
-        }
+            mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
+        }*/
 
     }
 }
