@@ -74,7 +74,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         mTapDetector = new GestureDetector(context, mTapGestureListener);
 
         setEGLContextClientVersion(2);
-        mRenderer = new MainRenderer();
+        mRenderer = new MainRenderer(context);
         setRenderer(mRenderer);
     }
 

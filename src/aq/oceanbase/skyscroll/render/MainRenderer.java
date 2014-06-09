@@ -1,8 +1,11 @@
 package aq.oceanbase.skyscroll.render;
 
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.*;
-import android.os.SystemClock;
 import android.util.Log;
+import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.commons.GraphicsCommons;
 import aq.oceanbase.skyscroll.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
@@ -20,13 +23,15 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
 
-
 //TODO: check scope of all variables
 public class MainRenderer  implements GLSurfaceView.Renderer {
+
+    private final Context mContext;
 
     //Constants and sizes
     private final int mBytesPerFloat = 4;
     private final int mPositionDataSize = 3;
+    private final int mTextureCoordinateDataSize = 2;
     private int mScreenWidth;
     private int mScreenHeight;
 
@@ -39,7 +44,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //Rendering settings
     private final float mNearPlane = 1.0f;
     private final float mFarPlane = 30.0f;
-    private final float mFrustumDepthFactor = mFarPlane/mNearPlane;
 
     //Camera parameters
     private Vector3f camPos = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -55,14 +59,23 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //Handlers
     private int mNodeShaderProgram;
     private int mLineShaderProgram;
+    private int mSpriteShaderProgram;
     private int mMVPMatrixHandler;
     private int mNodesPositionHandler;
     private int mLinesPositionHandler;
+    private int mSpritePositionHandler;
     private int mNodeColorHandler;
+    private int mSpriteColorHandler;
+    private int mTextureUniformHandler;
+    private int mTextureCoordinateHandler;
+    private int mTextureDataHandler;
 
     //FloatBuffers
     private FloatBuffer mNodesPositions;
     private FloatBuffer mLinesPositions;
+    private FloatBuffer mSpriteVertices;
+    private FloatBuffer mSpriteTexCoords;
+
 
     //Arrays
     private Node mNodes[];
@@ -75,28 +88,56 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //Touch variables
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
     private Vector2f mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-    private TouchRay mTouchRay = new TouchRay(0, 0, 0, 0, 0, 0, 0);
-
-    //Time variables
-    private long mSwitchTime;
 
     //Nodes
     private int mSelectedNode;
 
-    public MainRenderer() {
+    public MainRenderer(Context context) {
+        mContext = context;
+
         Log.e("RunDebug", "Renderer constructor stage passed");
         TreeGenerator generator = new TreeGenerator();
-        float[] nodesPositionData = generator.getNodesPositionData();
+        final float[] nodesPositionData = generator.getNodesPositionData();
         mNodesPositions = ByteBuffer.allocateDirect(nodesPositionData.length * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mNodesPositions.put(nodesPositionData).position(0);
 
-        float[] linesPositionData = generator.getLinesPositionData();
+        final float[] linesPositionData = generator.getLinesPositionData();
         mLinesPositions = ByteBuffer.allocateDirect(linesPositionData.length * mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         mLinesPositions.put(linesPositionData).position(0);
 
         mNodes = generator.getNodes();
+
+        final float[] trData =
+                {
+                        -1.0f,  1.0f, 0.0f,
+                        -1.0f, -1.0f, 0.0f,
+                         1.0f, -1.0f, 0.0f,
+
+                         1.0f, -1.0f, 0.0f,
+                         1.0f,  1.0f, 0.0f,
+                        -1.0f,  1.0f, 0.0f
+                };
+
+        mSpriteVertices = ByteBuffer.allocateDirect(trData.length * mBytesPerFloat)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        mSpriteVertices.put(trData).position(0);
+
+        final float[] spriteTextureCoordinateData =
+                {
+                    0.0f, 0.0f,
+                    0.0f, 1.0f,
+                    1.0f, 1.0f,
+
+                    1.0f, 1.0f,
+                    1.0f, 0.0f,
+                    0.0f, 0.0f
+                };
+
+        mSpriteTexCoords = ByteBuffer.allocateDirect(spriteTextureCoordinateData.length * mBytesPerFloat)
+                .order(ByteOrder.nativeOrder()).asFloatBuffer();
+        mSpriteTexCoords.put(spriteTextureCoordinateData).position(0);
     }
 
 
@@ -232,6 +273,35 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     //</editor-fold>
 
 
+    public static int loadTexture(final Context context, final int resourceId) {
+        final int[] textureHandler = new int[1];
+
+        GLES20.glGenTextures(1, textureHandler, 0);
+
+        if (textureHandler[0] != 0) {
+            final BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inScaled = false;
+
+            final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
+
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandler[0]);
+
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
+
+            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+
+            bitmap.recycle();
+        }
+
+        if (textureHandler[0] == 0) {
+            throw new RuntimeException("Error loading texture.");
+        }
+
+        return textureHandler[0];
+    }
+
+
     private void drawNodes() {
         float[] color;
 
@@ -283,6 +353,36 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     private void drawTree() {
         drawLines();
         drawNodes();
+    }
+
+    private void drawSprite(Vector3f pos, float[] color) {
+        GLES20.glUseProgram(mSpriteShaderProgram);
+
+        mMVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
+        mTextureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
+        mSpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
+        mSpriteColorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
+        mTextureCoordinateHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
+        Matrix.translateM(mMVPMatrix, 0, pos.x, pos.y, pos.z);
+        Matrix.scaleM(mMVPMatrix, 0, 2.0f, 2.0f, 2.0f);
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
+
+        GLES20.glVertexAttribPointer(mSpritePositionHandler, 3, GLES20.GL_FLOAT, false, 3*mBytesPerFloat, mSpriteVertices);
+        GLES20.glEnableVertexAttribArray(mSpritePositionHandler);
+
+        GLES20.glVertexAttrib4f(mSpriteColorHandler, color[0], color[1], color[2], color[3]);
+        GLES20.glDisableVertexAttribArray(mSpriteColorHandler);
+
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandler);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandler);
+        GLES20.glUniform1i(mTextureUniformHandler, 0);
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
     }
 
     private void drawRay(TouchRay tRay) {
@@ -347,7 +447,6 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-        mSwitchTime = SystemClock.uptimeMillis();
 
         //TODO: set up starting view angle
         Matrix.setLookAtM(mViewMatrix, 0,
@@ -375,7 +474,18 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
                 createAndLinkProgram(lineVertexShader, lineFragmentShader,
                         new String[]{"a_Position"});
 
-        Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
+        final String spriteVertexShaderSource = ShaderLoader.getShader("/shaders/sprites/spriteVertexShader.glsl");
+        final String spriteFragmentShaderSource = ShaderLoader.getShader("/shaders/sprites/spriteFragmentShader.glsl");
+
+        final int spriteVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, spriteVertexShaderSource);
+        final int spriteFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, spriteFragmentShaderSource);
+
+        mSpriteShaderProgram = GraphicsCommons.
+                createAndLinkProgram(spriteVertexShader, spriteFragmentShader, new String[]{"a_Position", "a_Color", "a_TexCoordinate"});
+
+        mTextureDataHandler = loadTexture(mContext, R.drawable.node1);
+
+        //Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
     }
 
     @Override
@@ -407,6 +517,8 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);
 
+        float[] color = {1.0f, 1.0f, 1.0f, 0.0f};
+        drawSprite(new Vector3f(0.0f, 20.0f, 0.0f), color);
         drawTree();
 
         updateHeight();
