@@ -281,6 +281,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         if (textureHandler[0] != 0) {
             final BitmapFactory.Options options = new BitmapFactory.Options();
             options.inScaled = false;
+            options.inPreferredConfig = Bitmap.Config.ARGB_4444;
 
             final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
 
@@ -382,7 +383,63 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandler);
         GLES20.glUniform1i(mTextureUniformHandler, 0);
 
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+
+        GLES20.glDisable(GLES20.GL_BLEND);
+
+
+    }
+
+    private void drawSpriteNodes() {
+        float[] color;
+        float[] tempMatrix = new float[16];
+
+        GLES20.glUseProgram(mSpriteShaderProgram);
+
+        mMVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
+        mTextureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
+
+        mSpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
+        mSpriteColorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
+        mTextureCoordinateHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
+
+        //To provide constant screen orientation only VP matrix is use
+        //Matrix translation is used to move the sprite around
+        //Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mViewMatrix, 0);
+
+        GLES20.glVertexAttribPointer(mSpritePositionHandler, 3, GLES20.GL_FLOAT, false, 3*mBytesPerFloat, mSpriteVertices);
+        GLES20.glEnableVertexAttribArray(mSpritePositionHandler);
+
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandler);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandler);
+        GLES20.glUniform1i(mTextureUniformHandler, 0);
+
+        for (int i = 0; i < mNodes.length; i++) {
+
+            //tempMatrix = mMVPMatrix;
+            Matrix.multiplyMM(tempMatrix, 0, mViewMatrix, 0, mModelMatrix,0);
+            Matrix.multiplyMM(tempMatrix, 0, mProjectionMatrix, 0, tempMatrix, 0);
+
+            //Matrix.setIdentityM(tempMatrix, 0);
+            //Matrix.translateM(mMVPMatrix, 0, tempMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
+            Matrix.translateM(tempMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
+            GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, tempMatrix, 0);
+
+            if (mNodes[i].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+
+            GLES20.glVertexAttrib4f(mSpriteColorHandler, color[0], color[1], color[2], color[3]);
+            GLES20.glDisableVertexAttribArray(mSpriteColorHandler);
+
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+        }
+
     }
 
     private void drawRay(TouchRay tRay) {
@@ -446,7 +503,8 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         GLES20.glClearColor(0.05f, 0.0f, 0.1f, 0.0f);
         GLES20.glEnable(GLES20.GL_CULL_FACE);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         //TODO: set up starting view angle
         Matrix.setLookAtM(mViewMatrix, 0,
@@ -517,9 +575,13 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);
 
+        //drawTree();
+        drawLines();
+
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         float[] color = {1.0f, 1.0f, 1.0f, 0.0f};
-        drawSprite(new Vector3f(0.0f, 20.0f, 0.0f), color);
-        drawTree();
+        drawSpriteNodes();
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         updateHeight();
         updateCameraPosition();
