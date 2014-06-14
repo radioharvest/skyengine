@@ -57,18 +57,35 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     private float[] mMVPMatrix = new float[16];
 
     //Handlers
+    //programs
     private int mNodeShaderProgram;
     private int mLineShaderProgram;
     private int mSpriteShaderProgram;
+
+    //matrices
     private int mMVPMatrixHandler;
+    private int mSpriteRotMatrixHandler;
+    private int mModelMatrixHandler;
+    private int mViewMatrixHandler;
+    private int mProjMatrixHandler;
+
+    //positions
     private int mNodesPositionHandler;
     private int mLinesPositionHandler;
     private int mSpritePositionHandler;
+    private int mSpriteMatrixHandler;
+
+    //colors
     private int mNodeColorHandler;
     private int mSpriteColorHandler;
+
+    //textures
     private int mTextureUniformHandler;
     private int mTextureCoordinateHandler;
     private int mTextureDataHandler;
+
+    //misc
+    private int mSpriteBillBoardMatrixHandler;
 
     //FloatBuffers
     private FloatBuffer mNodesPositions;
@@ -347,7 +364,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
 
-        GLES20.glLineWidth(1.0f);
+        GLES20.glLineWidth(2.0f);
         GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);
     }
 
@@ -402,7 +419,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         mMVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
         mTextureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
 
-        mSpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
+        mSpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_LocalPosition");
         mSpriteColorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
         mTextureCoordinateHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
 
@@ -422,14 +439,11 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         for (int i = 0; i < mNodes.length; i++) {
 
-            //tempMatrix = mMVPMatrix;
-            Matrix.multiplyMM(tempMatrix, 0, mViewMatrix, 0, mModelMatrix,0);
-            Matrix.multiplyMM(tempMatrix, 0, mProjectionMatrix, 0, tempMatrix, 0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix,0);
+            Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
 
-            //Matrix.setIdentityM(tempMatrix, 0);
-            //Matrix.translateM(mMVPMatrix, 0, tempMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
-            Matrix.translateM(tempMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
-            GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, tempMatrix, 0);
+            Matrix.translateM(mMVPMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
+            GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
 
             if (mNodes[i].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
             else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
@@ -441,6 +455,64 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
         }
 
     }
+
+    private void drawSpriteNodesUpdated() {
+        float[] color;
+        float[] spriteMatrix = new float[16];
+        float[] rotationMatrix = new float[16];
+
+        GLES20.glUseProgram(mSpriteShaderProgram);
+
+        mMVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
+        mTextureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
+        mSpriteMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_SpriteMatrix");
+        mSpriteRotMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_RotationMatrix");
+
+        mSpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
+        mTextureCoordinateHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
+        mSpriteColorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.rotateM(rotationMatrix, 0, -mAngle, 0.0f, 1.0f, 0.0f);
+
+        GLES20.glUniformMatrix4fv(mMVPMatrixHandler, 1, false, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(mSpriteRotMatrixHandler, 1, false, rotationMatrix, 0);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureDataHandler);
+        GLES20.glUniform1i(mTextureUniformHandler, 0);
+
+        mSpriteVertices.position(0);
+        GLES20.glVertexAttribPointer(mSpritePositionHandler, 3, GLES20.GL_FLOAT, false, 3*mBytesPerFloat, mSpriteVertices);
+        GLES20.glEnableVertexAttribArray(mSpritePositionHandler);
+
+        mSpriteTexCoords.position(0);
+        GLES20.glVertexAttribPointer(mTextureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
+        GLES20.glEnableVertexAttribArray(mTextureCoordinateHandler);
+
+        for (int i = 0; i < mNodes.length; i++) {
+
+            if (mNodes[i].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+
+            Matrix.setIdentityM(spriteMatrix, 0);
+            Matrix.translateM(spriteMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
+
+            GLES20.glUniformMatrix4fv(mSpriteMatrixHandler, 1, false, spriteMatrix, 0);
+
+
+            GLES20.glVertexAttrib4f(mSpriteColorHandler, color[0], color[1], color[2], color[3]);
+            GLES20.glDisableVertexAttribArray(mSpriteColorHandler);
+
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+        }
+
+    }
+
+
 
     private void drawRay(TouchRay tRay) {
         GLES20.glUseProgram(mLineShaderProgram);
@@ -498,6 +570,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
     }
 
 
+    //TODO: add shader object and upgrade loader with attrib handling
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
         GLES20.glClearColor(0.05f, 0.0f, 0.1f, 0.0f);
@@ -580,7 +653,7 @@ public class MainRenderer  implements GLSurfaceView.Renderer {
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         float[] color = {1.0f, 1.0f, 1.0f, 0.0f};
-        drawSpriteNodes();
+        drawSpriteNodesUpdated();
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         updateHeight();
