@@ -449,8 +449,8 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
         //final String vertexShader = getVertexShader();
         //final String fragmentShader = getFragmentShader();
 
-        final String vertexShader = ShaderLoader.getShader("/legacy/shaders/vertexShaderDemo.glsl");
-        final String fragmentShader = ShaderLoader.getShader("/legacy/shaders/fragmentShaderDemo.glsl");
+        final String vertexShader = ShaderLoader.getShaderSource("/legacy/shaders/vertexShaderDemo.glsl");
+        final String fragmentShader = ShaderLoader.getShaderSource("/legacy/shaders/fragmentShaderDemo.glsl");
 
         final int vertexShaderHandler = compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);
         final int fragmentShaderHandler = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);

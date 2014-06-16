@@ -10,10 +10,12 @@ import aq.oceanbase.skyscroll.commons.GraphicsCommons;
 import aq.oceanbase.skyscroll.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.commons.MathMisc;
+import aq.oceanbase.skyscroll.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.math.Vector2f;
 import aq.oceanbase.skyscroll.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.tree.nodes.Node;
+import aq.oceanbase.skyscroll.tree.nodes.NodeOrderUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -21,6 +23,8 @@ import javax.microedition.khronos.opengles.GL10;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 
 //TODO: check scope of all variables
@@ -153,12 +157,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     }
 
 
-    public void setScreenMetrics(int height, int width) {
-        this.mScreenHeight = height;
-        this.mScreenWidth = width;
-    }
-
-
     //<editor-fold desc="Getters and Setters">
     public void setTouchScreenCoords(float x, float y) {
         this.mTouchScreenCoords.x = x;
@@ -237,7 +235,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
 
     //<editor-fold desc="Selection">
-    private TouchRay castTouchRay(float touchX, float touchY) {
+    public TouchRay castTouchRay(float touchX, float touchY) {
         float[] result = new float[4];
         float[] MVMatrix = new float[16];
         int[] view = {0, 0, mScreenWidth, mScreenHeight};
@@ -283,36 +281,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     }
     //</editor-fold>
-
-
-    public static int loadTexture(final Context context, final int resourceId) {
-        final int[] textureHandler = new int[1];
-
-        GLES20.glGenTextures(1, textureHandler, 0);
-
-        if (textureHandler[0] != 0) {
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inScaled = false;
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-            final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
-
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandler[0]);
-
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
-            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_NEAREST);
-
-            GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
-
-            bitmap.recycle();
-        }
-
-        if (textureHandler[0] == 0) {
-            throw new RuntimeException("Error loading texture.");
-        }
-
-        return textureHandler[0];
-    }
 
 
     private void drawRay(TouchRay tRay) {
@@ -460,9 +428,21 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     }
 
     private void drawNodes() {
+        int cur;
         float[] color;
         float[] spriteMatrix = new float[16];
         float[] rotationMatrix = new float[16];
+        float[] convMatrix = new float[16];
+        float[] tempPos = new float[4];
+        NodeOrderUnit[] renderOrder = new NodeOrderUnit[mNodes.length];
+
+        Matrix.multiplyMM(convMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        for (int i = 0; i < mNodes.length; i++) {
+            Matrix.multiplyMV(tempPos, 0, convMatrix, 0, mNodes[i].getPos4f(), 0);
+            renderOrder[i] = new NodeOrderUnit(i, tempPos[2]);
+        }
+
+        Arrays.sort(renderOrder);
 
         GLES20.glUseProgram(mSpriteShaderProgram);
 
@@ -496,13 +476,15 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         GLES20.glVertexAttribPointer(mTextureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
         GLES20.glEnableVertexAttribArray(mTextureCoordinateHandler);
 
-        for (int i = 0; i < mNodes.length; i++) {
+        for (int i = 0; i < renderOrder.length; i++) {
 
-            if (mNodes[i].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            cur = renderOrder[i].getId();
+
+            if (mNodes[cur].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
             else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
 
             Matrix.setIdentityM(spriteMatrix, 0);
-            Matrix.translateM(spriteMatrix, 0, mNodes[i].posX, mNodes[i].posY, mNodes[i].posZ);
+            Matrix.translateM(spriteMatrix, 0, mNodes[cur].posX, mNodes[cur].posY, mNodes[cur].posZ);
 
             GLES20.glUniformMatrix4fv(mSpriteMatrixHandler, 1, false, spriteMatrix, 0);
 
@@ -513,6 +495,78 @@ public class MainRenderer implements GLSurfaceView.Renderer {
             GLES20.glDisable(GLES20.GL_DEPTH_TEST);
             GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
             GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        }
+
+    }
+
+    private void drawNodesLoc() {
+        int cur;
+        float[] color;
+        float[] spriteMatrix = new float[16];
+        float[] rotationMatrix = new float[16];
+        float[] convMatrix = new float[16];
+        float[] tempPos = new float[4];
+        NodeOrderUnit[] renderOrder = new NodeOrderUnit[mNodes.length];
+
+        Matrix.multiplyMM(convMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        for (int i = 0; i < mNodes.length; i++) {
+            Matrix.multiplyMV(tempPos, 0, convMatrix, 0, mNodes[i].getPos4f(), 0);
+            renderOrder[i] = new NodeOrderUnit(i, tempPos[2]);
+        }
+
+        Arrays.sort(renderOrder);
+
+        GLES20.glUseProgram(mSpriteShaderProgram);
+
+        int MVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
+        int TextureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
+        int SpriteMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_SpriteMatrix");
+        int SpriteRotMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_RotationMatrix");
+
+        int SpritePositionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
+        int TextureCoordinateHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
+        int SpriteColorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
+
+        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.rotateM(rotationMatrix, 0, -mAngle, 0.0f, 1.0f, 0.0f);
+
+        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, mMVPMatrix, 0);
+        GLES20.glUniformMatrix4fv(SpriteRotMatrixHandler, 1, false, rotationMatrix, 0);
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mSpriteTexDataHandler);
+        GLES20.glUniform1i(TextureUniformHandler, 0);
+
+        mSpriteVertices.position(0);
+        GLES20.glVertexAttribPointer(SpritePositionHandler, 3, GLES20.GL_FLOAT, false, 3*mBytesPerFloat, mSpriteVertices);
+        GLES20.glEnableVertexAttribArray(SpritePositionHandler);
+
+        mSpriteTexCoords.position(0);
+        GLES20.glVertexAttribPointer(TextureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
+        GLES20.glEnableVertexAttribArray(TextureCoordinateHandler);
+
+        for (int i = 0; i < renderOrder.length; i++) {
+
+            cur = renderOrder[i].getId();
+
+            if (mNodes[cur].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+
+            Matrix.setIdentityM(spriteMatrix, 0);
+            Matrix.translateM(spriteMatrix, 0, mNodes[cur].posX, mNodes[cur].posY, mNodes[cur].posZ);
+
+            GLES20.glUniformMatrix4fv(SpriteMatrixHandler, 1, false, spriteMatrix, 0);
+
+
+            GLES20.glVertexAttrib4f(SpriteColorHandler, color[0], color[1], color[2], color[3]);
+            GLES20.glDisableVertexAttribArray(SpriteColorHandler);
+
+            //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+            //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         }
 
     }
@@ -557,8 +611,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
 
-        final String nodeVertexShaderSource = ShaderLoader.getShader("/shaders/nodes/nodeVertexShader.glsl");
-        final String nodeFragmentShaderSource = ShaderLoader.getShader("/shaders/nodes/nodeFragmentShader.glsl");
+        final String nodeVertexShaderSource = ShaderLoader.getShaderSource("/shaders/nodes/nodeVertexShader.glsl");
+        final String nodeFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/nodes/nodeFragmentShader.glsl");
 
         final int nodeVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, nodeVertexShaderSource);
         final int nodeFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, nodeFragmentShaderSource);
@@ -567,8 +621,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 createAndLinkProgram(nodeVertexShader, nodeFragmentShader,
                         new String[] {"a_Position", "a_Color"});
 
-        final String lineVertexShaderSource = ShaderLoader.getShader("/shaders/lines/lineVertexShader.glsl");
-        final String lineFragmentShaderSource = ShaderLoader.getShader("/shaders/lines/lineFragmentShader.glsl");
+        final String lineVertexShaderSource = ShaderLoader.getShaderSource("/shaders/lines/lineVertexShader.glsl");
+        final String lineFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/lines/lineFragmentShader.glsl");
 
         final int lineVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, lineVertexShaderSource);
         final int lineFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, lineFragmentShaderSource);
@@ -577,8 +631,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 createAndLinkProgram(lineVertexShader, lineFragmentShader,
                         new String[]{"a_Position"});
 
-        final String spriteVertexShaderSource = ShaderLoader.getShader("/shaders/sprites/spriteVertexShader.glsl");
-        final String spriteFragmentShaderSource = ShaderLoader.getShader("/shaders/sprites/spriteFragmentShader.glsl");
+        final String spriteVertexShaderSource = ShaderLoader.getShaderSource("/shaders/sprites/spriteVertexShader.glsl");
+        final String spriteFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/sprites/spriteFragmentShader.glsl");
 
         final int spriteVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, spriteVertexShaderSource);
         final int spriteFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, spriteFragmentShaderSource);
@@ -586,8 +640,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mSpriteShaderProgram = GraphicsCommons.
                 createAndLinkProgram(spriteVertexShader, spriteFragmentShader, new String[]{"a_Position", "a_Color", "a_TexCoordinate"});
 
-        final String bckgndVertexShaderSource = ShaderLoader.getShader("/shaders/background/bckgrndVertexShader.glsl");
-        final String bckgndFragmentShaderSource = ShaderLoader.getShader("/shaders/background/bckgrndFragmentShader.glsl");
+        final String bckgndVertexShaderSource = ShaderLoader.getShaderSource("/shaders/background/bckgrndVertexShader.glsl");
+        final String bckgndFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/background/bckgrndFragmentShader.glsl");
 
         final int bckgndVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, bckgndVertexShaderSource);
         final int bckgndFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, bckgndFragmentShaderSource);
@@ -595,8 +649,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mBckgndShaderProgram = GraphicsCommons.
                 createAndLinkProgram(bckgndVertexShader, bckgndFragmentShader, new String[]{"a_Position", "a_TexCoordinate"});
 
-        mSpriteTexDataHandler = loadTexture(mContext, R.drawable.node);
-        mBckgrndTexDataHandler = loadTexture(mContext, R.drawable.bckgnd1);
+        mSpriteTexDataHandler = TextureLoader.loadTexture(mContext, R.drawable.node);
+        mBckgrndTexDataHandler = TextureLoader.loadTexture(mContext, R.drawable.bckgnd1);
 
         //Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
     }
@@ -637,9 +691,9 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         //drawTree();
         drawLines();
 
-        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-        drawNodes();
-        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        drawNodesLoc();
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         updateHeight();
         updateCameraPosition();
@@ -648,11 +702,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 camPos.x, camPos.y, camPos.z,
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
-
-        /*if (mTouchScreenCoords.nonZero()) {
-            castTouchRay(mTouchScreenCoords.x, mTouchScreenCoords.y);
-            mTouchScreenCoords = new Vector2f(0.0f, 0.0f);
-        }*/
 
     }
 }

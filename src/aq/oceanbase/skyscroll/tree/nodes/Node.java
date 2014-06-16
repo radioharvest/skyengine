@@ -39,6 +39,14 @@ public class Node {
         return new Vector3f(this.posX, this.posY, this.posZ);
     }
 
+    public float[] getPos3f() {
+        return new float[] {this.posX, this.posY, this.posZ};
+    }
+
+    public float[] getPos4f() {
+        return new float[] {this.posX, this.posY, this.posZ, 1.0f};     //w is 1 for point, 0 for direction
+    }
+
     public int getState() {
         return this.state;
     }
