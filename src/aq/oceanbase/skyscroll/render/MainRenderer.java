@@ -611,8 +611,10 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
 
-        final String nodeVertexShaderSource = ShaderLoader.getShaderSource("/shaders/nodes/nodeVertexShader.glsl");
-        final String nodeFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/nodes/nodeFragmentShader.glsl");
+        final String shaderFolder = "/aq/oceanbase/skyscroll/shaders";
+
+        final String nodeVertexShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/nodes/nodeVertexShader.glsl");
+        final String nodeFragmentShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/nodes/nodeFragmentShader.glsl");
 
         final int nodeVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, nodeVertexShaderSource);
         final int nodeFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, nodeFragmentShaderSource);
@@ -621,8 +623,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 createAndLinkProgram(nodeVertexShader, nodeFragmentShader,
                         new String[] {"a_Position", "a_Color"});
 
-        final String lineVertexShaderSource = ShaderLoader.getShaderSource("/shaders/lines/lineVertexShader.glsl");
-        final String lineFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/lines/lineFragmentShader.glsl");
+        final String lineVertexShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/lines/lineVertexShader.glsl");
+        final String lineFragmentShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/lines/lineFragmentShader.glsl");
 
         final int lineVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, lineVertexShaderSource);
         final int lineFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, lineFragmentShaderSource);
@@ -631,8 +633,10 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 createAndLinkProgram(lineVertexShader, lineFragmentShader,
                         new String[]{"a_Position"});
 
-        final String spriteVertexShaderSource = ShaderLoader.getShaderSource("/shaders/sprites/spriteVertexShader.glsl");
-        final String spriteFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/sprites/spriteFragmentShader.glsl");
+        //mLineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertexShader.glsl", shaderFolder + "/lines/lineFragmentShader.glsl");
+
+        final String spriteVertexShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/sprites/spriteVertexShader.glsl");
+        final String spriteFragmentShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/sprites/spriteFragmentShader.glsl");
 
         final int spriteVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, spriteVertexShaderSource);
         final int spriteFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, spriteFragmentShaderSource);
@@ -640,8 +644,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mSpriteShaderProgram = GraphicsCommons.
                 createAndLinkProgram(spriteVertexShader, spriteFragmentShader, new String[]{"a_Position", "a_Color", "a_TexCoordinate"});
 
-        final String bckgndVertexShaderSource = ShaderLoader.getShaderSource("/shaders/background/bckgrndVertexShader.glsl");
-        final String bckgndFragmentShaderSource = ShaderLoader.getShaderSource("/shaders/background/bckgrndFragmentShader.glsl");
+        final String bckgndVertexShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/background/bckgrndVertexShader.glsl");
+        final String bckgndFragmentShaderSource = ShaderLoader.getShaderSource(shaderFolder + "/background/bckgrndFragmentShader.glsl");
 
         final int bckgndVertexShader = GraphicsCommons.compileShader(GLES20.GL_VERTEX_SHADER, bckgndVertexShaderSource);
         final int bckgndFragmentShader = GraphicsCommons.compileShader(GLES20.GL_FRAGMENT_SHADER, bckgndFragmentShaderSource);
@@ -702,6 +706,5 @@ public class MainRenderer implements GLSurfaceView.Renderer {
                 camPos.x, camPos.y, camPos.z,
                 look.x, look.y, look.z,
                 up.x, up.y, up.z);
-
     }
 }

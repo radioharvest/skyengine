@@ -1,5 +1,6 @@
 package aq.oceanbase.skyscroll.legacy;
 
+import android.app.Activity;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
@@ -448,9 +449,10 @@ public class DemoRenderer implements GLSurfaceView.Renderer {
 
         //final String vertexShader = getVertexShader();
         //final String fragmentShader = getFragmentShader();
+        final String shaderFolder = "/aq/oceanbase/skyscroll/legacy/shaders";
 
-        final String vertexShader = ShaderLoader.getShaderSource("/legacy/shaders/vertexShaderDemo.glsl");
-        final String fragmentShader = ShaderLoader.getShaderSource("/legacy/shaders/fragmentShaderDemo.glsl");
+        final String vertexShader = ShaderLoader.getShaderSource(shaderFolder + "/vertexShaderDemo.glsl");
+        final String fragmentShader = ShaderLoader.getShaderSource(shaderFolder + "/fragmentShaderDemo.glsl");
 
         final int vertexShaderHandler = compileShader(GLES20.GL_VERTEX_SHADER, vertexShader);
         final int fragmentShaderHandler = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentShader);
