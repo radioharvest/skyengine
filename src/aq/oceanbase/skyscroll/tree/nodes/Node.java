@@ -4,6 +4,7 @@ import aq.oceanbase.skyscroll.math.Vector3f;
 
 public class Node {
 
+    //TODO: change state and type to enum
     public static final int IDLE = 1;
     public static final int OPEN = 2;
     public static final int WRONG = 3;

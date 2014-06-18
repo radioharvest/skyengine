@@ -59,7 +59,8 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         public boolean onSingleTapConfirmed(MotionEvent e) {
             Log.e("Touch", "Tapped");
             //mRenderer.castTouchRay(e.getX(), e.getY());
-            mRenderer.selectNode(e.getX(), e.getY());
+            //mRenderer.selectNode(e.getX(), e.getY());
+            mRenderer.processTap(e.getX(), e.getY());
 
             return true;
         }
