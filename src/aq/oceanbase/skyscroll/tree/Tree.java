@@ -14,6 +14,8 @@ import java.nio.FloatBuffer;
 import java.util.Arrays;
 
 public class Tree {
+    public static int positionDataSize = 3;
+
     public Node[] nodes;
     private int selectedNode;
 
