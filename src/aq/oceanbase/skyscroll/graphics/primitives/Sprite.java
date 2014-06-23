@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.commons;
+package aq.oceanbase.skyscroll.graphics.primitives;
 
 import aq.oceanbase.skyscroll.render.MainRenderer;
 
@@ -6,17 +6,17 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
-public class SpriteTemplate {
+public class Sprite {
     public static int posDataSize = 3;
     public static int texCoordDataSize = 2;
 
     private final float[] vertexData;
     private final float[] spriteTextureCoordinateData;
 
-    private FloatBuffer spriteVertices;
-    private FloatBuffer spriteTexCoordinates;
+    public final FloatBuffer spriteVertices;
+    public final FloatBuffer spriteTexCoordinates;
 
-    public SpriteTemplate () {
+    public Sprite () {
         vertexData =
                 new float[] {
                         -1.0f,  1.0f, 0.0f,
