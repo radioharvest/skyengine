@@ -1,9 +1,7 @@
 package aq.oceanbase.skyscroll.loaders;
 
-import android.content.Context;
 import android.opengl.GLES20;
 import android.util.Log;
-import aq.oceanbase.skyscroll.R;
 
 import java.io.*;
 import java.util.ArrayList;

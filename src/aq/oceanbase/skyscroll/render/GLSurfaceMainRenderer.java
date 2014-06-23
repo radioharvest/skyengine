@@ -46,7 +46,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
             float span = scaleGestureDetector.getCurrentSpan();
             float temp = span - lastSpan;
-            mRenderer.zoom(temp * ZOOM_FACTOR);
+            mRenderer.mTouchHandler.onScale(temp * ZOOM_FACTOR);
             lastSpan = span;
 
             return true;
@@ -57,10 +57,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            Log.e("Touch", "Tapped");
-            //mRenderer.castTouchRay(e.getX(), e.getY());
-            //mRenderer.selectNode(e.getX(), e.getY());
-            mRenderer.processTap(e.getX(), e.getY());
+            mRenderer.mTouchHandler.onTap(e.getX(), e.getY());
 
             return true;
         }
@@ -84,8 +81,6 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         float x = e.getX();
         float y = e.getY();
 
-        //mRenderer.setTouchScreenCoords(x, y);
-
 
         mScaleDetector.onTouchEvent(e);
         mTapDetector.onTouchEvent(e);
@@ -108,16 +103,8 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
                     }
 
 
-                    if (mDelta.nonZero()) {
-                        //Log.e("Touch", new StringBuilder().append("mDelta.x").append(mDelta.x).toString());
-                        mRenderer.setMomentum(mDelta);
-                    }
-
-                    //Log.e("Touch", new StringBuilder().append("mDelta.x: ").append(mDelta.x).toString());
-                    //Log.e("Touch", "ACTION MOVE");
-                    if (Math.abs(mDelta.x) >= 0.01) mRenderer.setAngle(mRenderer.getAngle() + mDelta.x);
-                    if (Math.abs(mDelta.y) >= 0.01) mRenderer.setHeight(mRenderer.getHeight() + mDelta.y);
-                    //REMEMBER THE BREAK OP
+                    if (mDelta.x != 0) mRenderer.mTouchHandler.onSwipeHorizontal(mDelta.x);
+                    if (mDelta.y != 0) mRenderer.mTouchHandler.onSwipeVertical(mDelta.y);
                     break;
                 }
 

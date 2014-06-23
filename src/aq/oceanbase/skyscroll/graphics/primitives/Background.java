@@ -2,7 +2,6 @@ package aq.oceanbase.skyscroll.graphics.primitives;
 
 import android.content.Context;
 import android.opengl.GLES20;
-import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.Renderable;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;

@@ -57,15 +57,15 @@ public class Tree implements Renderable {
     }
 
     public FloatBuffer getNodesPositionsB() {
-        return nodesPositionsBuffer;
+        return this.nodesPositionsBuffer;
     }
 
     public FloatBuffer getLinesPositionsB() {
-        return linesPositionsBuffer;
+        return this.linesPositionsBuffer;
     }
 
     public float getAngle() {
-        return angle;
+        return this.angle;
     }
 
     public void updateAngle(float amount) {
@@ -75,22 +75,11 @@ public class Tree implements Renderable {
     }
 
 
-    public NodeOrderUnit[] getDrawOrder(float[] conversionMatrix) {
-        NodeOrderUnit[] drawOrder = new NodeOrderUnit[nodes.length];
-        float[] tempPos = new float[4];
-
-        for (int i = 0; i < nodes.length; i++) {
-            Matrix.multiplyMV(tempPos, 0, conversionMatrix, 0, nodes[i].getPos4f(), 0);
-            drawOrder[i] = new NodeOrderUnit(i, tempPos[2]);
-        }
-
-        Arrays.sort(drawOrder);
-
-        return drawOrder;
-    }
-
-
     public void performRaySelection(TouchRay tRay) {
+        Matrix.setRotateM(this.modelMatrix, 0, -this.angle, 0.0f, 1.0f, 0.0f);      //derotating to world coordinates
+
+        tRay = tRay.multiplyByMatrix(this.modelMatrix);
+
         int sel = -1;
         for (int i = 0; i < nodes.length; i++) {
             Vector3f curPos = nodes[i].getPosV();
@@ -203,7 +192,7 @@ public class Tree implements Renderable {
 
             cur = renderOrder[i].getId();
 
-            if (nodes[cur].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            if (nodes[cur].isSelected()) color = new float[] {0.1f, 0.1f, 0.7f, 1.0f};
             else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
 
             Matrix.setIdentityM(spriteMatrix, 0);

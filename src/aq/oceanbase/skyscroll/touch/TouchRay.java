@@ -1,5 +1,6 @@
 package aq.oceanbase.skyscroll.touch;
 
+import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.math.Vector3f;
 
@@ -69,6 +70,17 @@ public class TouchRay {
         return input.subtractV(this.near).lengthSqr();
     }
     //</editor-fold>
+
+
+    public TouchRay multiplyByMatrix(float[] matrix) {
+        float[] rayNear = this.near.toArray4f();
+        float[] rayFar = this.far.toArray4f();
+
+        Matrix.multiplyMV(rayNear, 0, matrix, 0, rayNear, 0);
+        Matrix.multiplyMV(rayFar, 0, matrix, 0, rayFar, 0);
+
+        return new TouchRay(rayNear[0], rayNear[1], rayNear[2], rayFar[0], rayFar[1], rayFar[2], this.radius);
+    }
 
 
     public boolean notNull() {

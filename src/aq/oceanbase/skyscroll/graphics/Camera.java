@@ -3,6 +3,11 @@ package aq.oceanbase.skyscroll.graphics;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.math.Vector3f;
 
+/**
+ * This class is used to store camera information:
+ * pos, dir and up vectors as well as view and projection matrices
+ */
+
 public class Camera {
     private Vector3f pos;
     private Vector3f dir;
@@ -18,13 +23,46 @@ public class Camera {
         this.updateCamera();
     }
 
-    public float[] getViewM() {
-        return this.viewMatrix;
+
+    //<editor-fold desc="Getters and Setters">
+    public Vector3f getPos() {
+        return this.pos;
+    }
+
+    public Vector3f getDir() {
+        return dir;
+    }
+
+    public Vector3f getUp() {
+        return up;
+    }
+
+    public void setPos(Vector3f pos) {
+        this.pos = pos;
+    }
+
+    public void setDir(Vector3f dir) {
+        this.dir = dir;
+    }
+
+    public void setUp(Vector3f up) {
+        this.up = up;
+    }
+
+
+    public void setProjM(float[] projMatrix) {
+        this.projectionMatrix = projMatrix;
     }
 
     public float[] getProjM() {
         return this.projectionMatrix;
     }
+
+    public float[] getViewM() {
+        return this.viewMatrix;
+    }
+    //</editor-fold>
+
 
     public void updateCamera () {
         Matrix.setLookAtM(viewMatrix, 0,

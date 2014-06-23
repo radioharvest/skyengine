@@ -4,12 +4,15 @@ import android.content.Context;
 import android.opengl.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
+import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.math.MathMisc;
 import aq.oceanbase.skyscroll.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.math.Vector2f;
 import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.tree.Tree;
 import aq.oceanbase.skyscroll.tree.nodes.NodeOrderUnit;
@@ -31,9 +34,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     public static final int mBytesPerFloat = 4;
     private int mScreenWidth;
     private int mScreenHeight;
-    private final int mNodePosDataSize;
-    private final int mSpritePosDataSize;
-    private final int mTexCoordDataSize;
 
     //Constraints
     private float mMinHeight = 0.0f;
@@ -49,34 +49,13 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private Vector3f camPos = new Vector3f(0.0f, 0.0f, 0.0f);
     private Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
     private Vector3f look = new Vector3f(0.0f, 0.0f, -1.0f);
-
-    //Matrices
-    private float[] mModelMatrix = new float[16];
-    private float[] mViewMatrix = new float[16];
-    private float[] mProjectionMatrix = new float[16];
-    private float[] mMVPMatrix = new float[16];
-
-    //Handlers
-    //programs
-    private int mLineShaderProgram;
-    private int mSpriteShaderProgram;
-    private int mBckgndShaderProgram;
-
-    //FloatBuffers
-    private FloatBuffer mSpriteVertices;
-    private FloatBuffer mSpriteTexCoords;
-
-    //Textures
-    private int mSpriteTexDataHandler;
-    private int mBckgrndTexDataHandler;
+    private Camera mCamera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f),
+                                        new Vector3f(0.0f, 0.0f, -1.0f),
+                                        new Vector3f(0.0f, 1.0f, 0.0f));
 
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
     private float mHeight = 0.0f;
-    private float mAngle = 0.0f;
-
-    //Touch variables
-    private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
 
     //FPS Counter
     private int mFrameCounter;
@@ -84,6 +63,38 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     //Tree
     private Tree mTree;
+
+    //Backgrounds
+    private Background mCurrentBackground;
+    private Background mTreeBackground = new Background(R.drawable.bckgnd1);
+
+    //Touch variables
+    public TouchHandler mTouchHandler;
+    private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
+    private final TouchHandler mTreeTouchHandler = new TouchHandler() {
+        @Override
+        public void onSwipeHorizontal(float amount) {
+            mMomentum.x = amount;
+        };
+
+        @Override
+        public void onSwipeVertical(float amount) {
+            mMomentum.y = amount;
+        };
+
+        @Override
+        public void onScale(float span) {
+            if (Math.abs(span) > 0.1) mDistance = mDistance - span;
+            if (mDistance <= mMinDist) mDistance = mMinDist;
+            else if (mDistance > mMaxDist) mDistance = mMaxDist;
+        };
+
+        @Override
+        public void onTap(float x, float y) {
+            TouchRay ray = castTouchRay(x, y);
+            mTree.performRaySelection(ray);
+        };
+    };
 
 
     public MainRenderer(Context context) {
@@ -93,27 +104,12 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         mTree = new Tree();
 
-        Sprite spriteTemplate = new Sprite();
-
-        mSpriteVertices = spriteTemplate.getSpriteVertices();       //separate var is used because to increase readability
-        mSpriteTexCoords = spriteTemplate.getSpriteTexCoords();
-
-        mNodePosDataSize = Tree.posDataSize;
-        mSpritePosDataSize = Sprite.posDataSize;
-        mTexCoordDataSize = Sprite.texCoordDataSize;
-
+        mCurrentBackground = mTreeBackground;
+        mTouchHandler = mTreeTouchHandler;
 }
 
 
     //<editor-fold desc="Getters and Setters">
-    public float getAngle() {
-        return this.mAngle;
-    }
-
-    public void setAngle(float angle) {
-        this.mAngle = angle;
-    }
-
     public float getHeight() {
         return this.mHeight;
     }
@@ -123,26 +119,21 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         else if (height > mMaxHeight) this.mHeight = mMaxHeight;
         else this.mHeight = height;
     }
-
-    public void setMomentum (Vector2f momentum) {
-        //TODO: add operator override
-        this.mMomentum.x = momentum.x;
-        this.mMomentum.y = momentum.y;
-    }
     //</editor-fold>
 
 
     //<editor-fold desc="Updaters">
-    public void zoom(float distance) {
-        if (Math.abs(distance) > 0.1) mDistance = mDistance - distance;
-        if (mDistance <= mMinDist) mDistance = mMinDist;
-        else if (mDistance > mMaxDist) mDistance = mMaxDist;
+    private void updateAngle() {
+        mTree.updateAngle(mMomentum.x);
+    }
+
+    private void updateHeight() {
+        mHeight = mHeight + mMomentum.y;
+        if (mHeight > mMaxHeight) mHeight = mMaxHeight;
+        if (mHeight < mMinHeight) mHeight = mMinHeight;
     }
 
     private void updateMomentum() {
-        //Log.e("NavDebug", new StringBuilder().append("mMomentum.x: ").append(mMomentum.x).toString());
-        //Log.e("NavDebug", new StringBuilder().append("mMomentum.y: ").append(mMomentum.y).toString());
-
         if (mMomentum.x != 0.0f) {
             mMomentum.x = MathMisc.decrementConvergingValue(mMomentum.x, 1.7f);
         }
@@ -152,194 +143,68 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         }
     }
 
-    private void updateAngle() {
-        //Log.e("NavDebug", new StringBuilder().append("mAngle: ").append(mAngle).toString());
-
-        mAngle = mAngle + mMomentum.x;
-        if (mAngle >= 360.0f) mAngle = mAngle - 360.0f;
-        if (mAngle <= -360.0f) mAngle = mAngle + 360.0f;
-    }
-
-    private void updateHeight() {
-        //Log.e("NavDebug", new StringBuilder().append("mHeight: ").append(mHeight).toString());
-
-        mHeight = mHeight + mMomentum.y;
-        if (mHeight > mMaxHeight) mHeight = mMaxHeight;
-        if (mHeight < mMinHeight) mHeight = mMinHeight;
-    }
-
     private void updateCameraPosition() {
-        //Log.e("NavDebug", new StringBuilder().append("camPos.z: ").append(camPos.z).toString());
-        camPos.z = mDistance;
-        camPos.y = mHeight;
-        look.y = mHeight;
+        Vector3f updPos = mCamera.getPos();
+        updPos.y = mHeight;
+        updPos.z = mDistance;
+
+        Vector3f updDir = mCamera.getDir();
+        updDir.y = mHeight;
+
+        mCamera.setPos(updPos);
+        mCamera.setDir(updDir);
+        mCamera.updateCamera();
+    }
+
+    private void update() {
+        if (mMomentum.nonZero()) {
+            updateHeight();
+            updateAngle();
+            updateMomentum();
+        }
+
+        updateCameraPosition();
     }
     //</editor-fold>
 
 
-    //<editor-fold desc="Selection">
-    public TouchRay castTouchRay(float touchX, float touchY) {
+    /*public TouchRay castTouchRay(float touchX, float touchY) {
+        Log.e("Touch", "YEAP");
         float[] result = new float[4];
         float[] MVMatrix = new float[16];
         int[] view = {0, 0, mScreenWidth, mScreenHeight};
 
-        Matrix.multiplyMM(MVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
+        Matrix.multiplyMM(MVMatrix, 0, mCamera.getViewM(), 0, mTree.getModelMatrix(), 0);
 
         float winX = touchX;
         float winY = (float)mScreenHeight - touchY;
 
-        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mProjectionMatrix, 0, view, 0, result, 0);      //get point on the far plane
+        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mCamera.getProjM(), 0, view, 0, result, 0);     //get point on the far plane
         Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
 
-        Vector3f camRotated = camPos.rotate(-mAngle, 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
+        Vector3f camRotated = mCamera.getPos().rotate(-mTree.getAngle(), 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
 
         return new TouchRay(camRotated, far, 1.0f);
+    }*/
+
+    public TouchRay castTouchRay(float touchX, float touchY) {
+        Log.e("Touch", "YEAP");
+        float[] result = new float[4];
+        float[] MVMatrix = new float[16];
+        int[] view = {0, 0, mScreenWidth, mScreenHeight};
+
+        //Matrix.multiplyMM(MVMatrix, 0, mCamera.getViewM(), 0, mTree.getModelMatrix(), 0);
+
+        float winX = touchX;
+        float winY = (float)mScreenHeight - touchY;
+
+        GLU.gluUnProject(winX, winY, 1.0f, mCamera.getViewM(), 0, mCamera.getProjM(), 0, view, 0, result, 0);     //get point on the far plane
+        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
+
+        //Vector3f camRotated = mCamera.getPos().rotate(-mTree.getAngle(), 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
+
+        return new TouchRay(mCamera.getPos(), far, 1.0f);
     }
-
-    public void processTap(float x, float y) {
-        TouchRay ray = castTouchRay(x, y);
-        mTree.performRaySelection(ray);
-    }
-    //</editor-fold>
-
-
-    //<editor-fold desc="Drawing functions">
-    //TODO: introduction of class-binded data sizes may be bad idea. check later.
-    private void drawTreeBackground() {
-        GLES20.glUseProgram(mBckgndShaderProgram);
-
-        int textureUniformHandler = GLES20.glGetUniformLocation(mBckgndShaderProgram, "u_Texture");
-
-        int positionHandler = GLES20.glGetAttribLocation(mBckgndShaderProgram, "a_Position");
-        int texCoordHandler = GLES20.glGetAttribLocation(mBckgndShaderProgram, "a_TexCoordinate");
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mBckgrndTexDataHandler);
-        GLES20.glUniform1i(textureUniformHandler, 0);
-
-        //mSpriteVertices.position(0);
-        //GLES20.glVertexAttribPointer(positionHandler, 3, GLES20.GL_FLOAT, false, 3*mBytesPerFloat, mSpriteVertices);
-        mSpriteVertices.position(0);
-        GLES20.glVertexAttribPointer(positionHandler, mSpritePosDataSize, GLES20.GL_FLOAT, false, 0, mSpriteVertices);
-        GLES20.glEnableVertexAttribArray(positionHandler);
-
-        //mSpriteTexCoords.position(0);
-        //GLES20.glVertexAttribPointer(textureCoordinateHandler, mTextureCoordinateDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
-        mSpriteTexCoords.position(0);
-        GLES20.glVertexAttribPointer(texCoordHandler, mTexCoordDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
-        GLES20.glEnableVertexAttribArray(texCoordHandler);
-
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
-    }
-
-    private void drawNodes() {
-        int cur;
-        float[] color;
-        float[] spriteMatrix = new float[16];
-        float[] rotationMatrix = new float[16];
-        float[] convMatrix = new float[16];
-
-        Matrix.multiplyMM(convMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        NodeOrderUnit[] renderOrder = mTree.getDrawOrder(convMatrix);
-
-        GLES20.glUseProgram(mSpriteShaderProgram);
-
-        int MVPMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_MVPMatrix");
-        int textureUniformHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_Texture");
-        int spriteMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_SpriteMatrix");
-        int spriteRotMatrixHandler = GLES20.glGetUniformLocation(mSpriteShaderProgram, "u_RotationMatrix");
-
-        int positionHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Position");
-        int texCoordHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_TexCoordinate");
-        int colorHandler = GLES20.glGetAttribLocation(mSpriteShaderProgram, "a_Color");
-
-        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
-
-        Matrix.setIdentityM(rotationMatrix, 0);
-        Matrix.rotateM(rotationMatrix, 0, -mAngle, 0.0f, 1.0f, 0.0f);
-
-        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, mMVPMatrix, 0);
-        GLES20.glUniformMatrix4fv(spriteRotMatrixHandler, 1, false, rotationMatrix, 0);
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mSpriteTexDataHandler);
-        GLES20.glUniform1i(textureUniformHandler, 0);
-
-        mSpriteVertices.position(0);
-        GLES20.glVertexAttribPointer(positionHandler, mSpritePosDataSize, GLES20.GL_FLOAT, false, 0, mSpriteVertices);
-        GLES20.glEnableVertexAttribArray(positionHandler);
-
-        mSpriteTexCoords.position(0);
-        GLES20.glVertexAttribPointer(texCoordHandler, mTexCoordDataSize, GLES20.GL_FLOAT, false, 0, mSpriteTexCoords);
-        GLES20.glEnableVertexAttribArray(texCoordHandler);
-
-        for (int i = 0; i < renderOrder.length; i++) {
-
-            cur = renderOrder[i].getId();
-
-            if (mTree.nodes[cur].isSelected()) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
-            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
-
-            Matrix.setIdentityM(spriteMatrix, 0);
-            Matrix.translateM(spriteMatrix, 0, mTree.nodes[cur].posX, mTree.nodes[cur].posY, mTree.nodes[cur].posZ);
-
-            GLES20.glUniformMatrix4fv(spriteMatrixHandler, 1, false, spriteMatrix, 0);
-
-            GLES20.glVertexAttrib4f(colorHandler, color[0], color[1], color[2], color[3]);
-            GLES20.glDisableVertexAttribArray(colorHandler);
-
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
-        }
-
-    }
-
-    private void drawLines() {
-        GLES20.glUseProgram(mLineShaderProgram);
-
-        int MVPMatrixHandler = GLES20.glGetUniformLocation(mLineShaderProgram, "u_MVPMatrix");
-        int positionHandler = GLES20.glGetAttribLocation(mLineShaderProgram, "a_Position");
-
-        GLES20.glVertexAttribPointer(positionHandler, mNodePosDataSize, GLES20.GL_FLOAT, false, 0, mTree.getLinesPositionsB());
-        GLES20.glEnableVertexAttribArray(positionHandler);
-
-        Matrix.multiplyMM(mMVPMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
-        Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVPMatrix, 0);
-
-        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, mMVPMatrix, 0);
-
-        GLES20.glLineWidth(2.0f);
-        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);
-    }
-
-
-    private void drawTree() {
-        drawTreeBackground();
-
-        updateMomentum();
-        updateAngle();
-
-        Matrix.setIdentityM(mModelMatrix, 0);
-        Matrix.rotateM(mModelMatrix, 0, mAngle, 0.0f, 1.0f, 0.0f);
-
-        //TODO: redo enable/disable switch when performance optimizations are done
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        drawLines();
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
-
-        drawNodes();
-
-
-        updateHeight();
-        updateCameraPosition();
-
-        Matrix.setLookAtM(mViewMatrix, 0,
-                camPos.x, camPos.y, camPos.z,
-                look.x, look.y, look.z,
-                up.x, up.y, up.z);
-    }
-    //</editor-fold>
-
 
     private void countFPS() {
         long currentTime = new Date().getTime();
@@ -361,32 +226,22 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         //TODO: set up starting view angle
-        Matrix.setLookAtM(mViewMatrix, 0,
-                camPos.x, camPos.y, camPos.z,
-                look.x, look.y, look.z,
-                up.x, up.y, up.z);
+        mCamera.updateCamera();
 
         mTime = new Date().getTime();
         mFrameCounter = 0;
 
         final String shaderFolder = "/aq/oceanbase/skyscroll/shaders";
 
-        mLineShaderProgram = ShaderLoader.
-                getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
-        mSpriteShaderProgram = ShaderLoader.
-                getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
-        mBckgndShaderProgram = ShaderLoader.
-                getShaderProgram(shaderFolder + "/background/bckgrndVertex.glsl", shaderFolder + "/background/bckgrndFragment.glsl");
-
-        mSpriteTexDataHandler = TextureLoader.loadTexture(mContext, R.drawable.node);
-        mBckgrndTexDataHandler = TextureLoader.loadTexture(mContext, R.drawable.bckgnd1);
+        mTree.initialize(mContext, shaderFolder);
+        mTreeBackground.initialize(mContext, shaderFolder);
     }
 
     @Override
     public void onSurfaceChanged(GL10 unused, int width, int height) {
         GLES20.glViewport(0, 0, width, height);
+        float[] projectionMatrix = new float[16];
 
-        //TODO: move
         final float ratio = (float) width/height;
         final float left = -ratio;
         final float right = ratio;
@@ -396,15 +251,18 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mScreenWidth = width;
         mScreenHeight = height;
 
-        Matrix.frustumM(mProjectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
-        Log.e("Draw", new StringBuilder().append("Screen coords: ").append(mScreenWidth).append(", ").append(mScreenHeight).toString());
+        Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
+
+        mCamera.setProjM(projectionMatrix);
     }
 
     @Override
     public void onDrawFrame(GL10 unused) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        drawTree();
+        update();
+        mCurrentBackground.draw(mCamera);
+        mTree.draw(mCamera);
 
         countFPS();
     }

@@ -1,11 +1,19 @@
 package aq.oceanbase.skyscroll.touch;
 
-public interface TouchHandler {
-    public void onSwipeHorizontal(float swipe);
+/**
+ * This class represents basic TouchHandler functionality.
+ * It is designed to be overriden by anonymous classes
+ * representing different TouchHadler objects.
+ * Non-interface approach is chosen to avoid overriding
+ * unused methods which will do nothing when called.
+ */
 
-    public void onSwipeVertical(float swipe);
+public abstract class TouchHandler {
+    public void onSwipeHorizontal(float amount) {};
 
-    public void onScale(float span);
+    public void onSwipeVertical(float amount) {};
 
-    public void onTap(float tap);
+    public void onScale(float span) {};
+
+    public void onTap(float x, float y) {};
 }
