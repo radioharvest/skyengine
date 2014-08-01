@@ -26,6 +26,7 @@ public class Background extends Sprite implements Renderable {
     }
 
     public void draw(Camera cam) {
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glUseProgram(bckgndShaderProgram);
 
         int textureUniformHandler = GLES20.glGetUniformLocation(bckgndShaderProgram, "u_Texture");
@@ -46,5 +47,6 @@ public class Background extends Sprite implements Renderable {
         GLES20.glEnableVertexAttribArray(texCoordHandler);
 
         GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 6);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

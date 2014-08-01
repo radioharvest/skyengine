@@ -7,6 +7,7 @@ import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
+import aq.oceanbase.skyscroll.graphics.windows.Window;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.math.MathMisc;
 import aq.oceanbase.skyscroll.loaders.TextureLoader;
@@ -34,6 +35,10 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     public static final int mBytesPerFloat = 4;
     private int mScreenWidth;
     private int mScreenHeight;
+    private int[] mScreenMetrics;
+    private boolean mResolutionChanged = false;
+
+    private final String mShaderFolder;
 
     //Constraints
     private float mMinHeight = 0.0f;
@@ -45,17 +50,14 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private final float mNearPlane = 1.0f;
     private final float mFarPlane = 30.0f;
 
-    //Camera parameters
-    private Vector3f camPos = new Vector3f(0.0f, 0.0f, 0.0f);
-    private Vector3f up = new Vector3f(0.0f, 1.0f, 0.0f);
-    private Vector3f look = new Vector3f(0.0f, 0.0f, -1.0f);
-    private Camera mCamera = new Camera(new Vector3f(0.0f, 0.0f, 0.0f),
-                                        new Vector3f(0.0f, 0.0f, -1.0f),
-                                        new Vector3f(0.0f, 1.0f, 0.0f));
-
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
     private float mHeight = 0.0f;
+
+    //Camera
+    private Camera mCamera = new Camera(new Vector3f(0.0f, 0.0f, mDistance),
+            new Vector3f(0.0f, 0.0f, -1.0f),
+            new Vector3f(0.0f, 1.0f, 0.0f));
 
     //FPS Counter
     private int mFrameCounter;
@@ -63,6 +65,9 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     //Tree
     private Tree mTree;
+
+    //Windows
+    private Window mWindow;
 
     //Backgrounds
     private Background mCurrentBackground;
@@ -91,8 +96,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         @Override
         public void onTap(float x, float y) {
-            TouchRay ray = castTouchRay(x, y);
-            mTree.performRaySelection(ray);
+            mTree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+            //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
         };
     };
 
@@ -106,6 +111,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         mCurrentBackground = mTreeBackground;
         mTouchHandler = mTreeTouchHandler;
+
+        mShaderFolder = "/aq/oceanbase/skyscroll/shaders";
 }
 
 
@@ -168,40 +175,15 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     //</editor-fold>
 
 
-    /*public TouchRay castTouchRay(float touchX, float touchY) {
-        Log.e("Touch", "YEAP");
-        float[] result = new float[4];
-        float[] MVMatrix = new float[16];
-        int[] view = {0, 0, mScreenWidth, mScreenHeight};
-
-        Matrix.multiplyMM(MVMatrix, 0, mCamera.getViewM(), 0, mTree.getModelMatrix(), 0);
-
-        float winX = touchX;
-        float winY = (float)mScreenHeight - touchY;
-
-        GLU.gluUnProject(winX, winY, 1.0f, MVMatrix, 0, mCamera.getProjM(), 0, view, 0, result, 0);     //get point on the far plane
-        Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
-
-        Vector3f camRotated = mCamera.getPos().rotate(-mTree.getAngle(), 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
-
-        return new TouchRay(camRotated, far, 1.0f);
-    }*/
-
     public TouchRay castTouchRay(float touchX, float touchY) {
-        Log.e("Touch", "YEAP");
         float[] result = new float[4];
-        float[] MVMatrix = new float[16];
         int[] view = {0, 0, mScreenWidth, mScreenHeight};
-
-        //Matrix.multiplyMM(MVMatrix, 0, mCamera.getViewM(), 0, mTree.getModelMatrix(), 0);
 
         float winX = touchX;
         float winY = (float)mScreenHeight - touchY;
 
         GLU.gluUnProject(winX, winY, 1.0f, mCamera.getViewM(), 0, mCamera.getProjM(), 0, view, 0, result, 0);     //get point on the far plane
         Vector3f far = new Vector3f( result[0]/result[3], result[1]/result[3], result[2]/result[3]);    //divide by w-component
-
-        //Vector3f camRotated = mCamera.getPos().rotate(-mTree.getAngle(), 0.0f, 1.0f, 0.0f);     //derotate to get cam position in model space
 
         return new TouchRay(mCamera.getPos(), far, 1.0f);
     }
@@ -231,10 +213,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mTime = new Date().getTime();
         mFrameCounter = 0;
 
-        final String shaderFolder = "/aq/oceanbase/skyscroll/shaders";
-
-        mTree.initialize(mContext, shaderFolder);
-        mTreeBackground.initialize(mContext, shaderFolder);
+        mTree.initialize(mContext, mShaderFolder);
+        mTreeBackground.initialize(mContext, mShaderFolder);
     }
 
     @Override
@@ -248,21 +228,40 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         final float bottom = -1.0f;
         final float top = 1.0f;
 
+        /*Log.e("Draw", new StringBuilder().append("Width: ").append(mScreenWidth).toString());
+        if (mScreenWidth != 0 && mScreenWidth != width) {           //check if screen has been initialized and rotated
+            this.mResolutionChanged = true;
+            Log.e("Draw", new StringBuilder().append("FLIPPED").toString());
+        }*/
+
         mScreenWidth = width;
+        Log.e("Draw", new StringBuilder().append("Width: ").append(mScreenWidth).toString());
         mScreenHeight = height;
+        mScreenMetrics = new int[] {0, 0, mScreenWidth, mScreenHeight};
 
         Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
 
         mCamera.setProjM(projectionMatrix);
+
+        mWindow = new Window(20, 1.0f, mCamera, mScreenMetrics);
+
+        mWindow.initialize(mContext, mShaderFolder);
     }
 
     @Override
     public void onDrawFrame(GL10 unused) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
+        Log.e("Draw", new StringBuilder().append("Width: ").append(mScreenWidth).toString());
+        if (this.mResolutionChanged) {
+            //this.mWindow.rotate90();
+            this.mResolutionChanged = false;
+        }
+
         update();
         mCurrentBackground.draw(mCamera);
         mTree.draw(mCamera);
+        //mWindow.draw(mCamera);
 
         countFPS();
     }

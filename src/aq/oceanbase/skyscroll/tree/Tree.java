@@ -150,7 +150,7 @@ public class Tree implements Renderable {
         float[] convMatrix = new float[16];
         float[] MVPMatrix = new float[16];
 
-        Matrix.multiplyMM(convMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);
+        Matrix.multiplyMM(convMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);        //multiply view matrix by model to calc distances from cam
         NodeOrderUnit[] renderOrder = this.buildDrawOrder(convMatrix);
 
 

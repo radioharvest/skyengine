@@ -9,65 +9,89 @@ import aq.oceanbase.skyscroll.math.Vector3f;
  */
 
 public class Camera {
-    private Vector3f pos;
-    private Vector3f dir;
-    private Vector3f up;
+    private Vector3f mPos;
+    private Vector3f mDir;
+    private Vector3f mUp;
 
-    private float[] viewMatrix = new float[16];
-    private float[] projectionMatrix = new float[16];
+    private float[] mViewMatrix = new float[16];
+    private float[] mProjectionMatrix = new float[16];
 
     public Camera (Vector3f position, Vector3f direction, Vector3f up) {
-        this.pos = position;
-        this.dir = direction;
-        this.up = up;
+        this.mPos = position;
+        this.mDir = direction;
+        this.mUp = up;
         this.updateCamera();
     }
 
 
     //<editor-fold desc="Getters and Setters">
     public Vector3f getPos() {
-        return this.pos;
+        return this.mPos;
     }
 
     public Vector3f getDir() {
-        return dir;
+        return mDir;
     }
 
     public Vector3f getUp() {
-        return up;
+        return mUp;
+    }
+
+    public float getPosX() {
+        return this.mPos.x;
+    }
+
+    public float getPosY() {
+        return this.mPos.y;
+    }
+
+    public float getPosZ() {
+        return this.mPos.z;
     }
 
     public void setPos(Vector3f pos) {
-        this.pos = pos;
+        this.mPos = pos;
     }
 
     public void setDir(Vector3f dir) {
-        this.dir = dir;
+        this.mDir = dir;
     }
 
     public void setUp(Vector3f up) {
-        this.up = up;
+        this.mUp = up;
+    }
+
+    public void setPosX(float x) {
+        this.mPos.x = x;
+    }
+
+    public void setPosY(float y) {
+        this.mPos.y = y;
+    }
+
+    public void setPosZ(float z) {
+        this.mPos.z = z;
     }
 
 
     public void setProjM(float[] projMatrix) {
-        this.projectionMatrix = projMatrix;
+        this.mProjectionMatrix = projMatrix;
     }
 
     public float[] getProjM() {
-        return this.projectionMatrix;
+        return this.mProjectionMatrix;
     }
 
     public float[] getViewM() {
-        return this.viewMatrix;
+        return this.mViewMatrix;
     }
     //</editor-fold>
 
 
     public void updateCamera () {
-        Matrix.setLookAtM(viewMatrix, 0,
-                pos.x, pos.y, pos.z,
-                dir.x, dir.y, dir.z,
-                up.x, up.y, up.z);
+        Matrix.setLookAtM(mViewMatrix, 0,
+                mPos.x, mPos.y, mPos.z,
+                mDir.x, mDir.y, mDir.z,
+                mUp.x, mUp.y, mUp.z);
     }
 }

@@ -23,8 +23,6 @@ public class MainRendererActivity extends Activity {
 
         if (!supportsES2) return;
 
-
-
         setContentView(mGLSurfaceView);
     }
 
