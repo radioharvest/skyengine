@@ -1,4 +1,4 @@
-uniform mat4 u_MVPMatrix;
+uniform mat4 u_VPMatrix;
 uniform mat4 u_SpriteMatrix;
 uniform mat4 u_RotationMatrix;
 
@@ -12,5 +12,5 @@ varying vec2 v_TexCoordinate;
 void main() {
     v_Color = a_Color;
     v_TexCoordinate = a_TexCoordinate;
-    gl_Position = u_MVPMatrix * u_SpriteMatrix * u_RotationMatrix * a_Position;
+    gl_Position = u_VPMatrix * u_SpriteMatrix * u_RotationMatrix * a_Position;
 }

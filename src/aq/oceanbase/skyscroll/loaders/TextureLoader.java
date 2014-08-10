@@ -7,17 +7,25 @@ import android.opengl.GLES20;
 import android.opengl.GLUtils;
 
 public class TextureLoader {
+    public static int loadTexture(final Context context, final int resourceId, final BitmapFactory.Options options) {
+        final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
+        return loadTexture(bitmap);
+    }
+
     public static int loadTexture(final Context context, final int resourceId) {
+        final BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inScaled = false;
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+
+        return loadTexture(context, resourceId, options);
+    }
+
+    public static int loadTexture(Bitmap bitmap) {
         final int[] textureHandler = new int[1];
 
         GLES20.glGenTextures(1, textureHandler, 0);
 
         if (textureHandler[0] != 0) {
-            final BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inScaled = false;
-            options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-
-            final Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resourceId, options);
 
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textureHandler[0]);
 
