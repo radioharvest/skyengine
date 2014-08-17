@@ -7,7 +7,9 @@ import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
+import aq.oceanbase.skyscroll.graphics.text.FontMap;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
+import aq.oceanbase.skyscroll.graphics.windows.WindowContent;
 import aq.oceanbase.skyscroll.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.math.MathMisc;
 import aq.oceanbase.skyscroll.loaders.TextureLoader;
@@ -28,6 +30,10 @@ import java.util.Date;
 //TODO: check scope of all variables
 public class MainRenderer implements GLSurfaceView.Renderer {
 
+    public static enum DRAWMODE {
+        TREE, QUESTION
+    }
+
     private final Context mContext;
 
     //Constants and sizes
@@ -37,14 +43,14 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private int mScreenHeight;
     private int[] mScreenMetrics;
     private boolean mResolutionChanged = false;
-
+    private DRAWMODE mDrawmode = DRAWMODE.QUESTION;
     private final String mShaderFolder;
 
     //Constraints
     private float mMinHeight = 0.0f;
     private float mMaxHeight = 30.0f;
     private float mMinDist = 8.0f;
-    private float mMaxDist = 20.0f;
+    private float mMaxDist = 40.0f;
 
     //Rendering settings
     private final float mNearPlane = 1.0f;
@@ -68,6 +74,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     //Windows
     private Window mWindow;
+    private FontMap mFontMap;
 
     //Backgrounds
     private Background mCurrentBackground;
@@ -99,6 +106,19 @@ public class MainRenderer implements GLSurfaceView.Renderer {
             mTree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
         };
+    };
+
+    private final TouchHandler mWindowTouchHandler = new TouchHandler() {
+        @Override
+        public void onSwipeVertical(float amount) {
+            Log.e("Draw", new StringBuilder("Float Amount: ").append(amount).toString());
+            mWindow.scrollContent((int)(-amount * 40));
+        }
+
+        @Override
+        public void onTap(float x, float y) {
+            //TODO
+        }
     };
 
 
@@ -215,6 +235,9 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         mTree.initialize(mContext, mShaderFolder);
         mTreeBackground.initialize(mContext, mShaderFolder);
+
+        mFontMap = new FontMap("Roboto-Regular.ttf", 1800, mContext.getAssets());
+        mFontMap.initialize(mContext, mShaderFolder);
     }
 
     @Override
@@ -259,10 +282,18 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         }
 
         update();
+
         mCurrentBackground.draw(mCamera);
-        mTree.draw(mCamera);
+        if (mDrawmode == DRAWMODE.TREE) {
+            mTree.draw(mCamera);
+            mTouchHandler = mTreeTouchHandler;
+        } else {
+            mWindow.draw(mCamera);
+            mTouchHandler = mWindowTouchHandler;
+        }
+        //mTree.draw(mCamera);
         //mWindow.draw(mCamera);
 
-        countFPS();
+        //countFPS();
     }
 }

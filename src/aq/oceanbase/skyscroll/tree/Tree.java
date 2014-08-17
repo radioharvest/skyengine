@@ -219,13 +219,11 @@ public class Tree implements Renderable {
     public void initialize(Context context, String shaderFolder) {
         lineShaderProgram = ShaderLoader.
                 getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
-        nodeShaderProgram = ShaderLoader.
-                //getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
-                getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");
 
         textureDataHandler = TextureLoader.loadTexture(context, R.drawable.node);
 
-        batch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, nodeShaderProgram, textureDataHandler);
+        batch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);
+        batch.initialize(context, shaderFolder);
     }
 
     public void drawNodesBatch(Camera cam) {

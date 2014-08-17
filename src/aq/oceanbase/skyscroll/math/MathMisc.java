@@ -13,6 +13,20 @@ public class MathMisc {
         return value;
     }
 
+    public static int getClosestPowerOfTwo(int value) {
+        value--;
+        value |= value >> 1;
+        value |= value >> 2;
+        value |= value >> 4;
+        value |= value >> 8;
+        value |= value >> 16;
+
+        if (value == Integer.MAX_VALUE) return Integer.MAX_VALUE;
+        value++;
+
+        return value;
+    }
+
     public static void printMatrix(float[] matrix, String tag) {
         Log.e("Error", new StringBuilder().append(tag).toString());
         Log.e("Error", new StringBuilder().append(matrix[0]).append(" ").append(matrix[1]).append(" ").append(matrix[2]).append(" ").append(matrix[3]).toString());

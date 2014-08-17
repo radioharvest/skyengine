@@ -2,17 +2,19 @@ package aq.oceanbase.skyscroll.graphics.text;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.opengl.GLES20;
+import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.Renderable;
+import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.loaders.TextureLoader;
 
-public class Text implements Renderable {
+public class FontMap implements Renderable {
 
     public static int CHAR_START = 32;
     public static int CHAR_END = 126;
@@ -29,8 +31,6 @@ public class Text implements Renderable {
 
     private AssetManager mAssets;
     private String mFontFile;
-
-    private String mText;
 
     private int mTextureId;
     private int mTextureSize;
@@ -53,27 +53,42 @@ public class Text implements Renderable {
     private float[] mCharWidths;
     private TextureRegion[] mCharRgns;
 
-    private int mShaderProgram;
-    private int mContext;
+    private SpriteBatch mSpriteBatch;
 
-    public Text(String fontFile, AssetManager assets) {
+    public FontMap(String fontFile, int fontSize, AssetManager assets) {
         this.mFontSize = 10;
         this.mFontPadX = this.mFontPadY = 1;
         this.mScaleX = this.mScaleY = 1.0f;
 
-        this.mText = "";
+        this.mCharWidths = new float[CHAR_CNT];
+        this.mCharRgns = new TextureRegion[CHAR_CNT];
 
         this.mFontFile = fontFile;
         this.mAssets = assets;
     }
 
-    public boolean build () {
+    public void setScaling(float x, float y) {
+        this.mScaleX = x;
+        this.mScaleY = y;
+    }
+
+    public void initialize(Context context, String shaderFolder) {
+        this.generate();
+
+        mSpriteBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, mTextureId);
+        mSpriteBatch.initialize(context, shaderFolder);
+    }
+
+    //TODO: consider refactoring to avoid scaling
+    public boolean generate() {
         //setup paint instance
         Typeface tf = Typeface.createFromAsset( mAssets, mFontFile );
         Paint paint = new Paint();
         paint.setAntiAlias(true);
         paint.setTextSize(mFontSize);
-        paint.setColor(0xffffffff);
+        //paint.setColor(0xFFFFFFFF);
+        paint.setARGB(255, 255, 255, 255);
+        paint.setTypeface(Typeface.create(tf, Typeface.BOLD));
         paint.setTypeface(tf);
 
         //get font metrics
@@ -123,7 +138,7 @@ public class Text implements Renderable {
         else mTextureSize = 2048;
 
         //create empty bitmap with alpha only
-        Bitmap bitmap = Bitmap.createBitmap(mTextureSize, mTextureSize, Bitmap.Config.ALPHA_8);
+        Bitmap bitmap = Bitmap.createBitmap(mTextureSize, mTextureSize, Bitmap.Config.ARGB_8888);       //originally was ALPHA_8
         Canvas canvas = new Canvas(bitmap);
         bitmap.eraseColor( 0x00000000 );        //Set transparent background (ARGB)
 
@@ -169,11 +184,50 @@ public class Text implements Renderable {
         return true;
     }
 
-    public void initialize(Context context, String shaderFolder) {
+    public void drawText(String text, float x, float y, float z, Camera cam, float angleX, float angleY, float angleZ) {
+        float[] modelMatrix = new float[16];
 
+        float charWidth = mCellWidth*mScaleX;
+        float charHeight = mCellHeight*mScaleY;
+
+        int len = text.length();
+
+        x += (charWidth / 2.0f) - (mFontPadX * mScaleX);            // starting positions to draw (centers of sprite)
+        y += (charHeight / 2.0f) - (mFontPadY * mScaleY);
+
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix, 0, x, y, z);
+        Matrix.rotateM(modelMatrix, 0, angleX, 1, 0, 0);
+        Matrix.rotateM(modelMatrix, 0, angleY, 0, 1, 0);
+        Matrix.rotateM(modelMatrix, 0, angleZ, 0, 0, 1);
+
+        float posX, posY;
+        posX = posY = 0;
+
+        mSpriteBatch.beginBatch(cam);
+
+        for (int i = 0; i < len; i++) {
+            int c = (int)text.charAt(i) - CHAR_START;
+            if (c < 0 || c >= CHAR_CNT) c = CHAR_UNKNOWN;
+
+            Matrix.translateM(modelMatrix, 0, posX, posY, 0);
+            mSpriteBatch.batchElement(charWidth, charHeight, mCharRgns[c], modelMatrix);
+            posX = mCharWidths[c] * mScaleX;
+        }
+
+        mSpriteBatch.endBatch();
     }
 
     public void draw(Camera cam) {
+        float[] modelMatrix = new float[16];
 
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.translateM(modelMatrix, 0, 0.0f, 0.0f, 0.0f);
+
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        mSpriteBatch.beginBatch(cam);
+        mSpriteBatch.batchElement(2.0f, 2.0f, mTextureRgn, modelMatrix);
+        mSpriteBatch.endBatch();
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

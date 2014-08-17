@@ -1,13 +1,19 @@
 package aq.oceanbase.skyscroll.graphics;
 
+import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import aq.oceanbase.skyscroll.loaders.ShaderLoader;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class SpriteBatch {
+// TODO: describe usage in detail
+// firstly initialize(), then beginBatch(), then add elements, then endBatch()
+
+public class SpriteBatch implements Renderable {
     public final static int POSITION_DATA_SIZE = 3;         // X, Y, Z
     public final static int TEXTURE_DATA_SIZE = 2;          // U, V
     public final static int INDEX_DATA_SIZE = 1;            // Index
@@ -21,12 +27,13 @@ public class SpriteBatch {
     public final static int INDICES_PER_SPRITE = 6;         // Two triangles
     public final static int MAX_BATCHSIZE = 16;             // Maximum size of a batch
 
+    private Camera mCam;                        // Camera instance
+
     private int mProgram;
     private int mTextureHandle;
 
     private short[] mIndices;                   // Indices for triangle vertices
     private float[] mVertices;                  // Triangle vertices
-    private float[] mVPMatrix;                  // View-Projection matrix (built from camera)
     private float[] mModelMatrices;             // Array of model matrices for each sprite
     private float[] mOrientationMatrix;         // Orientation matrix for each sprite (to support incam orientation)
     private FloatBuffer mVertexBuffer;          // Buffer of packaged vertex information
@@ -45,7 +52,7 @@ public class SpriteBatch {
     //      vertexType: the type of the vertex: colored or plain
     //      programHandle: handle to the shader program
     //      textureHandle: handle to the texture program
-    public SpriteBatch(int vertexType, int programHandle, int textureHandle) {
+    public SpriteBatch(int vertexType, int textureHandle) {
         this.mVertexTypeSize = vertexType;
         this.mVertexStride = mVertexTypeSize * (Float.SIZE / 8);        // Size is represented by bits hence the division
         this.mColor = new float[] {1.0f, 1.0f, 1.0f, 1.0f};             // Default color is white with full alpha
@@ -53,9 +60,7 @@ public class SpriteBatch {
         this.mIndices = new short[ MAX_BATCHSIZE * INDICES_PER_SPRITE ];
         this.mVertices = new float[ MAX_BATCHSIZE * VERTICES_PER_SPRITE * mVertexTypeSize ];
         this.mModelMatrices = new float[ MAX_BATCHSIZE * 16 ];
-        this.mVPMatrix = new float[16];
 
-        this.mProgram = programHandle;
         this.mTextureHandle = textureHandle;
 
         this.mBufferCounter = 0;
@@ -81,6 +86,14 @@ public class SpriteBatch {
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
     }
 
+    // -- Initialize -- //
+    // Desc: standard initialize function from Renderable interface. Function initializes program and binds texture.
+    // TODO: possible optimization: move buffers initialization here
+    public void initialize(Context context, String shaderFolder) {
+        mProgram = ShaderLoader.
+                getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");
+    }
+
 
     // -- Begin batching -- //
     // Desc: Setup the batch. Reset the counter variables and calculate the VP matrix
@@ -92,9 +105,7 @@ public class SpriteBatch {
         mBatchSize = 0;
         mBufferCounter = 0;
 
-        Matrix.setIdentityM(mVPMatrix, 0);
-        Matrix.multiplyMM(mVPMatrix, 0, cam.getProjM(), 0, cam.getViewM(), 0);
-
+        mCam = cam;
         mOrientationMatrix = orientationMatrix;
     }
 
@@ -116,7 +127,7 @@ public class SpriteBatch {
             mVertexBuffer.put(mVertices, 0, mBufferCounter);
             mVertexBuffer.flip();
 
-            drawBatch();
+            draw(mCam);
         }
     }
 
@@ -261,7 +272,9 @@ public class SpriteBatch {
 
     // -- Draw batch -- //
     // Desc: Draw the whole batch.
-    public void drawBatch() {
+    public void draw(Camera cam) {
+        float[] VPMatrix = new float[16];
+
         GLES20.glUseProgram(mProgram);
 
         int VPMatrixHandle = GLES20.glGetUniformLocation(mProgram, "u_VPMatrix");
@@ -275,7 +288,10 @@ public class SpriteBatch {
         int colorHandle = GLES20.glGetAttribLocation(mProgram, "a_Color");
 
 
-        GLES20.glUniformMatrix4fv(VPMatrixHandle, 1, false, mVPMatrix, 0);
+        Matrix.setIdentityM(VPMatrix, 0);
+        Matrix.multiplyMM(VPMatrix, 0, cam.getProjM(), 0, cam.getViewM(), 0);
+
+        GLES20.glUniformMatrix4fv(VPMatrixHandle, 1, false, VPMatrix, 0);
         GLES20.glUniformMatrix4fv(orientationMatrixHandle, 1, false, mOrientationMatrix, 0);
 
         GLES20.glUniformMatrix4fv(modelMatricesHandle, mBatchSize, false, mModelMatrices, 0);
