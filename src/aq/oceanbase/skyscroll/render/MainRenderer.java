@@ -19,6 +19,7 @@ import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.tree.Tree;
 import aq.oceanbase.skyscroll.tree.nodes.NodeOrderUnit;
+import aq.oceanbase.skyscroll.tree.nodes.Question;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -121,7 +122,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         @Override
         public void onTap(float x, float y) {
-            switchMode(MODE.TREE);
+            //switchMode(MODE.TREE);
+            if (mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics)) switchMode(MODE.TREE);
         }
     };
 
@@ -227,6 +229,36 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     }
 
 
+    private Question getQuestion(int id) {
+        String text = "Alright then, picture this if you will:\n" +
+                "10 to 2 AM, X, Yogi DMT, and a box of Krispy Kremes, in my \"need to know\" post, just outside of Area 51.\n" +
+                "Contemplating the whole \"chosen people\" thing with just a flaming stealth banana split the sky like one would hope but never really expect to see in a place like this.\n" +
+                "Cutting right angle donuts on a dime and stopping right at my Birkenstocks, and me yelping...\n" +
+                "Holy fucking shit!\n" +
+                "\n" +
+                "Then the X-Files being, looking like some kind of blue-green Jackie Chan with Isabella Rossellini lips and breath that reeked of vanilla Chig Champa,\n" +
+                "did a slow-mo Matrix descent out of the butt end of the banana vessel and hovered above my bug-eyes, my gaping jaw, and my sweaty L. Ron Hubbard upper lip and all I could think was: \"I hope Uncle Martin here doesn't notice that I pissed my fuckin' pants.\"\n" +
+                "\n" +
+                "So light in his way,\n" +
+                "Like an apparition,\n" +
+                "He had me crying out,\n" +
+                "\"Fuck me,\n" +
+                "It's gotta be,\n" +
+                "Deadhead Chemistry,\n" +
+                "The blotter got right on top of me,\n" +
+                "Got me seein' E-motherfuckin'-T!\"\n" +
+                "\n" +
+                "And after calming me down with some orange slices and some fetal spooning, E.T. revealed to me his singular purpose.\n" +
+                "He said, \"You are the Chosen One, the One who will deliver the message. A message of hope for those who choose to hear it and a warning for those who do not.\"\n" +
+                "Me. The Chosen One?\n" +
+                "They chose me!!!\n" +
+                "And I didn't even graduate from fuckin' high school.";
+
+        String[] buttons = new String[] {"Tool", "Queen", "The Cult", "Primal Scream"};
+
+        return new Question(text, buttons, 0);
+    }
+
     //TODO: add shader object and upgrade loader with attrib handling
     @Override
     public void onSurfaceCreated(GL10 unused, EGLConfig config) {
@@ -296,7 +328,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         if (mModeSwitched) {
             if (mDrawmode == MODE.QUESTION) {
-                mWindow = new Window(20, 10.0f, mCamera, mScreenMetrics);
+                mWindow = new Window(20, 2.0f, mCamera, mScreenMetrics);        //TODO: debug the value of 1.0
+                mWindow.setQuestion(this.getQuestion(1));
                 mWindow.initialize(mContext, mShaderFolder);
             }
             else mWindow.release();
@@ -304,7 +337,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
             mModeSwitched = false;
         }
 
-        //mCurrentBackground.draw(mCamera);
+        mCurrentBackground.draw(mCamera);
         if (mDrawmode == MODE.TREE) {
             mTree.draw(mCamera);
             mTouchHandler = mTreeTouchHandler;

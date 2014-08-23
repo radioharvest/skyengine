@@ -13,6 +13,8 @@ import java.nio.FloatBuffer;
 public class ButtonBlock {
     private Button[] mButtons;
 
+    private int mHighlighted = -1;
+
     private Vector3f mPos;
 
     private float mOffset;
@@ -21,9 +23,6 @@ public class ButtonBlock {
 
     private float[] mMetrics;
     private int[] mPixelMetrics;
-
-    private FloatBuffer mButtonPackedBuffer;
-    private FloatBuffer mButtonColorBuffer;
 
     public ButtonBlock(Vector3f position, float[] floatMetrics, int[] pixelMetrics, float offset, String[] answers) {
         this.mPos = position;
@@ -61,38 +60,6 @@ public class ButtonBlock {
     public Button getButton(int i) {
         if (i <= mButtons.length - 1) return mButtons[i];
         else return null;
-    }
-
-
-    public FloatBuffer getButtonPackedBuffer() {
-        mButtonPackedBuffer.position(0);
-        return mButtonPackedBuffer;
-    }
-
-    public FloatBuffer getButtonColorBuffer() {
-        float[] colorData = getButtonColorData();
-
-        mButtonColorBuffer.clear();
-        mButtonColorBuffer.put(colorData, 0, colorData.length);
-        mButtonColorBuffer.flip();
-
-        mButtonColorBuffer.position(0);
-        return mButtonColorBuffer;
-    }
-
-    private float[] getButtonColorData() {
-        float[] colors;
-        float[] colorData = new float[ mButtons.length * Button.VERTEX_AMOUNT * Button.COLOR_DATA_SIZE ];
-
-        for ( int i = 0; i < mButtons.length; i++ ) {
-            int stride = i*Button.VERTEX_AMOUNT*Button.COLOR_DATA_SIZE;
-            colors = mButtons[i].getColorData();
-            for ( int j = 0; j < colors.length; j++ ) {
-                colorData[stride + j] = colors[j];
-            }
-        }
-
-        return colorData;
     }
 
 
@@ -147,8 +114,6 @@ public class ButtonBlock {
     public void generateBitmap(Typeface tf) {
         int maxWidth = 0;
 
-        float[] packedData = new float[ mButtons.length * Button.VERTEX_AMOUNT * Button.BUFFER_DATA_SIZE ];
-
         for ( int i = 0; i < mButtons.length; i++ )if (mButtons[i].getWidth() > maxWidth ) maxWidth = mButtons[i].getPixelWidth();
         int cellHeight = mButtons[0].getPixelHeight();
 
@@ -170,7 +135,7 @@ public class ButtonBlock {
 
         mBitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(mBitmap);
-        mBitmap.eraseColor( 0xFFFFFFFF );
+        mBitmap.eraseColor( 0x30FFFFFF );
 
         int x, y;
 
@@ -178,26 +143,32 @@ public class ButtonBlock {
             int textWidth = (int)paint.measureText(mButtons[i].getText());
             int halfWidth = textWidth/2;
 
+            Log.e("Draw", new StringBuilder("Text: ").append(textWidth).append(" Button: ").append(mButtons[i].getPixelWidth()).toString());
+
 
             if (textWidth >= mButtons[i].getPixelWidth()) {
-                y = i * cellHeight + cellHeight / 6 + (int)Math.abs(fm.top);
+                //y = i * cellHeight + cellHeight / 6 + (int)Math.abs(fm.top);
+                y = i * cellHeight + ( cellHeight/2 );
 
                 int lineWidth = 0;
+                int wordWidth = 0;
                 String[] words = mButtons[i].getText().split(" ");
                 StringBuilder line = new StringBuilder();
 
                 for ( int k = 0; k < words.length; k++ ) {
-                    lineWidth += (int)paint.measureText(words[k] + " ");
-                    line.append(words[k] + " ");
+                    wordWidth = (int)paint.measureText(words[k] + " ");
 
-                    if ( lineWidth >= halfWidth ) {
+                    if ( lineWidth + wordWidth >= halfWidth ) {
                         x = (mButtons[i].getPixelWidth() - lineWidth)/2;
                         canvas.drawText(line.toString(), x, y, paint);
 
-                        y += Math.abs((int)(fm.top + fm.leading));
+                        y += (int)(Math.abs(fm.top) + fm.bottom);
                         lineWidth = 0;
                         line = new StringBuilder();
                     }
+
+                    line.append(words[k] + " ");
+                    lineWidth += wordWidth;
                 }
 
                 x = (mButtons[i].getPixelWidth() - lineWidth)/2;
@@ -205,7 +176,7 @@ public class ButtonBlock {
 
             } else {
                 x = mButtons[i].getPixelWidth()/2 - halfWidth;
-                y = i * cellHeight + cellHeight / 3 + (int)Math.abs(fm.top);
+                y = i * cellHeight + ( cellHeight/2 ) + (int)(Math.abs(fm.top) + fm.leading)/2;
 
                 canvas.drawText(mButtons[i].getText(), x, y, paint);
             }
@@ -213,15 +184,40 @@ public class ButtonBlock {
             mButtons[i].setTexRgn( new TextureRegion( bmpWidth, bmpHeight, 0, i * cellHeight,
                     mButtons[i].getPixelWidth(), mButtons[i].getPixelHeight() ) );
 
-            float[] buttonData = mButtons[i].getPackedData();
-            int stride = i * Button.VERTEX_AMOUNT * Button.BUFFER_DATA_SIZE;
-            for ( int k = 0; k < buttonData.length; k++ ) packedData[ stride + k ] = buttonData[k];
         }
 
-
-        mButtonPackedBuffer = ByteBuffer.allocateDirect(mButtons.length * Button.VERTEX_AMOUNT * Button.BUFFER_DATA_SIZE * (Float.SIZE / 8)).
-                order(ByteOrder.nativeOrder()).asFloatBuffer();
-        mButtonPackedBuffer.put(packedData).position(0);
     }
 
+
+    public int findPressedButton(float touchX, float touchY) {
+        Vector3f pos;
+        float x, y;
+        float[] metrics;
+        for ( int i = 0; i < mButtons.length; i++ ) {
+            pos = mButtons[i].getPos();
+            metrics = mButtons[i].getMetrics();
+
+            pos.print("Draw", "Pos");
+            x = touchX - (pos.x - metrics[0]/2);
+            y = touchY - (pos.y - metrics[1]/2);
+
+            if ( x >= 0 && x <= metrics[0]) {
+                if ( y >= 0 && y <= metrics[1]) {
+                    return i;
+                }
+            }
+        }
+
+        return -1;
+    }
+
+
+    public void highlightButton(int id) {
+        if (mHighlighted != -1) {
+            mButtons[mHighlighted].setState(Button.STATE.NEUTRAL);
+        }
+
+        mButtons[id].setState(Button.STATE.WRONG);
+        mHighlighted = id;
+    }
 }

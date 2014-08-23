@@ -22,6 +22,7 @@ import aq.oceanbase.skyscroll.math.Vector2f;
 import aq.oceanbase.skyscroll.math.Vector3f;
 import aq.oceanbase.skyscroll.render.MainRenderer;
 import aq.oceanbase.skyscroll.touch.TouchRay;
+import aq.oceanbase.skyscroll.tree.nodes.Question;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -64,6 +65,8 @@ public class Window implements Renderable {
 
     private SpriteBatch mButtonBatch;
 
+    private Question mQuestion;
+
     public Window (float x, float y, float z, float width, float height, Camera cam, int[] screenMetrics) {
         this.mPos = new Vector3f(x, y, z);
         this.mWindowMetrics = new float[] {width, height};
@@ -86,35 +89,6 @@ public class Window implements Renderable {
         this.mWindowPixelMetrics = new int[] {width, height};
 
         this.setDefaultSettings();
-
-        String text = "Alright then, picture this if you will:\n" +
-                "10 to 2 AM, X, Yogi DMT, and a box of Krispy Kremes, in my \"need to know\" post, just outside of Area 51.\n" +
-                "Contemplating the whole \"chosen people\" thing with just a flaming stealth banana split the sky like one would hope but never really expect to see in a place like this.\n" +
-                "Cutting right angle donuts on a dime and stopping right at my Birkenstocks, and me yelping...\n" +
-                "Holy fucking shit!\n" +
-                "\n" +
-                "Then the X-Files being, looking like some kind of blue-green Jackie Chan with Isabella Rossellini lips and breath that reeked of vanilla Chig Champa,\n" +
-                "did a slow-mo Matrix descent out of the butt end of the banana vessel and hovered above my bug-eyes, my gaping jaw, and my sweaty L. Ron Hubbard upper lip and all I could think was: \"I hope Uncle Martin here doesn't notice that I pissed my fuckin' pants.\"\n" +
-                "\n" +
-                "So light in his way,\n" +
-                "Like an apparition,\n" +
-                "He had me crying out,\n" +
-                "\"Fuck me,\n" +
-                "It's gotta be,\n" +
-                "Deadhead Chemistry,\n" +
-                "The blotter got right on top of me,\n" +
-                "Got me seein' E-motherfuckin'-T!\"\n" +
-                "\n" +
-                "And after calming me down with some orange slices and some fetal spooning, E.T. revealed to me his singular purpose.\n" +
-                "He said, \"You are the Chosen One, the One who will deliver the message. A message of hope for those who choose to hear it and a warning for those who do not.\"\n" +
-                "Me. The Chosen One?\n" +
-                "They chose me!!!\n" +
-                "And I didn't even graduate from fuckin' high school.";
-
-        String[] buttons = new String[] {"Tool", "Queen", "The Offspring", "Black Label Society"};
-
-        //this.addContentBlock(new float[] {1.0f, 0.6f}, text);
-        this.addButtonBlock(new float[] {1.0f, 1.0f}, buttons);
     }
 
     public Window (Vector3f position, float width, float height, Camera cam, int[] screenMetrics) {
@@ -186,6 +160,13 @@ public class Window implements Renderable {
     public void setFontSize(int size) {
         this.mFontSize = size;
     }
+
+    public void setQuestion(Question question) {
+        this.mQuestion = question;
+
+        this.addContentBlock(new float[] {1.0f, 0.6f}, mQuestion.getBody());
+        this.addButtonBlock(new float[] {1.0f, 0.4f}, mQuestion.getVariants());
+    }
     //</editor-fold>
 
 
@@ -240,6 +221,7 @@ public class Window implements Renderable {
     //</editor-fold>
 
 
+    //<editor-fold desc="Block functions">
     public void addContentBlock(float[] sectionMetrics, String text) {
         this.addContentBlock(sectionMetrics, ALIGN.LEFT, ALIGN.TOP, text);
     }
@@ -306,7 +288,7 @@ public class Window implements Renderable {
         pixelMetrics[0] = (int)( mWindowPixelMetrics[0]*sectionMetrics[0] );
         pixelMetrics[1] = (int)( mWindowPixelMetrics[1]*sectionMetrics[1] );
 
-        Vector3f pos = new Vector3f(0, 0, 0);
+        Vector3f pos = new Vector3f(0.0f, 0.0f, 0.0f);
 
         if (horizontalAlign == ALIGN.RIGHT) {
             pos.x = ( (1.0f - sectionMetrics[0]) * mWindowMetrics[0] );
@@ -324,6 +306,7 @@ public class Window implements Renderable {
 
         mButtonBlock = new ButtonBlock(pos, metrics, pixelMetrics, mBorderOffset, buttons);
     }
+    //</editor-fold>
 
 
     //<editor-fold desc="Touch functions">
@@ -333,6 +316,22 @@ public class Window implements Renderable {
             mContent.mTexRgn.moveVertically(uvAmount, 0.0f, mContent.mUpperLimit);
             mContent.rebuildTextureBuffer();
         }
+    }
+
+    public boolean pressButton(int inputTouchX, int inputTouchY, Camera cam, int[] screenMetrics) {
+        int buttonId;
+        Vector3f touch = new TouchRay(inputTouchX, inputTouchY, 1.0f, cam, screenMetrics)
+                .getPointPositionOnRay(cam.getPosZ() - this.mPos.z);
+
+        touch = touch.subtractV(mPos).subtractV(mButtonBlock.getPos());
+        buttonId = mButtonBlock.findPressedButton(touch.x, touch.y);
+
+        if (buttonId != -1) {
+            if (buttonId == mQuestion.getAnswer()) return true;
+            else mButtonBlock.highlightButton(buttonId);
+        }
+
+        return false;
     }
     //</editor-fold>
 
@@ -359,11 +358,11 @@ public class Window implements Renderable {
         GLES20.glDisableVertexAttribArray(colorHandler);
 
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        GLES20.glLineWidth(this.mBorderWidth);
-        GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, 4);
+        //GLES20.glLineWidth(this.mBorderWidth);
+        //GLES20.glDrawArrays(GLES20.GL_LINE_LOOP, 0, 4);
 
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);     //S*alpha + D*(1-alpha)
-        //GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mOrderDataBuffer);
+        GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mOrderDataBuffer);
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
 
@@ -406,11 +405,8 @@ public class Window implements Renderable {
         float[] blockMatrix = new float[16];
         Vector3f pos = new Vector3f(mButtonBlock.getPos());
 
-        //mButtonBlock.getPos().print("Draw", "BlockPos");
         Matrix.setIdentityM(blockMatrix, 0);
         Matrix.translateM(blockMatrix, 0, mModelMatrix, 0, pos.x, pos.y, pos.z);
-        MathMisc.printMatrix(mModelMatrix, "Model Matrix");
-        MathMisc.printMatrix(blockMatrix, "Block Matrix");
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         mButtonBatch.beginBatch(cam);
@@ -421,19 +417,14 @@ public class Window implements Renderable {
 
             float[] metrics = mButtonBlock.getButton(i).getMetrics();
 
-            float[] color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+            float[] color = mButtonBlock.getButton(i).getColor();
 
             Matrix.setIdentityM(buttonMatrix, 0);
             Matrix.translateM(buttonMatrix, 0, blockMatrix, 0, pos.x, pos.y, pos.z);
-            MathMisc.printMatrix(buttonMatrix, "Button Matrix");
 
-            mButtonBatch.batchElement(metrics[0], metrics[1], color, new TextureRegion(), buttonMatrix);
+            //MathMisc.printMatrix(buttonMatrix, "Draw");
 
-            /*Log.e("Draw", new StringBuilder().append(i).toString());
-            pos.print("Draw", "Position");
-            Log.e("Draw", new StringBuilder("Metrics: ").append(metrics[0]).append(" ").append(metrics[1]).toString());*/
-
-
+            mButtonBatch.batchElement(metrics[0], metrics[1], color, mButtonBlock.getButton(i).getTexRgn(), buttonMatrix);
         }
 
         mButtonBatch.endBatch();
@@ -442,8 +433,7 @@ public class Window implements Renderable {
     //</editor-fold>
 
 
-    public void initialize(Context context, String shaderFolder)
-    {
+    public void initialize(Context context, String shaderFolder) {
         float[] windowVertexData = new float[] {
             0.0f, 0.0f, 0.0f,      //TL
             0.0f, -mWindowMetrics[1], 0.0f,     //BL
@@ -473,18 +463,6 @@ public class Window implements Renderable {
         if (mContent != null) {
             mContent.generateBitmap(tf);
             mContentTextureHandle = TextureLoader.loadTexture(mContent.getBitmap());
-            //mTextureHandler = TextureLoader.loadTexture(context, R.drawable.bckgnd1);
-
-            /*float[] contentVertexData = new float[] {
-                    mBorderOffset, -mBorderOffset, 0.0f,
-                    mBorderOffset, mBorderOffset - mWindowMetrics[1], 0.0f,
-                    mWindowMetrics[0] - mBorderOffset, mBorderOffset - mWindowMetrics[1], 0.0f,
-                    mWindowMetrics[0] - mBorderOffset, -mBorderOffset, 0.0f
-            };
-
-            mContentVertexBuffer = ByteBuffer.allocateDirect(contentVertexData.length * ( Float.SIZE/8 ))
-                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
-            mContentVertexBuffer.put(contentVertexData).position(0);*/
 
             mContentProgram = ShaderLoader.
                     getShaderProgram(shaderFolder + "/window/windowContentVertex.glsl", shaderFolder + "/window/windowContentFragment.glsl");
@@ -493,20 +471,11 @@ public class Window implements Renderable {
         if (mButtonBlock != null) {
             mButtonBlock.generateBitmap(tf);
             //TODO: check if I really need that handle as a class member
-            //mButtonBlockTextureHandle = TextureLoader.loadTexture(mButtonBlock.getBitmap());
-            mButtonBlockTextureHandle = TextureLoader.loadTexture(context, R.drawable.bckgnd1);
-
-            /*mButtonBuffer = ByteBuffer.allocate(12 * (Float.SIZE / 8))
-                    .order(ByteOrder.nativeOrder()).asFloatBuffer();
-
-            mButtonTextureBuffer = ByteBuffer.allocate(8 * (Float.SIZE / 8))
-                    .order(ByteOrder.nativeOrder()).asFloatBuffer();*/
+            mButtonBlockTextureHandle = TextureLoader.loadTexture(mButtonBlock.getBitmap());
 
             mButtonBatch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, mButtonBlockTextureHandle);
             mButtonBatch.initialize(context, shaderFolder);
         }
-
-        Log.e("Draw", new StringBuilder("Window Metrics: ").append(mWindowMetrics[0]).append(" ").append(mWindowMetrics[1]).toString());
     }
 
     public void release() {
