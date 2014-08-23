@@ -80,7 +80,7 @@ public class Tree implements Renderable {
     }
 
 
-    public void performRaySelection(TouchRay tRay) {
+    public boolean performRaySelection(TouchRay tRay) {
         Matrix.setRotateM(this.modelMatrix, 0, -this.angle, 0.0f, 1.0f, 0.0f);      //derotating to world coordinates
 
         tRay = tRay.multiplyByMatrix(this.modelMatrix);
@@ -94,10 +94,13 @@ public class Tree implements Renderable {
             }
         }
 
+        //TODO: TEMPORARILY DISABLED SELECTION!!!
         if (sel == -1 || sel == selectedNode) {
             deselectNode(sel);
+            return false;
         } else {
             selectNode(sel);
+            return true;
         }
     }
 

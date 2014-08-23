@@ -30,7 +30,7 @@ import java.util.Date;
 //TODO: check scope of all variables
 public class MainRenderer implements GLSurfaceView.Renderer {
 
-    public static enum DRAWMODE {
+    public static enum MODE {
         TREE, QUESTION
     }
 
@@ -42,8 +42,11 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private int mScreenWidth;
     private int mScreenHeight;
     private int[] mScreenMetrics;
+
     private boolean mResolutionChanged = false;
-    private DRAWMODE mDrawmode = DRAWMODE.QUESTION;
+    private MODE mDrawmode = MODE.TREE;
+    private boolean mModeSwitched = false;
+
     private final String mShaderFolder;
 
     //Constraints
@@ -103,21 +106,22 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         @Override
         public void onTap(float x, float y) {
-            mTree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+            boolean selected;
+            selected = mTree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
+            if (selected) switchMode(MODE.QUESTION);
         };
     };
 
     private final TouchHandler mWindowTouchHandler = new TouchHandler() {
         @Override
         public void onSwipeVertical(float amount) {
-            Log.e("Draw", new StringBuilder("Float Amount: ").append(amount).toString());
             mWindow.scrollContent((int)(-amount * 40));
         }
 
         @Override
         public void onTap(float x, float y) {
-            //TODO
+            switchMode(MODE.TREE);
         }
     };
 
@@ -217,6 +221,11 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         } else mFrameCounter += 1;
     }
 
+    private void switchMode (MODE mode) {
+        this.mModeSwitched = true;
+        this.mDrawmode = mode;
+    }
+
 
     //TODO: add shader object and upgrade loader with attrib handling
     @Override
@@ -236,8 +245,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mTree.initialize(mContext, mShaderFolder);
         mTreeBackground.initialize(mContext, mShaderFolder);
 
-        mFontMap = new FontMap("Roboto-Regular.ttf", 1800, mContext.getAssets());
-        mFontMap.initialize(mContext, mShaderFolder);
+        /*mFontMap = new FontMap("Roboto-Regular.ttf", 1800, mContext.getAssets());
+        mFontMap.initialize(mContext, mShaderFolder);*/
     }
 
     @Override
@@ -266,9 +275,11 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         mCamera.setProjM(projectionMatrix);
 
-        mWindow = new Window(20, 1.0f, mCamera, mScreenMetrics);
+        Log.e("Draw", new StringBuilder("Context: ").append(mContext.toString()).toString());
 
-        mWindow.initialize(mContext, mShaderFolder);
+        /*mWindow = new Window(20, 1.0f, mCamera, mScreenMetrics);
+
+        mWindow.initialize(mContext, mShaderFolder);*/
     }
 
     @Override
@@ -283,8 +294,18 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         update();
 
-        mCurrentBackground.draw(mCamera);
-        if (mDrawmode == DRAWMODE.TREE) {
+        if (mModeSwitched) {
+            if (mDrawmode == MODE.QUESTION) {
+                mWindow = new Window(20, 10.0f, mCamera, mScreenMetrics);
+                mWindow.initialize(mContext, mShaderFolder);
+            }
+            else mWindow.release();
+
+            mModeSwitched = false;
+        }
+
+        //mCurrentBackground.draw(mCamera);
+        if (mDrawmode == MODE.TREE) {
             mTree.draw(mCamera);
             mTouchHandler = mTreeTouchHandler;
         } else {
@@ -295,5 +316,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         //mWindow.draw(mCamera);
 
         //countFPS();
+
     }
 }

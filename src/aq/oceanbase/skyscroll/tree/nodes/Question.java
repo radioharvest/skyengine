@@ -1,47 +1,53 @@
 package aq.oceanbase.skyscroll.tree.nodes;
 
 public class Question {
-    private double id;
+    private double mId;
 
-    private String type;
+    private String mType;
 
-    private int difficulty;
+    private int mDifficulty;
 
-    private String body;
+    private String mBody;
 
-    private String variants[];
+    private String mVariants[];
 
-    private int answer;
+    private int mAnswer;
+
+    public Question(String text, String[] variants, int answer) {
+        this.mBody = text;
+        this.mVariants = variants;
+        this.mAnswer = answer;
+    }
 
     public double getId() {
-        return id;
+        return mId;
     }
 
     public void setId(double id) {
-        this.id = id;
+        this.mId = id;
     }
 
     public String getBody() {
-        return body;
+        return mBody;
     }
 
     public void setBody(String body) {
-        this.body = body;
+        this.mBody = body;
     }
 
     public String[] getVariants() {
-        return variants;
+        return mVariants;
     }
 
     public void setVariants(String[] variants) {
-        this.variants = variants;
+        this.mVariants = variants;
     }
 
     public int getAnswer() {
-        return answer;
+        return mAnswer;
     }
 
     public void setAnswer(int answer) {
-        this.answer = answer;
+        this.mAnswer = answer;
     }
 }

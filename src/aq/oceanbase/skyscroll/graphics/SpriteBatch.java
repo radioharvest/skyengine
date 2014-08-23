@@ -11,7 +11,8 @@ import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
 // TODO: describe usage in detail
-// firstly initialize(), then beginBatch(), then add elements, then endBatch()
+// Firstly initialize(), then beginBatch(), then add elements, then endBatch()
+// Remember, that sprite origin is located in the CENTER of the sprite, not top left corner
 
 public class SpriteBatch implements Renderable {
     public final static int POSITION_DATA_SIZE = 3;         // X, Y, Z
@@ -134,7 +135,7 @@ public class SpriteBatch implements Renderable {
 
     // -- Add element to a batch -- //
     // Desc: Add element to the batch. Color info is added to the packaged buffer last
-    //       to support packaging with default color
+    //       to support packaging with default color.
     // Inputs:
     //      width: width of the sprite in world coordinates
     //      height: height of the sprite in world coordinates

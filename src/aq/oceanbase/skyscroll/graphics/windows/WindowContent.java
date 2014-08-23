@@ -1,8 +1,6 @@
 package aq.oceanbase.skyscroll.graphics.windows;
 
-import android.content.res.AssetManager;
 import android.graphics.*;
-import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.math.MathMisc;
 
@@ -25,7 +23,6 @@ public class WindowContent{
     private ArrayList<String> mTextLines = new ArrayList<String>();
 
     private Bitmap mPicture;
-    private String mFontfile;
 
     public float mUpperLimit;
     public TextureRegion mTexRgn;
@@ -35,24 +32,22 @@ public class WindowContent{
     public WindowContent(String text) {
         this.mText = text;
         this.mFontsize = 20;
-        this.mFontfile = "Roboto-Regular.ttf";
         this.mWidth = 100;
     }
 
-    public WindowContent(int[] pixelMetrics, String text, String fontfile) {
+    public WindowContent(int[] pixelMetrics, String text) {
         this.mWidth = pixelMetrics[0];
         this.mWindowHeight = pixelMetrics[1];
 
         this.mText = text;
-        this.mFontfile = fontfile;
         this.mFontsize = 22;
 
         this.mTextLines = new ArrayList<String>();
         this.mPicture = null;
     }
 
-    public WindowContent(int width, int height, String text, String fontfile, Bitmap picture) {
-        this(new int[] {width, height}, text, fontfile);
+    public WindowContent(int width, int height, String text, Bitmap picture) {
+        this(new int[] {width, height}, text);
         this.mPicture = picture;
     }
 
@@ -132,8 +127,8 @@ public class WindowContent{
         }*/
     }
 
-    public void generateBitmap(AssetManager assets) {
-        Typeface tf = Typeface.createFromAsset(assets, mFontfile);
+    public void generateBitmap(Typeface tf) {
+        //Typeface tf = Typeface.createFromAsset(assets, mFontfile);
 
         Paint paint = new Paint();
         //paint.setARGB(255, 255, 255, 255);
@@ -153,8 +148,6 @@ public class WindowContent{
         int bmpWidth = MathMisc.getClosestPowerOfTwo(mWidth);
         int bmpHeight = MathMisc.getClosestPowerOfTwo(mHeight);
 
-        //Log.e("Error", new StringBuilder().append("width: ").append(bmpWidth).append("height: ").append(bmpHeight).toString());
-
         mBitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(mBitmap);
         //mBitmap.eraseColor( 0x00000000 );
@@ -162,21 +155,14 @@ public class WindowContent{
         //canvas.drawPaint(paint);
 
         int y = (int)Math.abs(fm.top);
-        //Log.e("Error", new StringBuilder().append(fm.top).toString());
-
-        //Log.e("Draw", new StringBuilder().append(mTextLines.size()).toString());
         for ( int i = 0; i < mTextLines.size(); i++ ) {
             canvas.drawText(mTextLines.get(i), 0, y, paint);
 
-            //Log.e("Draw", new StringBuilder().append(mTextLines.get(i)).toString());
             y += Math.abs((int)(fm.top + fm.leading));
-            //Log.e("Draw", new StringBuilder("Y: ").append(y).toString());
         }
 
         this.mTexRgn = new TextureRegion(bmpWidth, bmpHeight, 0, 0, mWidth, mWindowHeight);
         this.mUpperLimit = ((float)mHeight / (float)bmpHeight);
-        Log.e("Draw", new StringBuilder("Upper Limit: ").append(mHeight/(float)bmpHeight).toString());
-        Log.e("Draw", new StringBuilder("Windowheight: ").append(mWindowHeight/(float)bmpHeight).toString());
 
         float[] textureCoordinatesData = {
                 mTexRgn.u1, mTexRgn.v1,
@@ -188,6 +174,5 @@ public class WindowContent{
         this.mTextureCoordinateBuffer = ByteBuffer.allocateDirect(textureCoordinatesData.length * (Float.SIZE / 8))
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         this.mTextureCoordinateBuffer.put(textureCoordinatesData).position(0);
-        //Log.e("Error", new StringBuilder().append("BUILT").toString());
     }
 }

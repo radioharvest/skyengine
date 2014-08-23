@@ -38,25 +38,15 @@ public class TextureRegion {
     }
 
     public void moveVertically(float amount, float min, float max) {
-        Log.e("Draw", new StringBuilder("Amount input: ").append(amount).toString());
-        Log.e("Draw", new StringBuilder("Min: ").append(min).toString());
-        Log.e("Draw", new StringBuilder("Max: ").append(max).toString());
-        Log.e("Draw", new StringBuilder("TexRgn: ").append(u1).append(" ").append(v1).append(" ").append(u2).append(" ").append(v2).toString());
-
         if ( this.v1 + amount < min ) {
-            Log.e("Draw", new StringBuilder("Lower: ").append(amount).toString());
             amount = min - this.v1;
         }
         if ( this.v2 + amount > max ) {
-            Log.e("Draw", new StringBuilder("Higher: ").append(amount).toString());
             amount = max - this.v2;
         }
 
-        Log.e("Draw", new StringBuilder("Amount in func: ").append(amount).toString());
-
         this.v1 += amount;
         this.v2 += amount;
-        Log.e("Draw", new StringBuilder().append("MOVED").toString());
     }
 
     public void moveHorizontally(float amount) {
