@@ -1,7 +1,7 @@
 package aq.oceanbase.skyscroll.graphics.windows;
 
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class Button {
     public static final int BUFFER_DATA_SIZE = 5;

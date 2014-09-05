@@ -2,9 +2,8 @@ package aq.oceanbase.skyscroll.touch;
 
 import android.opengl.GLU;
 import android.opengl.Matrix;
-import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class TouchRay {
     private Vector3f mNear;

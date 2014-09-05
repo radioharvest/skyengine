@@ -1,6 +1,6 @@
 package aq.oceanbase.skyscroll.graphics.primitives;
 
-import aq.oceanbase.skyscroll.render.MainRenderer;
+import aq.oceanbase.skyscroll.graphics.render.MainRenderer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

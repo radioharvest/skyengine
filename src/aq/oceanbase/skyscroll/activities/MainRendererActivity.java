@@ -6,7 +6,8 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import aq.oceanbase.skyscroll.render.GLSurfaceMainRenderer;
+import aq.oceanbase.skyscroll.Core;
+import aq.oceanbase.skyscroll.graphics.render.GLSurfaceMainRenderer;
 
 public class MainRendererActivity extends Activity {
     private GLSurfaceView mGLSurfaceView;
@@ -14,8 +15,9 @@ public class MainRendererActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Core core = (Core)this.getApplication();
 
-        mGLSurfaceView = new GLSurfaceMainRenderer(this);
+        mGLSurfaceView = new GLSurfaceMainRenderer(this, core.getGameInstance());
 
         final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();

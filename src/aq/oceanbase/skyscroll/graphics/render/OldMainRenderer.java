@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.render;
+package aq.oceanbase.skyscroll.graphics.render;
 
 import android.content.Context;
 import android.opengl.*;
@@ -6,30 +6,23 @@ import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
-import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
-import aq.oceanbase.skyscroll.graphics.text.FontMap;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
-import aq.oceanbase.skyscroll.graphics.windows.WindowContent;
-import aq.oceanbase.skyscroll.loaders.ShaderLoader;
-import aq.oceanbase.skyscroll.math.MathMisc;
-import aq.oceanbase.skyscroll.loaders.TextureLoader;
-import aq.oceanbase.skyscroll.math.Vector2f;
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
-import aq.oceanbase.skyscroll.tree.Tree;
-import aq.oceanbase.skyscroll.tree.nodes.NodeOrderUnit;
-import aq.oceanbase.skyscroll.tree.nodes.Question;
+import aq.oceanbase.skyscroll.logic.tree.Tree;
+import aq.oceanbase.skyscroll.logic.tree.nodes.Question;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import java.nio.FloatBuffer;
 import java.util.Date;
 
 
 //TODO: check scope of all variables
-public class MainRenderer implements GLSurfaceView.Renderer {
+public class OldMainRenderer implements GLSurfaceView.Renderer {
 
     public static enum MODE {
         TREE, QUESTION
@@ -50,15 +43,16 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     private final String mShaderFolder;
 
+
+    //Rendering settings
+    private final float mNearPlane = 1.0f;
+    private final float mFarPlane = 40.0f;
+
     //Constraints
     private float mMinHeight = 0.0f;
     private float mMaxHeight = 30.0f;
     private float mMinDist = 8.0f;
-    private float mMaxDist = 40.0f;
-
-    //Rendering settings
-    private final float mNearPlane = 1.0f;
-    private final float mFarPlane = 30.0f;
+    private float mMaxDist = mFarPlane;
 
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
@@ -78,7 +72,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     //Windows
     private Window mWindow;
-    private FontMap mFontMap;
 
     //Backgrounds
     private Background mCurrentBackground;
@@ -91,19 +84,19 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         @Override
         public void onSwipeHorizontal(float amount) {
             mMomentum.x = amount;
-        };
+        }
 
         @Override
         public void onSwipeVertical(float amount) {
             mMomentum.y = amount;
-        };
+        }
 
         @Override
         public void onScale(float span) {
             if (Math.abs(span) > 0.1) mDistance = mDistance - span;
             if (mDistance <= mMinDist) mDistance = mMinDist;
             else if (mDistance > mMaxDist) mDistance = mMaxDist;
-        };
+        }
 
         @Override
         public void onTap(float x, float y) {
@@ -111,7 +104,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
             selected = mTree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
             if (selected) switchMode(MODE.QUESTION);
-        };
+        }
     };
 
     private final TouchHandler mWindowTouchHandler = new TouchHandler() {
@@ -128,7 +121,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     };
 
 
-    public MainRenderer(Context context) {
+    public OldMainRenderer(Context context) {
         mContext = context;
 
         Log.e("RunDebug", "Renderer constructor stage passed");
@@ -138,11 +131,19 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mCurrentBackground = mTreeBackground;
         mTouchHandler = mTreeTouchHandler;
 
-        mShaderFolder = "/aq/oceanbase/skyscroll/shaders";
+        mShaderFolder = "/aq/oceanbase/skyscroll/graphics/render/shaders";
     }
 
 
     //<editor-fold desc="Getters and Setters">
+    public Camera getCamera() {
+        return mCamera;
+    }
+
+    public void setCamera(Camera cam) {
+        this.mCamera = cam;
+    }
+
     public float getHeight() {
         return this.mHeight;
     }
@@ -348,7 +349,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         //mTree.draw(mCamera);
         //mWindow.draw(mCamera);
 
-        //countFPS();
+        countFPS();
 
     }
 }

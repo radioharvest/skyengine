@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.math;
+package aq.oceanbase.skyscroll.utils.math;
 
 public class Vector2f {
     public float x;

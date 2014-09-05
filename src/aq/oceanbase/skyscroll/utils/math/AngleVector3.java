@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.math;
+package aq.oceanbase.skyscroll.utils.math;
 
 // this class is used to store 3d angle
 public class AngleVector3 {

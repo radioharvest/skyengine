@@ -2,7 +2,7 @@ package aq.oceanbase.skyscroll.graphics.windows;
 
 import android.graphics.*;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.MathMisc;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

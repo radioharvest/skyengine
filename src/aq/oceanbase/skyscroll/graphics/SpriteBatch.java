@@ -3,7 +3,7 @@ package aq.oceanbase.skyscroll.graphics;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import aq.oceanbase.skyscroll.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

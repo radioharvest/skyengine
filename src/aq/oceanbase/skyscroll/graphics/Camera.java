@@ -1,7 +1,7 @@
 package aq.oceanbase.skyscroll.graphics;
 
 import android.opengl.Matrix;
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 /**
  * This class is used to store camera information:

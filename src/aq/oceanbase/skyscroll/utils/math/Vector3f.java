@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.math;
+package aq.oceanbase.skyscroll.utils.math;
 
 import android.opengl.Matrix;
 import android.util.Log;

@@ -3,12 +3,8 @@ package aq.oceanbase.skyscroll.graphics.windows;
 import android.graphics.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.math.MathMisc;
-import aq.oceanbase.skyscroll.math.Vector3f;
-
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
+import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class ButtonBlock {
     private Button[] mButtons;
@@ -92,7 +88,7 @@ public class ButtonBlock {
                     buttonPixelWidth = (int)Math.ceil(buttonWidth * mPixelMetrics[0] / mMetrics[0]);
                 }
 
-                position.print("Draw", "CurrentPosition");
+                //position.print("Draw", "CurrentPosition");
                 mButtons[i] = new Button(new Vector3f(position), new float[] {buttonWidth, buttonHeight},
                         new int[] {buttonPixelWidth, buttonPixelHeight}, buttonValues[i]);
 
@@ -102,8 +98,8 @@ public class ButtonBlock {
                 if ( lineFillCounter == 2 ) {
                     position.x = mOffset + (buttonWidth/2.0f);
                     position.y -= (buttonHeight + mOffset);
-                    Log.e("Draw", new StringBuilder().append("Changed").toString());
-                    position.print("Draw", "Updated position");
+                    //Log.e("Draw", new StringBuilder().append("Changed").toString());
+                    //position.print("Draw", "Updated position");
                     lineFillCounter = 0;
                 }
                 else position.x += (buttonWidth + mOffset);
@@ -143,7 +139,7 @@ public class ButtonBlock {
             int textWidth = (int)paint.measureText(mButtons[i].getText());
             int halfWidth = textWidth/2;
 
-            Log.e("Draw", new StringBuilder("Text: ").append(textWidth).append(" Button: ").append(mButtons[i].getPixelWidth()).toString());
+            //Log.e("Draw", new StringBuilder("Text: ").append(textWidth).append(" Button: ").append(mButtons[i].getPixelWidth()).toString());
 
 
             if (textWidth >= mButtons[i].getPixelWidth()) {
@@ -197,7 +193,7 @@ public class ButtonBlock {
             pos = mButtons[i].getPos();
             metrics = mButtons[i].getMetrics();
 
-            pos.print("Draw", "Pos");
+            //pos.print("Draw", "Pos");
             x = touchX - (pos.x - metrics[0]/2);
             y = touchY - (pos.y - metrics[1]/2);
 

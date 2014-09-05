@@ -1,6 +1,6 @@
-package aq.oceanbase.skyscroll.tree.nodes;
+package aq.oceanbase.skyscroll.logic.tree.nodes;
 
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class Node {
 

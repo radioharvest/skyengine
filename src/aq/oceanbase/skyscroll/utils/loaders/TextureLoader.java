@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.loaders;
+package aq.oceanbase.skyscroll.utils.loaders;
 
 import android.content.Context;
 import android.graphics.Bitmap;

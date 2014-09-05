@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.tree.nodes;
+package aq.oceanbase.skyscroll.logic.tree.nodes;
 
 public class Question {
     private double mId;

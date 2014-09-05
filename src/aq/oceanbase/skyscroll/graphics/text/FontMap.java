@@ -12,7 +12,7 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.loaders.TextureLoader;
+import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 public class FontMap implements Renderable {
 

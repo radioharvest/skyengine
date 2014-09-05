@@ -1,6 +1,6 @@
-package aq.oceanbase.skyscroll.generators;
+package aq.oceanbase.skyscroll.logic.generators;
 
-import aq.oceanbase.skyscroll.tree.nodes.Node;
+import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 
 import java.util.ArrayList;
 import java.util.Random;

@@ -1,23 +1,22 @@
-package aq.oceanbase.skyscroll.tree;
+package aq.oceanbase.skyscroll.logic.tree;
 
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
-import aq.oceanbase.skyscroll.generators.TreeGenerator;
-import aq.oceanbase.skyscroll.loaders.ShaderLoader;
-import aq.oceanbase.skyscroll.loaders.TextureLoader;
-import aq.oceanbase.skyscroll.math.Vector3f;
+import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
+import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.render.MainRenderer;
+import aq.oceanbase.skyscroll.graphics.render.MainRenderer;
 import aq.oceanbase.skyscroll.touch.TouchRay;
-import aq.oceanbase.skyscroll.tree.nodes.Node;
-import aq.oceanbase.skyscroll.tree.nodes.NodeOrderUnit;
+import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
+import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

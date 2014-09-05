@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.render;
+package aq.oceanbase.skyscroll.graphics.render;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
@@ -6,11 +6,21 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import aq.oceanbase.skyscroll.math.Vector2f;
+import aq.oceanbase.skyscroll.Core;
+import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.logic.Game;
+import aq.oceanbase.skyscroll.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class GLSurfaceMainRenderer extends GLSurfaceView {
 
+    private final String mShaderFolder = "/aq/oceanbase/skyscroll/graphics/render/shaders";
+
     private final MainRenderer mRenderer;
+    private Game mGameInstance;
+
+    private float mDistance = 15.0f;         //cam distance from origin
+    private float mHeight = 0.0f;
 
 
     //CONSTANTS
@@ -46,7 +56,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
             float span = scaleGestureDetector.getCurrentSpan();
             float temp = span - lastSpan;
-            mRenderer.mTouchHandler.onScale(temp * ZOOM_FACTOR);
+            mRenderer.mGameInstance.mTouchHandler.onScale(temp * ZOOM_FACTOR);
             lastSpan = span;
 
             return true;
@@ -57,24 +67,27 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            mRenderer.mTouchHandler.onTap(e.getX(), e.getY());
+            mRenderer.mGameInstance.mTouchHandler.onTap(e.getX(), e.getY());
 
             return true;
         }
     };
 
 
-    public GLSurfaceMainRenderer (Context context) {
+    public GLSurfaceMainRenderer (Context context, Game gameInstance) {
         super(context);
-        Log.e("RunDebug", "GLSurface stage passed");
 
         mScaleDetector = new ScaleGestureDetector(context, mScaleGestureListener);
         mTapDetector = new GestureDetector(context, mTapGestureListener);
 
         setEGLContextClientVersion(2);
         //setPreserveEGLContextOnPause(true);
-        mRenderer = new MainRenderer(context);
+
+        mGameInstance = gameInstance;
+
+        mRenderer = new MainRenderer(context, mShaderFolder);
         setRenderer(mRenderer);
+        mRenderer.setGameInstance(mGameInstance);
     }
 
     @Override
@@ -104,8 +117,8 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
                     }
 
 
-                    if (mDelta.x != 0) mRenderer.mTouchHandler.onSwipeHorizontal(mDelta.x);
-                    if (mDelta.y != 0) mRenderer.mTouchHandler.onSwipeVertical(mDelta.y);
+                    if (mDelta.x != 0) mRenderer.mGameInstance.mTouchHandler.onSwipeHorizontal(mDelta.x);
+                    if (mDelta.y != 0) mRenderer.mGameInstance.mTouchHandler.onSwipeVertical(mDelta.y);
                     break;
                 }
 

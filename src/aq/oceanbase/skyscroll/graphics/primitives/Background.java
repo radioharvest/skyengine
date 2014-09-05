@@ -4,8 +4,8 @@ import android.content.Context;
 import android.opengl.GLES20;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.Renderable;
-import aq.oceanbase.skyscroll.loaders.ShaderLoader;
-import aq.oceanbase.skyscroll.loaders.TextureLoader;
+import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 public class Background extends Sprite implements Renderable {
     private int textureId;
