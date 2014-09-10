@@ -8,10 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.Renderable;
-import aq.oceanbase.skyscroll.graphics.SpriteBatch;
-import aq.oceanbase.skyscroll.graphics.TextureRegion;
+import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 public class FontMap implements Renderable {
@@ -28,6 +25,7 @@ public class FontMap implements Renderable {
     public static int FONT_SIZE_MIN = 6;
     public static int FONT_SIZE_MAX = 180;
 
+    private boolean mInitialized = false;
 
     private AssetManager mAssets;
     private String mFontFile;
@@ -72,12 +70,6 @@ public class FontMap implements Renderable {
         this.mScaleY = y;
     }
 
-    public void initialize(Context context, String shaderFolder) {
-        this.generate();
-
-        mSpriteBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, mTextureId);
-        mSpriteBatch.initialize(context, shaderFolder);
-    }
 
     //TODO: consider refactoring to avoid scaling
     public boolean generate() {
@@ -216,6 +208,23 @@ public class FontMap implements Renderable {
         }
 
         mSpriteBatch.endBatch();
+    }
+
+    public boolean isInitialized() {
+        return this.mInitialized;
+    }
+
+    public void initialize(Context context, ProgramManager programManager) {
+        this.generate();
+
+        mSpriteBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, mTextureId);
+        mSpriteBatch.initialize(context, programManager);
+
+        this.mInitialized = true;
+    }
+
+    public void release() {
+        //TODO: FILL
     }
 
     public void draw(Camera cam) {

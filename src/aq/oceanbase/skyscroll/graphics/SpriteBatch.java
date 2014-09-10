@@ -28,6 +28,8 @@ public class SpriteBatch implements Renderable {
     public final static int INDICES_PER_SPRITE = 6;         // Two triangles
     public final static int MAX_BATCHSIZE = 16;             // Maximum size of a batch
 
+    private boolean mInitialized = false;               // Initialization flag
+
     private Camera mCam;                        // Camera instance
 
     private int mProgram;
@@ -86,15 +88,6 @@ public class SpriteBatch implements Renderable {
         mVertexBuffer = ByteBuffer.allocateDirect( mVertexTypeSize * VERTICES_PER_SPRITE * MAX_BATCHSIZE * (Float.SIZE / 8) ).
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
     }
-
-    // -- Initialize -- //
-    // Desc: standard initialize function from Renderable interface. Function initializes program and binds texture.
-    // TODO: possible optimization: move buffers initialization here
-    public void initialize(Context context, String shaderFolder) {
-        mProgram = ShaderLoader.
-                getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");
-    }
-
 
     // -- Begin batching -- //
     // Desc: Setup the batch. Reset the counter variables and calculate the VP matrix
@@ -268,6 +261,26 @@ public class SpriteBatch implements Renderable {
         }
 
         mBatchSize++;
+    }
+
+
+    public boolean isInitialized() {
+        return this.mInitialized;
+    }
+
+
+    // -- Initialize -- //
+    // Desc: standard initialize function from Renderable interface. Function initializes program and binds texture.
+    // TODO: possible optimization: move buffers initialization here
+    public void initialize(Context context, ProgramManager programManager) {
+        mProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITEBATCH);
+
+        this.mInitialized = true;
+    }
+
+
+    public void release() {
+        //TODO: FILL
     }
 
 

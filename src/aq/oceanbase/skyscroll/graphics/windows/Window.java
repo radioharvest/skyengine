@@ -9,7 +9,9 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
@@ -29,6 +31,8 @@ public class Window implements Renderable {
     public static enum ALIGN {
         LEFT, RIGHT, TOP, BOTTOM
     }
+
+    private boolean mInitialized = false;
 
     private Vector3f mPos;          //the position of upper left corner
     private int[] mWindowPixelMetrics;
@@ -429,7 +433,12 @@ public class Window implements Renderable {
     //</editor-fold>
 
 
-    public void initialize(Context context, String shaderFolder) {
+    public boolean isInitialized() {
+        return this.mInitialized;
+    }
+
+
+    public void initialize(Context context, ProgramManager programManager) {
         float[] windowVertexData = new float[] {
             0.0f, 0.0f, 0.0f,      //TL
             0.0f, -mWindowMetrics[1], 0.0f,     //BL
@@ -451,17 +460,16 @@ public class Window implements Renderable {
                 .order(ByteOrder.nativeOrder()).asShortBuffer();
         mOrderDataBuffer.put(orderData).position(0);
 
-        mWindowProgram = ShaderLoader.
-                getShaderProgram(shaderFolder + "/window/windowVertex.glsl", shaderFolder + "/window/windowFragment.glsl");
+        mWindowProgram = programManager.getProgram(ProgramManager.PROGRAM.WINDOW);
 
         Typeface tf = Typeface.createFromAsset(context.getAssets(), "Roboto-Regular.ttf");
 
         if (mContent != null) {
             mContent.generateBitmap(tf);
             mContentTextureHandle = TextureLoader.loadTexture(mContent.getBitmap());
+            Log.e("Debug", new StringBuilder().append(mContent.bitmapRecycled()).toString());
 
-            mContentProgram = ShaderLoader.
-                    getShaderProgram(shaderFolder + "/window/windowContentVertex.glsl", shaderFolder + "/window/windowContentFragment.glsl");
+            mContentProgram = programManager.getProgram(ProgramManager.PROGRAM.WINDOWCONTENT);
         }
 
         if (mButtonBlock != null) {
@@ -470,8 +478,10 @@ public class Window implements Renderable {
             mButtonBlockTextureHandle = TextureLoader.loadTexture(mButtonBlock.getBitmap());
 
             mButtonBatch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, mButtonBlockTextureHandle);
-            mButtonBatch.initialize(context, shaderFolder);
+            mButtonBatch.initialize(context, programManager);
         }
+
+        this.mInitialized = true;
     }
 
     public void release() {
@@ -484,6 +494,8 @@ public class Window implements Renderable {
             GLES20.glDeleteTextures(1, new int[] {mButtonBlockTextureHandle}, 0);
             //TODO: add button batch release
         }
+
+        this.mInitialized = false;
     }
 
     public void draw(Camera cam) {

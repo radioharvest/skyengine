@@ -5,6 +5,7 @@ import android.opengl.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
@@ -42,6 +43,7 @@ public class OldMainRenderer implements GLSurfaceView.Renderer {
     private boolean mModeSwitched = false;
 
     private final String mShaderFolder;
+    private ProgramManager mProgramManager;
 
 
     //Rendering settings
@@ -132,6 +134,7 @@ public class OldMainRenderer implements GLSurfaceView.Renderer {
         mTouchHandler = mTreeTouchHandler;
 
         mShaderFolder = "/aq/oceanbase/skyscroll/graphics/render/shaders";
+        mProgramManager = new ProgramManager(mShaderFolder);
     }
 
 
@@ -275,8 +278,8 @@ public class OldMainRenderer implements GLSurfaceView.Renderer {
         mTime = new Date().getTime();
         mFrameCounter = 0;
 
-        mTree.initialize(mContext, mShaderFolder);
-        mTreeBackground.initialize(mContext, mShaderFolder);
+        mTree.initialize(mContext, mProgramManager);
+        mTreeBackground.initialize(mContext, mProgramManager);
 
         /*mFontMap = new FontMap("Roboto-Regular.ttf", 1800, mContext.getAssets());
         mFontMap.initialize(mContext, mShaderFolder);*/
@@ -331,7 +334,7 @@ public class OldMainRenderer implements GLSurfaceView.Renderer {
             if (mDrawmode == MODE.QUESTION) {
                 mWindow = new Window(20, 2.0f, mCamera, mScreenMetrics);        //TODO: debug the value of 1.0
                 mWindow.setQuestion(this.getQuestion(1));
-                mWindow.initialize(mContext, mShaderFolder);
+                mWindow.initialize(mContext, mProgramManager);
             }
             else mWindow.release();
 

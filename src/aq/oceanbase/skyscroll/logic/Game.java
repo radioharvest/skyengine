@@ -23,7 +23,7 @@ public class Game {
 
     private int[] mScreenMetrics;
 
-    private RenderContainer mCurrentRenderables;
+    public RenderContainer mCurrentRenderables;
     private RenderContainer mTreeRenderables = new RenderContainer();
     private RenderContainer mQuestionRenderables = new RenderContainer();
 
@@ -34,14 +34,14 @@ public class Game {
     private float mMaxDist = 40.0f;
 
     //Tree
-    private GameSession mGameSession;
+    public GameSession mGameSession;
 
     //Windows
-    private Window mWindow;
+    public Window mWindow;
 
     //Backgrounds
     private Background mCurrentBackground;
-    private Background mTreeBackground = new Background(R.drawable.bckgnd1);
+    public Background mTreeBackground = new Background(R.drawable.bckgnd1);
     private Background mQuestionBackground = mTreeBackground;
 
 
@@ -204,7 +204,7 @@ public class Game {
         mQuestionRenderables.clear();
         mWindow = new Window(20, 2.0f, mCamera, mScreenMetrics);
         mWindow.setQuestion(question);
-        mQuestionRenderables.addRenderable(mQuestionBackground).addRenderable(mWindow);
+        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mWindow);
     }
 
     private void killWindow() {
@@ -230,8 +230,11 @@ public class Game {
     private void switchMode (MODE mode) {
         if (mode == MODE.QUESTION)
             createWindow(this.getQuestion(1));
-        else
+        else {
             killWindow();
+            mWindow = null;
+        }
+
 
         setMode(mode);
     }

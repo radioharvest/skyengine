@@ -11,7 +11,11 @@ import android.content.Context;
  */
 
 public interface Renderable {
-    public void initialize(Context context, String shaderFolder);
+    public boolean isInitialized();
+
+    public void initialize(Context context, ProgramManager programManager);
+
+    public void release();
 
     public void draw(Camera cam);
 }

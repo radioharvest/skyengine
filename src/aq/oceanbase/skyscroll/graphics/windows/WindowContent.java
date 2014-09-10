@@ -80,6 +80,10 @@ public class WindowContent{
 
     }
 
+    public boolean bitmapRecycled() {
+        return mBitmap.isRecycled();
+    }
+
     private void parseText(String text, Paint paint) {
         int linePosition;
         int spaceWidth = (int)paint.measureText(" ");
