@@ -1,39 +1,48 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
+import android.util.Log;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Node {
 
-    //TODO: change state and type to enum
-    public static final int IDLE = 1;
-    public static final int OPEN = 2;
-    public static final int WRONG = 3;
-    public static final int RIGHT = 4;
+    public static enum NODESTATE {
+        IDLE, OPEN, WRONG, RIGHT
+    }
+
+    public int id;          // node id
 
     public float posX;
     public float posY;
     public float posZ;
 
-    private String type;
+    private int type;           // type is int for 3 subjects which are set up in Game
 
-    private int state;
-    private boolean selected;
+    private NODESTATE state;    // state of the Node
+    private boolean selected;   // selected flag
 
-    private int difficulty;
+    private int difficulty;     // difficulty level is int, amount is set in Game
 
-    private double questionId;
+    private int questionId;     // id of the question in database
 
-    private double inConnections[];
+    private int inboundConnections[] = new int[] {};     // array of inbound connections
+    private int outboundConnections[] = new int[] {};    //array of outbound connections
 
-    private double outConnections[];
+    private NodeConnectionSocket sockets[] = new NodeConnectionSocket[] {};
 
 
-    public Node(float x, float y, float z) {
+    public Node(int id, float x, float y, float z) {
+        this.id = id;
+
         this.posX = x;
         this.posY = y;
         this.posZ = z;
 
-        this.state = IDLE;
+        this.state = NODESTATE.IDLE;
+
+        Log.e("Debug", new StringBuilder().append(sockets.length).toString());
     }
 
     public Vector3f getPosV() {
@@ -48,18 +57,69 @@ public class Node {
         return new float[] {this.posX, this.posY, this.posZ, 1.0f};     //w is 1 for point, 0 for direction
     }
 
-    public int getState() {
-        return this.state;
+
+    public void setIdle() {
+        this.state = NODESTATE.IDLE;
     }
 
     public boolean isIdle() {
-        if (state == IDLE) return true;
+        if (state == NODESTATE.IDLE) return true;
         else return false;
     }
 
+    public NODESTATE getState() {
+        return this.state;
+    }
+
+
+    public Node setOutboundConnections(int[] out) {
+        this.outboundConnections = out;
+        return this;
+    }
+
+    public int[] getOutboundConnections() {
+        return this.outboundConnections;
+    }
+
+    public Node setInboundConnections(int[] in) {
+        this.inboundConnections = in;
+        return this;
+    }
+
+    public Node setInboundConnections(List<Integer> list) {
+        this.inboundConnections = new int[list.size()];
+        for (int i = 0; i < inboundConnections.length; i++)
+            inboundConnections[i] = list.get(i);
+
+        return this;
+    }
+
+    public int[] getInboundConnections() {
+        return this.inboundConnections;
+    }
+
+    public Node setSockets(NodeConnectionSocket sockets[]) {
+        this.sockets = sockets;
+        return this;
+    }
+
+    public NodeConnectionSocket[] getSockets() {
+        return this.sockets;
+    }
+
+    public NodeConnectionSocket getSocket(int id) {
+        for (int i = 0; i <= sockets.length; i++)
+        {
+            Log.e("Debug", new StringBuilder("Node num ").append(this.id).append(" Sockets: ").append(sockets.length).toString());
+            if (sockets[i].connectionId == id) return sockets[i];
+        }
+        //if no such socket return empty
+        return new NodeConnectionSocket(0, 0, 0, -1);
+    }
+
+
     public boolean isSelected() {
-        if (this.selected) return true;
-        else return false;
+        return this.selected;
     }
 
     public void select() {
@@ -68,9 +128,5 @@ public class Node {
 
     public void deselect() {
         this.selected = false;
-    }
-
-    public void setIdle() {
-        this.state = IDLE;
     }
 }

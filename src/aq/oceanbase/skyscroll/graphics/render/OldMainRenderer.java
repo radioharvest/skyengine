@@ -14,7 +14,7 @@ import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.Tree;
-import aq.oceanbase.skyscroll.logic.tree.nodes.Question;
+import aq.oceanbase.skyscroll.logic.Question;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

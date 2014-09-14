@@ -3,10 +3,12 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
+import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -15,55 +17,148 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
 
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class Tree implements Renderable {
+    public static enum CONNECTIONSTATE {
+        IDLE, OPEN, ACTIVE, INACTIVE
+    }
+
     public static int posDataSize = 3;
 
     private boolean initialized = false;
 
     public Node[] nodes;
+    public NodeConnection[] connections;
+
     private int selectedNode;
 
     private FloatBuffer nodesPositionsBuffer;
     private FloatBuffer linesPositionsBuffer;
 
     private int lineShaderProgram;
-    private int nodeShaderProgram;
 
     private int textureDataHandler;
 
     private float angle;
     private float[] modelMatrix = new float[16];
-    private Sprite sprite;
     private SpriteBatch batch;
 
     public Tree() {
         TreeGenerator generator = new TreeGenerator();
-        final float[] nodesPositionData = generator.getNodesPositionData();
+
+        nodes = generator.getNodes();
+        buildNodeConnections();
+
+        final float[] nodesPositionData = getNodesPositionData();
         nodesPositionsBuffer = ByteBuffer.allocateDirect(nodesPositionData.length * MainRenderer.mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         nodesPositionsBuffer.put(nodesPositionData).position(0);
 
-        final float[] linesPositionData = generator.getLinesPositionData();
+        final float[] linesPositionData = getConnectionsPositionData();
+        for ( int i = 0; i < linesPositionData.length; i++ ) Log.e("Debug", new StringBuilder().append(linesPositionData[i]).toString());
         linesPositionsBuffer = ByteBuffer.allocateDirect(linesPositionData.length * MainRenderer.mBytesPerFloat)
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         linesPositionsBuffer.put(linesPositionData).position(0);
 
-        nodes = generator.getNodes();
-
-        sprite = new Sprite();
 
     }
 
-    public FloatBuffer getNodesPositionsB() {
+    public Tree(Node[] nodesInput) {
+
+    }
+
+
+    private void buildNodeConnections() {
+        List<List<Integer>> inboundList = new ArrayList<List<Integer>>();
+        List<List<NodeConnectionSocket>> sockets = new ArrayList<List<NodeConnectionSocket>>();
+
+        List<NodeConnection> connectionList = new ArrayList<NodeConnection>();
+
+        for (int i = 0; i < this.nodes.length; i++) {
+            inboundList.add(new ArrayList<Integer>());
+            sockets.add(new ArrayList<NodeConnectionSocket>());
+        }
+
+        int[] outArray;
+        for (int i = 0; i < this.nodes.length; i++) {
+            outArray = nodes[i].getOutboundConnections();
+            for (int k = 0; k < outArray.length; k++) {
+                inboundList.get(outArray[k]).add(i);
+
+                if (outArray[k] > i) {
+                    int connId = connectionList.size();
+
+                    connectionList.add(new NodeConnection(i, outArray[k], connId));
+
+                    sockets.get(i).add(new NodeConnectionSocket(0, 0, 0, connId));
+                    sockets.get(outArray[k]).add(new NodeConnectionSocket(0, 0, 0, connId));
+                }
+            }
+        }
+
+        for (int i = 0; i < this.nodes.length; i++) {
+            nodes[i].setInboundConnections(inboundList.get(i));
+            Log.e("Debug", new StringBuilder("Sockets ").append(i).append(" ").append(sockets.get(i).size()).toString());
+            nodes[i].setSockets(sockets.get(i).toArray(new NodeConnectionSocket[sockets.get(i).size()]));
+        }
+
+        this.connections = connectionList.toArray(new NodeConnection[connectionList.size()]);
+    }
+
+
+    private float[] getNodesPositionData() {
+        float[] posData = new float[nodes.length * 3];
+
+        for (int i = 0; i < nodes.length; i++) {
+            posData[i*3 + 0] = nodes[i].posX;
+            posData[i*3 + 1] = nodes[i].posY;
+            posData[i*3 + 2] = nodes[i].posZ;
+            Log.e("Debug", new StringBuilder("Nodeid: ").append(nodes[i].id).toString());
+        }
+
+        return posData;
+    }
+
+    private float[] getConnectionsPositionData() {
+        float[] posData = new float[connections.length * 6];
+        Node node;
+        NodeConnectionSocket socket;
+        Log.e("Error", new StringBuilder("ConnLength: ").append(posData.length).toString());
+
+        for (int i = 0; i < connections.length; i++) {
+            Log.e("Debug", new StringBuilder("Connection ").append(i).append(" Origin: ").append(connections[i].originNode).append(" End: ").append(connections[i].endNode).toString());
+            node = nodes[connections[i].originNode];
+            socket = node.getSocket(i);
+            posData[i*6 + 0] = node.posX + socket.posX;
+            posData[i*6 + 1] = node.posY + socket.posY;
+            posData[i*6 + 2] = node.posZ + socket.posZ;
+
+            node = nodes[connections[i].endNode];
+            socket = node.getSocket(i);
+            posData[i*6 + 3] = node.posX + socket.posX;
+            posData[i*6 + 4] = node.posY + socket.posY;
+            posData[i*6 + 5] = node.posZ + socket.posZ;
+
+        }
+
+
+
+        return posData;
+    }
+
+
+    public FloatBuffer getNodesPositionsBuffer() {
         return this.nodesPositionsBuffer;
     }
 
-    public FloatBuffer getLinesPositionsB() {
+    public FloatBuffer getLinesPositionsBuffer() {
         return this.linesPositionsBuffer;
     }
 
@@ -148,7 +243,60 @@ public class Tree implements Renderable {
         GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);
     }
 
-    public void drawNodesBatch(Camera cam) {
+    private void drawConnections(Camera cam) {
+        float[] MVPMatrix = new float[16];
+        GLES20.glUseProgram(lineShaderProgram);
+
+        int MVPMatrixHandler = GLES20.glGetUniformLocation(lineShaderProgram, "u_MVPMatrix");
+        int positionHandler = GLES20.glGetAttribLocation(lineShaderProgram, "a_Position");
+        int colorHandler = GLES20.glGetAttribLocation(lineShaderProgram, "a_Color");
+
+        GLES20.glVertexAttribPointer(positionHandler, posDataSize, GLES20.GL_FLOAT, false, 0, linesPositionsBuffer);
+        GLES20.glEnableVertexAttribArray(positionHandler);
+
+        Matrix.multiplyMM(MVPMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);
+        Matrix.multiplyMM(MVPMatrix, 0, cam.getProjM(), 0, MVPMatrix, 0);
+
+        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, MVPMatrix, 0);
+
+        for (int i = 0; i < connections.length; i++) {
+            switch (connections[i].getState()) {
+                case IDLE:
+                    GLES20.glVertexAttrib4f(colorHandler, 0.5f, 0.5f, 0.5f, 1.0f);
+                    GLES20.glDisableVertexAttribArray(colorHandler);
+                    GLES20.glLineWidth(2.0f);
+                    break;
+                case OPEN:
+                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 1.0f, 1.0f, 1.0f);
+                    GLES20.glDisableVertexAttribArray(colorHandler);
+                    GLES20.glLineWidth(2.0f);
+                    break;
+                case ACTIVE:
+                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 1.0f, 1.0f, 1.0f);
+                    GLES20.glDisableVertexAttribArray(colorHandler);
+                    GLES20.glLineWidth(4.0f);
+                    break;
+                case INACTIVE:
+                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 0.0f, 0.0f, 0.0f);
+                    GLES20.glDisableVertexAttribArray(colorHandler);
+                    GLES20.glLineWidth(2.0f);
+                    break;
+                default:
+                    GLES20.glVertexAttrib4f(colorHandler, 0.5f, 0.5f, 0.5f, 1.0f);
+                    GLES20.glDisableVertexAttribArray(colorHandler);
+                    GLES20.glLineWidth(2.0f);
+                    break;
+            }
+            if (connections[i].getState() == NodeConnection.CONNECTIONSTATE.IDLE) GLES20.glLineWidth(2.0f);
+            else GLES20.glLineWidth(5.0f);
+            GLES20.glDrawArrays(GLES20.GL_LINES, i*2, 2);
+
+        }
+        /*GLES20.glLineWidth(2.0f);
+        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);*/
+    }
+
+    public void drawNodes(Camera cam) {
         int cur;
         TextureRegion texRgn = new TextureRegion();
         float[] color;
@@ -207,9 +355,9 @@ public class Tree implements Renderable {
 
         //TODO: redo enable/disable switch when performance optimizations are done
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        drawLines(cam);
+        drawConnections(cam);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
-        drawNodesBatch(cam);
+        drawNodes(cam);
     }
 }
