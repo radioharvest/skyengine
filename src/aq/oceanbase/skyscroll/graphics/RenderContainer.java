@@ -74,9 +74,11 @@ public class RenderContainer implements Renderable {
     }
 
     public void draw(Camera cam) {
-        for (Object object: mRenderList) {
-            Renderable rend = (Renderable)object;
-            rend.draw(cam);
+        if (!mRenderList.isEmpty()) {                       // to prevent rare bug
+            for (Object object: mRenderList) {
+                Renderable rend = (Renderable)object;
+                rend.draw(cam);
+            }
         }
     }
 }

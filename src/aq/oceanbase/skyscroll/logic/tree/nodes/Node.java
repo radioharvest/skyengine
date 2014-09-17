@@ -1,6 +1,7 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
 import android.util.Log;
+import aq.oceanbase.skyscroll.logic.tree.NodeConnection;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.util.ArrayList;
@@ -67,6 +68,11 @@ public class Node {
         else return false;
     }
 
+    public Node setState(NODESTATE state) {
+        this.state = state;
+        return this;
+    }
+
     public NODESTATE getState() {
         return this.state;
     }
@@ -110,11 +116,17 @@ public class Node {
     public NodeConnectionSocket getSocket(int id) {
         for (int i = 0; i <= sockets.length; i++)
         {
-            Log.e("Debug", new StringBuilder("Node num ").append(this.id).append(" Sockets: ").append(sockets.length).toString());
             if (sockets[i].connectionId == id) return sockets[i];
         }
         //if no such socket return empty
-        return new NodeConnectionSocket(0, 0, 0, -1);
+        return new NodeConnectionSocket(0, 0, 0, -1, 0);
+    }
+
+    public int getConnectionId(int endNodeId) {
+        for (int i = 0; i < this.sockets.length; i++) {
+            if (sockets[i].endNode == endNodeId) return sockets[i].connectionId;
+        }
+        return -1;
     }
 
 

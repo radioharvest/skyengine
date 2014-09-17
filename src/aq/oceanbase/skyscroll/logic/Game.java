@@ -5,6 +5,7 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
+import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
@@ -34,6 +35,8 @@ public class Game {
 
     //Tree
     public GameSession mGameSession;
+
+    private int mCurrentNode;
 
     //Windows
     public Window mWindow;
@@ -75,10 +78,15 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
-            boolean selected;
-            selected = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+            mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
-            if (selected) switchMode(MODE.QUESTION);
+            if (mCurrentNode != -1) {
+                if(mGameSession.tree.getNode(mCurrentNode).getState() == Node.NODESTATE.OPEN) {
+                    createWindow(getQuestion(1));
+                    switchMode(MODE.QUESTION);
+                }
+
+            }
         }
     };
 
@@ -90,8 +98,19 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
-            //switchMode(MODE.TREE);
-            if (mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics)) switchMode(MODE.TREE);
+            boolean answered;
+            answered = mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
+            if (mCurrentNode >= 0 && mCurrentNode < mGameSession.tree.getNodesAmount()) {
+                /*if (answered) mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.RIGHT);
+                else mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.WRONG);*/
+                if (answered) mGameSession.tree.setNodeRight(mCurrentNode);
+                else mGameSession.tree.setNodeWrong(mCurrentNode);
+            }
+
+            killWindow();
+            mWindow = null;
+
+            switchMode(MODE.TREE);
         }
     };
 
@@ -227,12 +246,12 @@ public class Game {
     }
 
     private void switchMode (MODE mode) {
-        if (mode == MODE.QUESTION)
+        /*if (mode == MODE.QUESTION)
             createWindow(this.getQuestion(1));
         else {
             killWindow();
             mWindow = null;
-        }
+        }*/
 
 
         setMode(mode);

@@ -136,6 +136,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
         /*mGameInstance.mTreeBackground.initialize(mContext, mShaderFolder);
         mGameInstance.mGameSession.tree.initialize(mContext, mShaderFolder);*/
+        Log.e("Debug", new StringBuilder().append("SurfaceCreated").toString());
     }
 
     @Override
@@ -157,6 +158,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
 
         mCamera.setProjM(projectionMatrix);
+        mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
+        Log.e("Debug", new StringBuilder().append("SurfaceChanged").toString());
     }
 
     @Override

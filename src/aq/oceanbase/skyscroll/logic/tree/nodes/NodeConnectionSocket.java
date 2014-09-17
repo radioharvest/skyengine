@@ -10,15 +10,18 @@ public class NodeConnectionSocket {
 
     public int connectionId;
 
-    public NodeConnectionSocket(float x, float y, float z, int connId) {
+    public int endNode;
+
+    public NodeConnectionSocket(float x, float y, float z, int connId, int endNode) {
         this.posX = x;
         this.posY = y;
         this.posZ = z;
 
         this.connectionId = connId;
+        this.endNode = endNode;
     }
 
-    public NodeConnectionSocket(Vector3f pos, int connId) {
-        this(pos.x, pos.y, pos.z, connId);
+    public NodeConnectionSocket(Vector3f pos, int connId, int endNode) {
+        this(pos.x, pos.y, pos.z, connId, endNode);
     }
 }

@@ -6,10 +6,8 @@ import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
-import aq.oceanbase.skyscroll.graphics.primitives.Sprite;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
-import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.graphics.render.MainRenderer;
@@ -17,7 +15,6 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
 
-import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -34,7 +31,7 @@ public class Tree implements Renderable {
 
     private boolean initialized = false;
 
-    public Node[] nodes;
+    private Node[] nodes;
     public NodeConnection[] connections;
 
     private int selectedNode;
@@ -75,44 +72,6 @@ public class Tree implements Renderable {
     }
 
 
-    private void buildNodeConnections() {
-        List<List<Integer>> inboundList = new ArrayList<List<Integer>>();
-        List<List<NodeConnectionSocket>> sockets = new ArrayList<List<NodeConnectionSocket>>();
-
-        List<NodeConnection> connectionList = new ArrayList<NodeConnection>();
-
-        for (int i = 0; i < this.nodes.length; i++) {
-            inboundList.add(new ArrayList<Integer>());
-            sockets.add(new ArrayList<NodeConnectionSocket>());
-        }
-
-        int[] outArray;
-        for (int i = 0; i < this.nodes.length; i++) {
-            outArray = nodes[i].getOutboundConnections();
-            for (int k = 0; k < outArray.length; k++) {
-                inboundList.get(outArray[k]).add(i);
-
-                if (outArray[k] > i) {
-                    int connId = connectionList.size();
-
-                    connectionList.add(new NodeConnection(i, outArray[k], connId));
-
-                    sockets.get(i).add(new NodeConnectionSocket(0, 0, 0, connId));
-                    sockets.get(outArray[k]).add(new NodeConnectionSocket(0, 0, 0, connId));
-                }
-            }
-        }
-
-        for (int i = 0; i < this.nodes.length; i++) {
-            nodes[i].setInboundConnections(inboundList.get(i));
-            Log.e("Debug", new StringBuilder("Sockets ").append(i).append(" ").append(sockets.get(i).size()).toString());
-            nodes[i].setSockets(sockets.get(i).toArray(new NodeConnectionSocket[sockets.get(i).size()]));
-        }
-
-        this.connections = connectionList.toArray(new NodeConnection[connectionList.size()]);
-    }
-
-
     private float[] getNodesPositionData() {
         float[] posData = new float[nodes.length * 3];
 
@@ -146,6 +105,7 @@ public class Tree implements Renderable {
             posData[i*6 + 4] = node.posY + socket.posY;
             posData[i*6 + 5] = node.posZ + socket.posZ;
 
+            connections[i].setState(nodes[connections[i].originNode].getState(), nodes[connections[i].endNode].getState());
         }
 
 
@@ -154,16 +114,70 @@ public class Tree implements Renderable {
     }
 
 
-    public FloatBuffer getNodesPositionsBuffer() {
-        return this.nodesPositionsBuffer;
+    public Node getNode(int i) {
+        return this.nodes[i];
     }
 
-    public FloatBuffer getLinesPositionsBuffer() {
-        return this.linesPositionsBuffer;
+    public int getNodesAmount() {
+        return this.nodes.length;
     }
+
 
     public float getAngle() {
         return this.angle;
+    }
+
+
+    public void setNodeStateExplicitly(int id, Node.NODESTATE newState) {
+        nodes[id].setState(newState);
+    }
+
+    public boolean setNodeOpen(int id) {
+        switch (nodes[id].getState()) {
+            case WRONG:
+                nodes[id].setState(Node.NODESTATE.OPEN);
+                updateNodeConnections(id, nodes[id].getInboundConnections());
+                updateNodeConnections(id, nodes[id].getOutboundConnections());
+                break;
+            case IDLE:
+                nodes[id].setState(Node.NODESTATE.OPEN);
+                break;
+            default:            // any other case (RIGHT, OPEN)
+                return false;
+        }
+        return true;
+    }
+
+    public boolean setNodeWrong(int id) {
+        if (nodes[id].getState() != Node.NODESTATE.OPEN) return false;
+        nodes[id].setState(Node.NODESTATE.WRONG);
+        updateNodeConnections(id, nodes[id].getInboundConnections());
+        updateNodeConnections(id, nodes[id].getOutboundConnections());
+        return true;
+    }
+
+    public boolean setNodeRight(int id) {
+        if (nodes[id].getState() != Node.NODESTATE.OPEN) return false;
+        nodes[id].setState(Node.NODESTATE.RIGHT);
+        int[] outConns = nodes[id].getOutboundConnections();
+        for (int i = 0; i < outConns.length; i++)
+            setNodeOpen(outConns[i]);
+
+        updateNodeConnections(id, nodes[id].getInboundConnections());
+        updateNodeConnections(id, nodes[id].getOutboundConnections());
+
+        return true;
+    }
+
+
+    public void updateNodeConnections(int id, int[] nodeConns) {
+        int connId;
+        for (int i = 0; i < nodeConns.length; i++) {
+            connId = nodes[id].getConnectionId(nodeConns[i]);
+            if (connId != -1) {
+                this.connections[connId].setState(nodes[id].getState(), nodes[nodeConns[i]].getState());
+            }
+        }
     }
 
     public void updateAngle(float amount) {
@@ -173,7 +187,45 @@ public class Tree implements Renderable {
     }
 
 
-    public boolean performRaySelection(TouchRay tRay) {
+    private void buildNodeConnections() {
+        List<List<Integer>> inboundList = new ArrayList<List<Integer>>();
+        List<List<NodeConnectionSocket>> sockets = new ArrayList<List<NodeConnectionSocket>>();
+
+        List<NodeConnection> connectionList = new ArrayList<NodeConnection>();
+
+        for (int i = 0; i < this.nodes.length; i++) {
+            inboundList.add(new ArrayList<Integer>());
+            sockets.add(new ArrayList<NodeConnectionSocket>());
+        }
+
+        int[] outArray;
+        for (int i = 0; i < this.nodes.length; i++) {
+            outArray = nodes[i].getOutboundConnections();
+            for (int k = 0; k < outArray.length; k++) {
+                inboundList.get(outArray[k]).add(i);
+
+                if (outArray[k] > i) {
+                    int connId = connectionList.size();
+
+                    connectionList.add(new NodeConnection(i, outArray[k], connId));
+
+                    sockets.get(i).add(new NodeConnectionSocket(0, 0, 0, connId, outArray[k]));
+                    sockets.get(outArray[k]).add(new NodeConnectionSocket(0, 0, 0, connId, i));
+                }
+            }
+        }
+
+        for (int i = 0; i < this.nodes.length; i++) {
+            nodes[i].setInboundConnections(inboundList.get(i));
+            Log.e("Debug", new StringBuilder("Sockets ").append(i).append(" ").append(sockets.get(i).size()).toString());
+            nodes[i].setSockets(sockets.get(i).toArray(new NodeConnectionSocket[sockets.get(i).size()]));
+        }
+
+        this.connections = connectionList.toArray(new NodeConnection[connectionList.size()]);
+    }
+
+
+    public int performRaySelection(TouchRay tRay) {
         Matrix.setRotateM(this.modelMatrix, 0, -this.angle, 0.0f, 1.0f, 0.0f);      //derotating to world coordinates
 
         tRay = tRay.multiplyByMatrix(this.modelMatrix);
@@ -187,14 +239,7 @@ public class Tree implements Renderable {
             }
         }
 
-        //TODO: TEMPORARILY DISABLED SELECTION!!!
-        if (sel == -1 || sel == selectedNode) {
-            deselectNode(sel);
-            return false;
-        } else {
-            selectNode(sel);
-            return true;
-        }
+        return sel;
     }
 
     public void selectNode(int id) {
@@ -208,6 +253,8 @@ public class Tree implements Renderable {
         else if (selectedNode != -1) nodes[selectedNode].deselect();
         selectedNode = -1;
     }
+
+
 
 
     private NodeOrderUnit[] buildDrawOrder(float[] conversionMatrix) {
@@ -277,7 +324,7 @@ public class Tree implements Renderable {
                     GLES20.glLineWidth(4.0f);
                     break;
                 case INACTIVE:
-                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 0.0f, 0.0f, 0.0f);
+                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 0.0f, 0.0f, 1.0f);
                     GLES20.glDisableVertexAttribArray(colorHandler);
                     GLES20.glLineWidth(2.0f);
                     break;
@@ -317,8 +364,22 @@ public class Tree implements Renderable {
 
             cur = renderOrder[i].getId();
 
-            if (nodes[cur].isSelected()) color = new float[] {0.1f, 0.1f, 0.7f, 1.0f};
-            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+            /*if (nodes[cur].isSelected()) color = new float[] {0.1f, 0.1f, 0.7f, 1.0f};
+            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};*/
+            switch (nodes[cur].getState()) {
+                case RIGHT:
+                    color = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
+                    break;
+                case WRONG:
+                    color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+                    break;
+                case OPEN:
+                    color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+                    break;
+                default:            //when IDLE
+                    color = new float[] {0.5f, 0.5f, 0.5f, 1.0f};
+                    break;
+            }
 
             Matrix.setIdentityM(spriteMatrix, 0);
             Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX, nodes[cur].posY, nodes[cur].posZ);

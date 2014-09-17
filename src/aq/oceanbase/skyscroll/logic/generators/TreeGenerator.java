@@ -396,15 +396,15 @@ public class TreeGenerator {
     public void genNodes() {
         this.nodeList = new ArrayList<Node>();
 
-        nodeList.add(new Node(0, -5.0f, 0.0f, 0.0f).setOutboundConnections(new int[] {4}));
-        nodeList.add(new Node(1, 0.0f, 1.0f, -5.0f).setOutboundConnections(new int[] {5}));
-        nodeList.add(new Node(2, 5.0f, 2.0f, 0.0f).setOutboundConnections(new int[] {6}));
-        nodeList.add(new Node(3, 0.0f, 3.0f, 5.0f).setOutboundConnections(new int[] {7}));
+        nodeList.add(new Node(0, -5.0f, 0.0f, 0.0f).setOutboundConnections(new int[] {4}).setState(Node.NODESTATE.OPEN));
+        nodeList.add(new Node(1, 0.0f, 1.0f, -5.0f).setOutboundConnections(new int[] {5}).setState(Node.NODESTATE.OPEN));
+        nodeList.add(new Node(2, 5.0f, 2.0f, 0.0f).setOutboundConnections(new int[] {6}).setState(Node.NODESTATE.OPEN));
+        nodeList.add(new Node(3, 0.0f, 3.0f, 5.0f).setOutboundConnections(new int[] {7}).setState(Node.NODESTATE.RIGHT));
 
         nodeList.add(new Node(4, 4.33f, 5.0f, 2.5f).setOutboundConnections(new int[] {8}));
         nodeList.add(new Node(5, -2.5f, 6.0f, 4.33f).setOutboundConnections(new int[] {9}));
         nodeList.add(new Node(6, -4.33f, 7.0f, -2.5f).setOutboundConnections(new int[] {10}));
-        nodeList.add(new Node(7, 2.5f, 8.0f, -4.33f).setOutboundConnections(new int[] {11}));
+        nodeList.add(new Node(7, 2.5f, 8.0f, -4.33f).setOutboundConnections(new int[] {11}).setState(Node.NODESTATE.OPEN));
 
         nodeList.add(new Node(8, 2.5f, 10.0f, 4.33f).setOutboundConnections(new int[] {12}));
         nodeList.add(new Node(9, -4.33f, 11.0f, 2.5f).setOutboundConnections(new int[] {13}));
