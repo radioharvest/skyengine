@@ -4,8 +4,6 @@ import android.content.Context;
 import android.opengl.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.RenderContainer;
 import aq.oceanbase.skyscroll.logic.Game;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
@@ -133,6 +131,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mTime = new Date().getTime();
         mFrameCounter = 0;
 
+        mProgramManager.reload();
         mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
         /*mGameInstance.mTreeBackground.initialize(mContext, mShaderFolder);
         mGameInstance.mGameSession.tree.initialize(mContext, mShaderFolder);*/
@@ -158,7 +157,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
 
         mCamera.setProjM(projectionMatrix);
-        mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
+        //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
         Log.e("Debug", new StringBuilder().append("SurfaceChanged").toString());
     }
 
@@ -168,21 +167,12 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         //Log.e("Draw", new StringBuilder().append("Width: ").append(mScreenWidth).toString());
         if (this.mResolutionChanged) {
-            //this.mWindow.rotate90();
             this.mResolutionChanged = false;
         }
 
         mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
         mGameInstance.mCurrentRenderables.draw(mCamera);
-        /*mGameInstance.mTreeBackground.draw(mCamera);
 
-        if (mGameInstance.mWindow != null) {
-            if (!mGameInstance.mWindow.isInitialized()) mGameInstance.mWindow.initialize(mContext, mShaderFolder);
-
-            mGameInstance.mWindow.draw(mCamera);
-        } else {
-            mGameInstance.mGameSession.tree.draw(mCamera);
-        }*/
 
         mGameInstance.update();
 

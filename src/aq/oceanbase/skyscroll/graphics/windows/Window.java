@@ -9,10 +9,11 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.text.format.Time;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
@@ -48,6 +49,9 @@ public class Window implements Renderable {
 
     private WindowContent mContent = null;
     private ButtonBlock mButtonBlock = null;
+
+    private int mButtonBlinkPeriod = 300;
+    private long mTimer = -1;
 
     private int mWindowProgram;
     private int mContentProgram;
@@ -92,6 +96,10 @@ public class Window implements Renderable {
 
     public Window (Vector3f position, float width, float height, Camera cam, int[] screenMetrics) {
         this(position.x, position.y, position.z, width, height, cam, screenMetrics);
+    }
+
+    public Window (int screenX, int screenY, float depth, Camera cam, int[] screenMetrics) {
+        this(screenX, screenY, depth, screenMetrics[2] - 2*screenX, screenMetrics[3] - 2*screenY, cam, screenMetrics);
     }
 
     public Window (int offset, float depth, Camera cam, int[] screenMetrics) {
@@ -163,8 +171,8 @@ public class Window implements Renderable {
     public void setQuestion(Question question) {
         this.mQuestion = question;
 
-        this.addContentBlock(new float[] {1.0f, 0.6f}, mQuestion.getBody());
-        this.addButtonBlock(new float[] {1.0f, 0.4f}, mQuestion.getVariants());
+        this.addContentBlock(new float[] {1.0f, 0.5f}, mQuestion.getBody());
+        this.addButtonBlock(new float[] {1.0f, 0.5f}, mQuestion.getVariants());
     }
     //</editor-fold>
 
@@ -317,7 +325,7 @@ public class Window implements Renderable {
         }
     }
 
-    public boolean pressButton(int inputTouchX, int inputTouchY, Camera cam, int[] screenMetrics) {
+    public Button.STATE pressButton(int inputTouchX, int inputTouchY, Camera cam, int[] screenMetrics) {
         int buttonId;
         Vector3f touch = new TouchRay(inputTouchX, inputTouchY, 1.0f, cam, screenMetrics)
                 .getPointPositionOnRay(cam.getPosZ() - this.mPos.z);
@@ -326,11 +334,22 @@ public class Window implements Renderable {
         buttonId = mButtonBlock.findPressedButton(touch.x, touch.y);
 
         if (buttonId != -1) {
-            if (buttonId == mQuestion.getAnswer()) return true;
-            else mButtonBlock.highlightButton(buttonId);
+            Time now = new Time();
+            now.setToNow();
+            mTimer = now.toMillis(false);
+            Log.e("Debug", new StringBuilder("Button timer: ").append(mTimer).toString());
+
+            if (buttonId == mQuestion.getAnswer()) {
+                mButtonBlock.highlightButton(buttonId, Button.STATE.RIGHT);
+                return Button.STATE.RIGHT;
+            }
+            else {
+                mButtonBlock.highlightButton(buttonId, Button.STATE.WRONG);
+                return Button.STATE.WRONG;
+            }
         }
 
-        return false;
+        return Button.STATE.NEUTRAL;
     }
     //</editor-fold>
 
@@ -409,6 +428,18 @@ public class Window implements Renderable {
 
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         mButtonBatch.beginBatch(cam);
+
+        /*if (mButtonBlock.isButtonHighlighted()) {
+            Time now = new Time();
+            now.setToNow();
+            if (now.toMillis(false) - mTimer > mButtonBlinkPeriod) {
+                mButtonBlock.blink();
+                Log.e("Debug", new StringBuilder("Times: ").append(now.toMillis(false)).append(" ").append(mTimer).toString());
+                mTimer = now.toMillis(false);
+            }
+            now.clear("any");
+
+        }*/
 
         for ( int i = 0; i < mButtonBlock.getButtonsAmount(); i++ ) {
 

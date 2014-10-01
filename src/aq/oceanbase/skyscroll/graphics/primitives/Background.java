@@ -3,9 +3,8 @@ package aq.oceanbase.skyscroll.graphics.primitives;
 import android.content.Context;
 import android.opengl.GLES20;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.Renderable;
-import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 public class Background extends Sprite implements Renderable {

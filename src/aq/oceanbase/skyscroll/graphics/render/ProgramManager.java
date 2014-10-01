@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics;
+package aq.oceanbase.skyscroll.graphics.render;
 
 import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 
@@ -49,5 +49,23 @@ public class ProgramManager {
              default:
                  return 0;
         }
+    }
+
+    public void reload() {
+        if (bckgrndShaderProgram != 0)
+            bckgrndShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/background/bckgrndVertex.glsl", shaderFolder + "/background/bckgrndFragment.glsl");
+
+        if (lineShaderProgram != 0)
+            lineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
+
+        if (spriteBatchShaderProgram != 0)
+            spriteBatchShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");
+
+        if (windowShaderProgram != 0)
+            windowShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/window/windowVertex.glsl", shaderFolder + "/window/windowFragment.glsl");
+
+        if (windowContentShaderProgram != 0)
+            windowContentShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/window/windowContentVertex.glsl", shaderFolder + "/window/windowContentFragment.glsl");
+
     }
 }

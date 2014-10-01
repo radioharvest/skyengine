@@ -58,6 +58,11 @@ public class ButtonBlock {
         else return null;
     }
 
+    public boolean isButtonHighlighted() {
+        if (mHighlighted != -1) return true;
+        return false;
+    }
+
 
     private void computeButtonsMetrics(String[] buttonValues) {
         this.mButtons = new Button[buttonValues.length];
@@ -120,14 +125,14 @@ public class ButtonBlock {
         paint.setTypeface(tf);
         paint.setColor(Color.WHITE);
         paint.setStyle(Paint.Style.FILL);
-        paint.setTextSize(20);
+        paint.setTextSize(28);
         paint.setAntiAlias(true);
         paint.setStrokeWidth(5);
 
         Paint.FontMetrics fm = paint.getFontMetrics();
 
-        float fontsize = (float)Math.floor((cellHeight / 3) * 20 / (Math.abs(fm.top) + fm.leading));
-        paint.setTextSize(fontsize);
+        //float fontsize = (float)Math.floor((cellHeight / 3) * 20 / (Math.abs(fm.top) + fm.leading));
+        //paint.setTextSize(fontsize);
 
         mBitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(mBitmap);
@@ -208,12 +213,33 @@ public class ButtonBlock {
     }
 
 
-    public void highlightButton(int id) {
+    public void highlightButton(int id, Button.STATE state) {
         if (mHighlighted != -1) {
             mButtons[mHighlighted].setState(Button.STATE.NEUTRAL);
         }
 
-        mButtons[id].setState(Button.STATE.WRONG);
+        mButtons[id].setState(state);
         mHighlighted = id;
+    }
+
+    public void blink(int buttonId, float[] color1, float[] color2) {
+        float[] buttonColor = mButtons[buttonId].getColor();
+        if (buttonColor[0] == color1[0] && buttonColor[1] == color1[1] && buttonColor[2] == color1[2] && buttonColor[3] == color1[3]) {
+            mButtons[buttonId].setColor(color2);
+        } else mButtons[buttonId].setColor(color1);
+        Log.e("Debug", new StringBuilder().append("BLINKED").toString());
+    }
+
+    public void blink(int buttonId, float[] color) {
+        this.blink(buttonId, color, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
+    }
+
+    public void blink() {
+        if (mHighlighted != -1) {
+            float[] color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+            if (mButtons[mHighlighted].getState() == Button.STATE.RIGHT) color = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
+            if (mButtons[mHighlighted].getState() == Button.STATE.WRONG) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+            this.blink(mHighlighted, color, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
+        }
     }
 }

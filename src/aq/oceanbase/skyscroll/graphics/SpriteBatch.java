@@ -3,7 +3,8 @@ package aq.oceanbase.skyscroll.graphics;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.graphics.render.Renderable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,6 +30,7 @@ public class SpriteBatch implements Renderable {
     public final static int MAX_BATCHSIZE = 16;             // Maximum size of a batch
 
     private boolean mInitialized = false;               // Initialization flag
+    private boolean mFiltered = false;
 
     private Camera mCam;                        // Camera instance
 
@@ -87,6 +89,10 @@ public class SpriteBatch implements Renderable {
 
         mVertexBuffer = ByteBuffer.allocateDirect( mVertexTypeSize * VERTICES_PER_SPRITE * MAX_BATCHSIZE * (Float.SIZE / 8) ).
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
+    }
+
+    public void setFiltered(boolean value) {
+        this.mFiltered = value;
     }
 
     // -- Begin batching -- //
@@ -314,6 +320,11 @@ public class SpriteBatch implements Renderable {
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, mTextureHandle);
         GLES20.glUniform1i(textureUniformHandle, 0);
+
+        if (mFiltered) {
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
+            GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        }
 
         mVertexBuffer.position(0);        //set the position of position data in vertex buffer
         GLES20.glVertexAttribPointer(positionHandle, POSITION_DATA_SIZE, GLES20.GL_FLOAT, false, mVertexStride, mVertexBuffer);

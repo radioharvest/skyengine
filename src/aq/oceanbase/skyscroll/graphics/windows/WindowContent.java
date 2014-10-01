@@ -31,7 +31,7 @@ public class WindowContent{
 
     public WindowContent(String text) {
         this.mText = text;
-        this.mFontsize = 20;
+        this.mFontsize = 35;
         this.mWidth = 100;
     }
 
@@ -40,7 +40,7 @@ public class WindowContent{
         this.mWindowHeight = pixelMetrics[1];
 
         this.mText = text;
-        this.mFontsize = 22;
+        this.mFontsize = 35;
 
         this.mTextLines = new ArrayList<String>();
         this.mPicture = null;
@@ -142,6 +142,7 @@ public class WindowContent{
         paint.setTextSize(mFontsize);
         paint.setAntiAlias(true);
         paint.setStrokeWidth(5);
+        paint.setTextAlign(Paint.Align.CENTER);
 
         parseText(mText, paint);
         Paint.FontMetrics fm = paint.getFontMetrics();
@@ -160,7 +161,7 @@ public class WindowContent{
 
         int y = (int)Math.abs(fm.top);
         for ( int i = 0; i < mTextLines.size(); i++ ) {
-            canvas.drawText(mTextLines.get(i), 0, y, paint);
+            canvas.drawText(mTextLines.get(i), mWidth/2, y, paint);
 
             y += Math.abs((int)(fm.top + fm.leading));
         }

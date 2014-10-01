@@ -1,7 +1,8 @@
-package aq.oceanbase.skyscroll.graphics;
+package aq.oceanbase.skyscroll.graphics.render;
 
 import android.content.Context;
 import android.util.Log;
+import aq.oceanbase.skyscroll.graphics.Camera;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,9 +1,11 @@
 package aq.oceanbase.skyscroll.logic;
 
+import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.RenderContainer;
+import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
+import aq.oceanbase.skyscroll.graphics.windows.Button;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
@@ -11,6 +13,9 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
+
+import android.text.format.Time;
+import java.util.Calendar;
 
 public class Game {
 
@@ -31,7 +36,10 @@ public class Game {
     private float mMinHeight = 0.0f;
     private float mMaxHeight = 30.0f;
     private float mMinDist = 8.0f;
-    private float mMaxDist = 40.0f;
+    private float mMaxDist = 30.0f;
+
+    private int mBlinkTime = 800;
+    private long mTimer = -1;
 
     //Tree
     public GameSession mGameSession;
@@ -51,7 +59,7 @@ public class Game {
     private float mDistance = 15.0f;         //cam distance from origin
     private float mHeight = 0.0f;
 
-    private Camera mCamera = new Camera(new Vector3f(0.0f, 0.0f, mDistance),
+    private Camera mCamera = new Camera(new Vector3f(0.0f, 8.0f, mDistance),
             new Vector3f(0.0f, 0.0f, -1.0f),
             new Vector3f(0.0f, 1.0f, 0.0f));
 
@@ -82,7 +90,7 @@ public class Game {
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
             if (mCurrentNode != -1) {
                 if(mGameSession.tree.getNode(mCurrentNode).getState() == Node.NODESTATE.OPEN) {
-                    createWindow(getQuestion(1));
+                    createWindow(getQuestion(mCurrentNode));
                     switchMode(MODE.QUESTION);
                 }
 
@@ -98,19 +106,28 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
-            boolean answered;
+            Button.STATE answered;
             answered = mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
             if (mCurrentNode >= 0 && mCurrentNode < mGameSession.tree.getNodesAmount()) {
                 /*if (answered) mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.RIGHT);
                 else mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.WRONG);*/
-                if (answered) mGameSession.tree.setNodeRight(mCurrentNode);
-                else mGameSession.tree.setNodeWrong(mCurrentNode);
+                if (answered == Button.STATE.RIGHT) mGameSession.tree.setNodeRight(mCurrentNode);
+                else if (answered == Button.STATE.WRONG) mGameSession.tree.setNodeWrong(mCurrentNode);
             }
 
+            if (answered != Button.STATE.NEUTRAL) {
+                Time now = new Time();
+                now.setToNow();
+                mTimer = now.toMillis(false);
+                Log.e("Debug", new StringBuilder("Set").append(mTimer).toString());
+            }
+
+            /*
             killWindow();
             mWindow = null;
 
             switchMode(MODE.TREE);
+            */
         }
     };
 
@@ -187,31 +204,138 @@ public class Game {
 
 
     private Question getQuestion(int id) {
-        String text = "Alright then, picture this if you will:\n" +
-                "10 to 2 AM, X, Yogi DMT, and a box of Krispy Kremes, in my \"need to know\" post, just outside of Area 51.\n" +
-                "Contemplating the whole \"chosen people\" thing with just a flaming stealth banana split the sky like one would hope but never really expect to see in a place like this.\n" +
-                "Cutting right angle donuts on a dime and stopping right at my Birkenstocks, and me yelping...\n" +
-                "Holy fucking shit!\n" +
-                "\n" +
-                "Then the X-Files being, looking like some kind of blue-green Jackie Chan with Isabella Rossellini lips and breath that reeked of vanilla Chig Champa,\n" +
-                "did a slow-mo Matrix descent out of the butt end of the banana vessel and hovered above my bug-eyes, my gaping jaw, and my sweaty L. Ron Hubbard upper lip and all I could think was: \"I hope Uncle Martin here doesn't notice that I pissed my fuckin' pants.\"\n" +
-                "\n" +
-                "So light in his way,\n" +
-                "Like an apparition,\n" +
-                "He had me crying out,\n" +
-                "\"Fuck me,\n" +
-                "It's gotta be,\n" +
-                "Deadhead Chemistry,\n" +
-                "The blotter got right on top of me,\n" +
-                "Got me seein' E-motherfuckin'-T!\"\n" +
-                "\n" +
-                "And after calming me down with some orange slices and some fetal spooning, E.T. revealed to me his singular purpose.\n" +
-                "He said, \"You are the Chosen One, the One who will deliver the message. A message of hope for those who choose to hear it and a warning for those who do not.\"\n" +
-                "Me. The Chosen One?\n" +
-                "They chose me!!!\n" +
-                "And I didn't even graduate from fuckin' high school.";
-
-        String[] buttons = new String[] {"Tool", "Queen", "The Cult", "Primal Scream"};
+        String text;
+        String[] buttons;
+        switch (id) {
+            case 1:
+                text = "Какой цвет снизу на российском флаге?";
+                buttons = new String[] {"Красный", "Белый", "Синий", "Голубой"};
+                break;
+            case 2:
+                text = "Самое быстрое животное в мире";
+                buttons = new String[] {"Гепард", "Леопард", "Вилорог", "Заяц русак"};
+                break;
+            case 3:
+                text = "Самая распространенная фамилия России";
+                buttons = new String[] {"Смирнов", "Иванов", "Петров", "Сидоров"};
+                break;
+            case 4:
+                text = "Самая ценная порода дерева";
+                buttons = new String[] {"Эбеновое", "Бакаут", "Бальзамо", "Зебрано"};
+                break;
+            case 5:
+                text = "Самое древнее животное";
+                buttons = new String[] {"Таракан", "Крокодил", "Ехидна", "Муравей"};
+                break;
+            case 6:
+                text = "Сколько материков на земле?";
+                buttons = new String[] {"6", "5", "7", "9"};
+                break;
+            case 7:
+                text = "Какая птица каждый день навещала прикованного к скале Прометея?";
+                buttons = new String[] {"Орел", "Сокол", "Ворон", "Сова"};
+                break;
+            case 8:
+                text = "Самое большое государство в мире";
+                buttons = new String[] {"Россия", "Китай", "Канада", "США"};
+                break;
+            case 9:
+                text = "Сколько суток составляют високосный год?";
+                buttons = new String[] {"366", "365", "364", "367"};
+                break;
+            case 10:
+                text = "Сколько раз старик из сказки А. С. Пушкина вызывал Золотую рыбку?";
+                buttons = new String[] {"5", "4", "3", "7"};
+                break;
+            case 11:
+                text = "Продукт питания, который не портится";
+                buttons = new String[] {"Мёд", "Балык", "Сыр", "Чернослив"};
+                break;
+            case 12:
+                text = "От укусов каких существ погибает больше всего людей?";
+                buttons = new String[] {"пчёлы", "змеи", "акулы", "пауки"};
+                break;
+            case 13:
+                text = "На что чаще всего бывает аллергия у людей?";
+                buttons = new String[] {"молоко", "шерсть", "цветы", "цитрусы"};
+                break;
+            case 14:
+                text = "Существо с 3 веками";
+                buttons = new String[] {"верблюд", "ящерица", "крокодил", "паук"};
+                break;
+            case 15:
+                text = "Сколько литров воды в одном кубическом метре?";
+                buttons = new String[] {"1000", "984", "1024", "900"};
+                break;
+            case 16:
+                text = "Кто из этих апостолов был братом Петра?";
+                buttons = new String[] {"Андрей", "Павел", "Иоанн", "Матфей"};
+                break;
+            case 17:
+                text = "Какой титул носил белогвардейский генерал Петр Николаевич Врангель?";
+                buttons = new String[] {"барон", "граф", "князь", "герцог"};
+                break;
+            case 18:
+                text = "Русская народная мудрость гласит: \"Мила та сторона, где ... резан\"";
+                buttons = new String[] {"Пуп", "Свет", "Хлеб", "Дом"};
+                break;
+            case 19:
+                text = "Кого первым встречает героиня сказки \"Гуси-лебеди\", отправившаяся на поиски брата?";
+                buttons = new String[] {"Печь", "Река", "Яблоня", "Русалка"};
+                break;
+            case 20:
+                text = "Что выращивали для продажи в столице братья из сказки Ершова \"Конек-горбунок\"?";
+                buttons = new String[] {"Пшеницу", "Рожь", "Овёс", "Горох"};
+                break;
+            case 21:
+                text = "Когда был основан Санкт-Петербург?";
+                buttons = new String[] {"1703", "1698", "1721", "1802"};
+                break;
+            case 22:
+                text = "Кто из мушкетёров был графом де Ля Фер?";
+                buttons = new String[] {"Атос", "Портос", "Арамис", "Д\"артаньян"};
+                break;
+            case 23:
+                text = "С какого знака Зодиака начинается новый астрологический год?";
+                buttons = new String[] {"Овен", "Стрелец", "Козерог", "Водолей"};
+                break;
+            case 24:
+                text = "Сколько оборотов делает Земля вокруг своей оси за 24 часа?";
+                buttons = new String[] {"1", "4", "7", "30"};
+                break;
+            case 25:
+                text = "Как звали царя в \"Сказке о золотом петушке\"?";
+                buttons = new String[] {"Дадон", "Гвидон", "Драдон", "Батый"};
+                break;
+            case 26:
+                text = "Что было на голове человека с улицы Бассейной в известном произведении С. Маршака?";
+                buttons = new String[] {"Сковорода", "Ведро", "Горшок", "Кастрюля"};
+                break;
+            case 27:
+                text = "Что означает в переводе с французского название пирожного \"безе\"?";
+                buttons = new String[] {"Поцелуй", "Нежный", "Пушистый", "Облако"};
+                break;
+            case 28:
+                text = "Чем Балда воду в море мутил?";
+                buttons = new String[] {"Веревкой", "Палкой", "Рукой", "Цепью"};
+                break;
+            case 29:
+                text = "Сколько букв в русском языке?";
+                buttons = new String[] {"33", "32", "30", "34"};
+                break;
+            case 30:
+                text = "Где появились самые первые бумажные деньги?";
+                buttons = new String[] {"Китай", "Греция", "Рим", "Англия"};
+                break;
+            case 31:
+                text = "Сколько струн у балалайки?";
+                buttons = new String[] {"3", "4", "5", "2"};
+                break;
+            default:
+                text = "Древние римляне называли друзей ворами, причем ворующими самое дорогое. Что именно?";
+                buttons = new String[] {"Время", "Деньги", "Любовь", "Идеи"};
+                break;
+        }
 
         return new Question(text, buttons, 0);
     }
@@ -220,7 +344,7 @@ public class Game {
 
     private void createWindow(Question question) {
         mQuestionRenderables.clear();
-        mWindow = new Window(20, 2.0f, mCamera, mScreenMetrics);
+        mWindow = new Window(20, 100, 2.0f, mCamera, mScreenMetrics);
         mWindow.setQuestion(question);
         mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mWindow);
     }
@@ -265,6 +389,22 @@ public class Game {
         }
 
         updateCameraPosition();
+
+        //Log.e("Debug", new StringBuilder().append(Calendar.getInstance().get(Calendar.MILLISECOND) - mTimer).toString());
+        //Log.e("Debug", new StringBuilder().append(mTimer).toString());
+
+        if (mTimer != -1) {
+            Time now = new Time();
+            now.setToNow();
+            if (now.toMillis(false) - mTimer > mBlinkTime) {
+                killWindow();
+                mWindow = null;
+
+                switchMode(MODE.TREE);
+
+                mTimer = -1;
+            }
+        }
     }
 
 }

@@ -9,6 +9,8 @@ import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.*;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 public class FontMap implements Renderable {

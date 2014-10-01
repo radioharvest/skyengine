@@ -1,6 +1,8 @@
-package aq.oceanbase.skyscroll.graphics;
+package aq.oceanbase.skyscroll.graphics.render;
 
 import android.content.Context;
+import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 
 /**
  * This interface is used for renderable objects

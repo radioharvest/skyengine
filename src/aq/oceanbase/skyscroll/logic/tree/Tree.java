@@ -6,6 +6,8 @@ import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
@@ -321,10 +323,10 @@ public class Tree implements Renderable {
                 case ACTIVE:
                     GLES20.glVertexAttrib4f(colorHandler, 1.0f, 1.0f, 1.0f, 1.0f);
                     GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(4.0f);
+                    GLES20.glLineWidth(5.0f);
                     break;
                 case INACTIVE:
-                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 0.0f, 0.0f, 1.0f);
+                    GLES20.glVertexAttrib4f(colorHandler, 0.8f, 0.0f, 0.0f, 1.0f);
                     GLES20.glDisableVertexAttribArray(colorHandler);
                     GLES20.glLineWidth(2.0f);
                     break;
@@ -334,8 +336,8 @@ public class Tree implements Renderable {
                     GLES20.glLineWidth(2.0f);
                     break;
             }
-            if (connections[i].getState() == NodeConnection.CONNECTIONSTATE.IDLE) GLES20.glLineWidth(2.0f);
-            else GLES20.glLineWidth(5.0f);
+            /*if (connections[i].getState() == NodeConnection.CONNECTIONSTATE.IDLE) GLES20.glLineWidth(2.0f);
+            else GLES20.glLineWidth(5.0f);*/
             GLES20.glDrawArrays(GLES20.GL_LINES, i*2, 2);
 
         }
@@ -368,10 +370,10 @@ public class Tree implements Renderable {
             else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};*/
             switch (nodes[cur].getState()) {
                 case RIGHT:
-                    color = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
+                    color = new float[] {0.0f, 0.8f, 0.0f, 1.0f};
                     break;
                 case WRONG:
-                    color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
+                    color = new float[] {0.8f, 0.0f, 0.0f, 1.0f};
                     break;
                 case OPEN:
                     color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
@@ -384,7 +386,7 @@ public class Tree implements Renderable {
             Matrix.setIdentityM(spriteMatrix, 0);
             Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX, nodes[cur].posY, nodes[cur].posZ);
 
-            batch.batchElement(2.0f, 2.0f, color, texRgn, spriteMatrix);
+            batch.batchElement(2.2f, 2.2f, color, texRgn, spriteMatrix);
         }
 
         batch.endBatch();
@@ -399,8 +401,10 @@ public class Tree implements Renderable {
         lineShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE);
 
         textureDataHandler = TextureLoader.loadTexture(context, R.drawable.node);
+        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
         batch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);
+        batch.setFiltered(true);
         batch.initialize(context, programManager);
 
         this.initialized = true;

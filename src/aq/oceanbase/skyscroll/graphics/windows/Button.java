@@ -71,6 +71,10 @@ public class Button {
         return mTexRgn;
     }
 
+    public STATE getState() {
+        return this.mState;
+    }
+
     public float[] getVertexData() {
         return new float[] {
                 mPos.x, mPos.y, mPos.z,
@@ -107,6 +111,10 @@ public class Button {
         };
     }
 
+    public void setColor(float[] color) {
+        this.mColor = color;
+    }
+
     public void setState (STATE state) {
         this.mState = state;
 
@@ -129,4 +137,5 @@ public class Button {
     public void setTexRgn (TextureRegion texRgn) {
         this.mTexRgn = texRgn;
     }
+
 }
