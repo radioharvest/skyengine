@@ -26,7 +26,7 @@ public class Node {
 
     private int difficulty;     // difficulty level is int, amount is set in Game
 
-    private int questionId;     // id of the question in database
+    private long questionId;     // id of the question in database
 
     private int inboundConnections[] = new int[] {};     // array of inbound connections
     private int outboundConnections[] = new int[] {};    //array of outbound connections
@@ -56,6 +56,15 @@ public class Node {
 
     public float[] getPos4f() {
         return new float[] {this.posX, this.posY, this.posZ, 1.0f};     //w is 1 for point, 0 for direction
+    }
+
+
+    public void setQuestionId(long id) {
+        this.questionId = id;
+    }
+
+    public long getQuestionId() {
+        return this.questionId;
     }
 
 

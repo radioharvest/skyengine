@@ -1,7 +1,10 @@
 package aq.oceanbase.skyscroll.logic;
 
+import java.util.Date;
+import java.util.Random;
+
 public class Question {
-    private double mId;
+    private long mId;
 
     private String mType;
 
@@ -11,19 +14,19 @@ public class Question {
 
     private String mVariants[];
 
-    private int mAnswer;
+    private int mAnswerId;
 
     public Question(String text, String[] variants, int answer) {
         this.mBody = text;
         this.mVariants = variants;
-        this.mAnswer = answer;
+        this.mAnswerId = answer;
     }
 
-    public double getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(double id) {
+    public void setId(long id) {
         this.mId = id;
     }
 
@@ -44,10 +47,28 @@ public class Question {
     }
 
     public int getAnswer() {
-        return mAnswer;
+        return mAnswerId;
     }
 
     public void setAnswer(int answer) {
-        this.mAnswer = answer;
+        this.mAnswerId = answer;
+    }
+
+    public Question shuffleAnswers() {
+        Random rand = new Random(new Date().getTime());
+        for (int i = 0, k = 0; i < Math.ceil(Game.QUESTIONS_AMOUNT); i++, k++) {
+            if (k >= mVariants.length) break;
+            int target = rand.nextInt(mVariants.length);
+            if (target != k) {
+                String swap = mVariants[target];
+                mVariants[target] = mVariants[k];
+                mVariants[k] = swap;
+                if (k == mAnswerId) mAnswerId = target;
+            } else {
+                i--;
+            }
+        }
+
+        return this;
     }
 }

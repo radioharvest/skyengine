@@ -14,7 +14,7 @@ public class Core extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        mGameInstance = new Game();
+        mGameInstance = new Game(getApplicationContext());
         Log.e("Debug", new StringBuilder().append("APPLICATION CREATED").toString());
     }
 }

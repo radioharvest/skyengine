@@ -1,7 +1,9 @@
 package aq.oceanbase.skyscroll.logic;
 
+import android.content.Context;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
+import aq.oceanbase.skyscroll.data.QuestionDBHelper;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
@@ -13,11 +15,13 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
-
 import android.text.format.Time;
-import java.util.Calendar;
+
+import java.sql.SQLException;
 
 public class Game {
+
+    public static final int QUESTIONS_AMOUNT = 4;
 
     public static enum MODE {
         TREE, QUESTION
@@ -27,6 +31,8 @@ public class Game {
     private boolean mModeSwitched = false;
 
     private int[] mScreenMetrics;
+
+    private Context mContext;
 
     public RenderContainer mCurrentRenderables;
     private RenderContainer mTreeRenderables = new RenderContainer();
@@ -132,8 +138,10 @@ public class Game {
     };
 
 
-    public Game() {
+    public Game(Context context) {
         mGameSession = new GameSession();
+        mContext = context;
+        populateQuestionDB();
         //mCurrentBackground = mTreeBackground;
 
         mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGameSession.tree);
@@ -160,6 +168,10 @@ public class Game {
 
     public void setScreenMetrics(int[] screenMetrics) {
         this.mScreenMetrics = screenMetrics;
+    }
+
+    public void setContext (Context context) {
+        this.mContext = context;
     }
 
     public RenderContainer getRenderables() {
@@ -203,7 +215,21 @@ public class Game {
     //</editor-fold>
 
 
-    private Question getQuestion(int id) {
+    private void populateQuestionDB() {
+        QuestionDBHelper qDBHelper = new QuestionDBHelper(mContext);
+        try {
+            qDBHelper.openW();
+            qDBHelper.addQuestion(getQuestionForDB(0));
+            for (int i = 1; i < 32; i++) {
+                qDBHelper.addQuestion(getQuestionForDB(i));
+            }
+            qDBHelper.close();
+        } catch (SQLException excep) {
+            Log.e("Error", "Database population error");
+        }
+    }
+
+    private Question getQuestionForDB(int id) {
         String text;
         String[] buttons;
         switch (id) {
@@ -338,6 +364,21 @@ public class Game {
         }
 
         return new Question(text, buttons, 0);
+    }
+
+    private Question getQuestion(long id) {
+        QuestionDBHelper qDBHelper = new QuestionDBHelper(mContext);
+        Question question;
+        try {
+            qDBHelper.openR();
+            question = qDBHelper.getQuestion(id + 1);
+            qDBHelper.close();
+        } catch (SQLException excep) {
+            question = new Question("Errors have occured\nWe won't tell you where or why\nLazy programmers",
+                    new String[] {"CLOSE", "BLANK", "BLANK", "BLANK"}, 0);
+        }
+        question.shuffleAnswers();
+        return question;
     }
 
 
