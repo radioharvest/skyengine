@@ -9,6 +9,8 @@ import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.primitives.Background;
 import aq.oceanbase.skyscroll.graphics.windows.Button;
 import aq.oceanbase.skyscroll.graphics.windows.Window;
+import aq.oceanbase.skyscroll.logic.events.WindowEvent;
+import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
@@ -72,6 +74,7 @@ public class Game {
     //Touch variables
     public TouchHandler mTouchHandler;
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
+
     private final TouchHandler mTreeTouchHandler = new TouchHandler() {
         @Override
         public void onSwipeHorizontal(float amount) {
@@ -103,7 +106,6 @@ public class Game {
             }
         }
     };
-
     private final TouchHandler mWindowTouchHandler = new TouchHandler() {
         @Override
         public void onSwipeVertical(float amount) {
@@ -115,9 +117,7 @@ public class Game {
             Button.STATE answered;
             answered = mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
             if (mCurrentNode >= 0 && mCurrentNode < mGameSession.tree.getNodesAmount()) {
-                /*if (answered) mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.RIGHT);
-                else mGameSession.tree.getNode(mCurrentNode).setState(Node.NODESTATE.WRONG);*/
-                if (answered == Button.STATE.RIGHT) mGameSession.tree.setNodeRight(mCurrentNode);
+                if (answered == Button.STATE.CORRECT) mGameSession.tree.setNodeCorrect(mCurrentNode);
                 else if (answered == Button.STATE.WRONG) mGameSession.tree.setNodeWrong(mCurrentNode);
             }
 
@@ -137,6 +137,15 @@ public class Game {
         }
     };
 
+    //Events
+    public class WindowListener implements WindowEventListener {
+        @Override
+        public void onClose(WindowEvent e) {
+            killWindow();
+            switchMode(MODE.TREE);
+        }
+    }
+
 
     public Game(Context context) {
         mGameSession = new GameSession();
@@ -148,6 +157,8 @@ public class Game {
         setMode(MODE.TREE);
     }
 
+
+    //<editor-fold desc="Getters and Setters">
     public Camera getCamera() {
         return mCamera;
     }
@@ -177,9 +188,10 @@ public class Game {
     public RenderContainer getRenderables() {
         return mCurrentRenderables;
     }
+    //</editor-fold>
 
 
-    //<editor-fold desc="Updaters">
+    //<editor-fold desc="Camera updaters">
     private void updateAngle() {
         mGameSession.tree.updateAngle(mMomentum.x);
     }
@@ -215,6 +227,15 @@ public class Game {
     //</editor-fold>
 
 
+    private void updateNode(int nodeId, boolean answered) {
+        if (nodeId >= 0 && nodeId < mGameSession.tree.getNodesAmount()) {
+            if (answered) mGameSession.tree.setNodeCorrect(nodeId);
+            else mGameSession.tree.setNodeWrong(mCurrentNode);
+        }
+    }
+
+
+    //<editor-fold desc="Questions">
     private void populateQuestionDB() {
         QuestionDBHelper qDBHelper = new QuestionDBHelper(mContext);
         try {
@@ -380,21 +401,26 @@ public class Game {
         question.shuffleAnswers();
         return question;
     }
+    //</editor-fold>
 
 
-
+    //<editor-fold desc="Windows">
     private void createWindow(Question question) {
         mQuestionRenderables.clear();
         mWindow = new Window(20, 100, 2.0f, mCamera, mScreenMetrics);
         mWindow.setQuestion(question);
+        mWindow.addWindowEventListener(new WindowListener());
         mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mWindow);
     }
 
     private void killWindow() {
+        mWindow = null;
         mQuestionRenderables.clear();
     }
+    //</editor-fold>
 
 
+    //<editor-fold desc="Mode handling">
     private void setMode(MODE mode) {
         switch (mode) {
             case TREE:
@@ -421,6 +447,8 @@ public class Game {
 
         setMode(mode);
     }
+    //</editor-fold>
+
 
     public void update() {
         if (mMomentum.nonZero()) {
@@ -437,14 +465,14 @@ public class Game {
         if (mTimer != -1) {
             Time now = new Time();
             now.setToNow();
-            if (now.toMillis(false) - mTimer > mBlinkTime) {
+            /*if (now.toMillis(false) - mTimer > mBlinkTime) {
                 killWindow();
                 mWindow = null;
 
                 switchMode(MODE.TREE);
 
                 mTimer = -1;
-            }
+            }*/
         }
     }
 

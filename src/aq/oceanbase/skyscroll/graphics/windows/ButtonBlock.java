@@ -237,7 +237,7 @@ public class ButtonBlock {
     public void blink() {
         if (mHighlighted != -1) {
             float[] color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
-            if (mButtons[mHighlighted].getState() == Button.STATE.RIGHT) color = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
+            if (mButtons[mHighlighted].getState() == Button.STATE.CORRECT) color = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
             if (mButtons[mHighlighted].getState() == Button.STATE.WRONG) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
             this.blink(mHighlighted, color, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
         }

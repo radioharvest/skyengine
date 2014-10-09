@@ -10,7 +10,7 @@ import java.util.List;
 public class Node {
 
     public static enum NODESTATE {
-        IDLE, OPEN, WRONG, RIGHT
+        IDLE, OPEN, WRONG, CORRECT
     }
 
     public int id;          // node id

@@ -144,7 +144,7 @@ public class Tree implements Renderable {
             case IDLE:
                 nodes[id].setState(Node.NODESTATE.OPEN);
                 break;
-            default:            // any other case (RIGHT, OPEN)
+            default:            // any other case (CORRECT, OPEN)
                 return false;
         }
         return true;
@@ -158,9 +158,9 @@ public class Tree implements Renderable {
         return true;
     }
 
-    public boolean setNodeRight(int id) {
+    public boolean setNodeCorrect(int id) {
         if (nodes[id].getState() != Node.NODESTATE.OPEN) return false;
-        nodes[id].setState(Node.NODESTATE.RIGHT);
+        nodes[id].setState(Node.NODESTATE.CORRECT);
         int[] outConns = nodes[id].getOutboundConnections();
         for (int i = 0; i < outConns.length; i++)
             setNodeOpen(outConns[i]);
@@ -369,7 +369,7 @@ public class Tree implements Renderable {
             /*if (nodes[cur].isSelected()) color = new float[] {0.1f, 0.1f, 0.7f, 1.0f};
             else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};*/
             switch (nodes[cur].getState()) {
-                case RIGHT:
+                case CORRECT:
                     color = new float[] {0.0f, 0.8f, 0.0f, 1.0f};
                     break;
                 case WRONG:

@@ -9,7 +9,7 @@ public class Button {
     public static final int VERTEX_AMOUNT = 4;
 
     public static enum STATE {
-        PRESSED, NEUTRAL, WRONG, RIGHT
+        PRESSED, NEUTRAL, WRONG, CORRECT
     }
 
     private int mId;
@@ -128,7 +128,7 @@ public class Button {
             case WRONG:
                 mColor = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
                 break;
-            case RIGHT:
+            case CORRECT:
                 mColor = new float[] {0.0f, 1.0f, 0.0f, 1.0f};
                 break;
         }

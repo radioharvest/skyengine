@@ -1,5 +1,8 @@
 package aq.oceanbase.skyscroll.logic;
 
+import android.util.Log;
+
+import javax.security.auth.login.LoginException;
 import java.util.Date;
 import java.util.Random;
 
@@ -60,10 +63,13 @@ public class Question {
             if (k >= mVariants.length) break;
             int target = rand.nextInt(mVariants.length);
             if (target != k) {
+                Log.e("Error", " " + mAnswerId);
                 String swap = mVariants[target];
                 mVariants[target] = mVariants[k];
                 mVariants[k] = swap;
                 if (k == mAnswerId) mAnswerId = target;
+                else if (target == mAnswerId) mAnswerId = k;
+                Log.e("Error", " " + mAnswerId);
             } else {
                 i--;
             }

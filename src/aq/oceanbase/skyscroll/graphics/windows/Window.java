@@ -15,6 +15,8 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
+import aq.oceanbase.skyscroll.logic.events.WindowEvent;
+import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -26,11 +28,17 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 public class Window implements Renderable {
     public static enum ALIGN {
         LEFT, RIGHT, TOP, BOTTOM
     }
+
+    private List<Object> mEventListeners = new ArrayList<Object>();
 
     private boolean mInitialized = false;
 
@@ -42,16 +50,15 @@ public class Window implements Renderable {
 
     private int mBorderPixelOffset;
     private float mBorderOffset;
-
     private float mBorderWidth;
-
     private int mFontSize;
 
     private WindowContent mContent = null;
     private ButtonBlock mButtonBlock = null;
 
-    private int mButtonBlinkPeriod = 300;
     private long mTimer = -1;
+    private int mClosingTime = 700;
+    private int mBlinkPeriod = 300;
 
     private int mWindowProgram;
     private int mContentProgram;
@@ -334,14 +341,11 @@ public class Window implements Renderable {
         buttonId = mButtonBlock.findPressedButton(touch.x, touch.y);
 
         if (buttonId != -1) {
-            Time now = new Time();
-            now.setToNow();
-            mTimer = now.toMillis(false);
-            Log.e("Debug", new StringBuilder("Button timer: ").append(mTimer).toString());
+            mTimer = new Date().getTime();
 
             if (buttonId == mQuestion.getAnswer()) {
-                mButtonBlock.highlightButton(buttonId, Button.STATE.RIGHT);
-                return Button.STATE.RIGHT;
+                mButtonBlock.highlightButton(buttonId, Button.STATE.CORRECT);
+                return Button.STATE.CORRECT;
             }
             else {
                 mButtonBlock.highlightButton(buttonId, Button.STATE.WRONG);
@@ -350,6 +354,27 @@ public class Window implements Renderable {
         }
 
         return Button.STATE.NEUTRAL;
+    }
+    //</editor-fold>
+
+
+    //<editor-fold desc="Event functions">
+    public void addWindowEventListener(Object obj) {
+        mEventListeners.add(obj);
+    }
+
+    public void removeWindowEventListener(Object obj) {
+        mEventListeners.remove(obj);
+    }
+
+    private void fireCloseEvent() {
+        WindowEvent event = new WindowEvent(this);
+        if (!mEventListeners.isEmpty()) {
+            for (int i = 0; i < mEventListeners.size(); i++) {
+                WindowEventListener listener = (WindowEventListener)mEventListeners.get(i);
+                listener.onClose(event);
+            }
+        }
     }
     //</editor-fold>
 
@@ -539,5 +564,7 @@ public class Window implements Renderable {
         if (mButtonBlock != null) this.drawButtons(cam);
         //if (mButtonBlock != null) this.drawButtons();
         //GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        if (mTimer != -1 && new Date().getTime() - mTimer >= mClosingTime) fireCloseEvent();
     }
 }

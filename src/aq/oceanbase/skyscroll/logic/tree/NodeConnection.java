@@ -39,12 +39,12 @@ public class NodeConnection {
             case WRONG:
                 this.state = CONNECTIONSTATE.INACTIVE;
                 break;
-            case RIGHT:
+            case CORRECT:
                 switch (endState) {
                      case OPEN:
                         this.state = CONNECTIONSTATE.OPEN;
                         break;
-                    case RIGHT:
+                    case CORRECT:
                         this.state = CONNECTIONSTATE.ACTIVE;
                         break;
                     case WRONG:
@@ -57,7 +57,7 @@ public class NodeConnection {
                 break;
             case OPEN:
                 switch (endState) {
-                    case RIGHT:
+                    case CORRECT:
                         this.state = CONNECTIONSTATE.OPEN;
                         break;
                     case WRONG:
