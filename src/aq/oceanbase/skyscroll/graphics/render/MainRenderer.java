@@ -20,7 +20,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private final Context mContext;
 
     //Constants and sizes
-    //TODO: read about statics. maybe it's a bad idea to do sizes static
     public static final int mBytesPerFloat = 4;
     private int mScreenWidth;
     private int mScreenHeight;

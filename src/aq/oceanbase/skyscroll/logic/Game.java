@@ -6,9 +6,8 @@ import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.data.QuestionDBHelper;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
-import aq.oceanbase.skyscroll.graphics.primitives.Background;
-import aq.oceanbase.skyscroll.graphics.windows.Button;
-import aq.oceanbase.skyscroll.graphics.windows.Window;
+import aq.oceanbase.skyscroll.graphics.elements.background.Background;
+import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
@@ -17,7 +16,6 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
-import android.text.format.Time;
 
 import java.sql.SQLException;
 
@@ -27,6 +25,10 @@ public class Game {
 
     public static enum MODE {
         TREE, QUESTION
+    }
+
+    public static enum ANSWER {
+        CORRECT, WRONG, NONE
     }
 
     private MODE mDrawmode = MODE.TREE;
@@ -41,7 +43,7 @@ public class Game {
     private RenderContainer mQuestionRenderables = new RenderContainer();
 
     //Constraints
-    private float mMinHeight = 0.0f;
+    private float mMinHeight = 4.0f;
     private float mMaxHeight = 30.0f;
     private float mMinDist = 8.0f;
     private float mMaxDist = 30.0f;
@@ -58,14 +60,16 @@ public class Game {
     public Window mWindow;
 
     //Backgrounds
+    private float mBackgroundShiftFactor = 1.0f / ((mMaxHeight - mMinHeight) + 1.0f);
+
     private Background mCurrentBackground;
-    public Background mTreeBackground = new Background(R.drawable.bckgnd1);
+    public Background mTreeBackground = new Background(R.drawable.bckgnd1, mBackgroundShiftFactor);
     private Background mQuestionBackground = mTreeBackground;
 
 
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
-    private float mHeight = 0.0f;
+    private float mHeight = mMinHeight;
 
     private Camera mCamera = new Camera(new Vector3f(0.0f, 8.0f, mDistance),
             new Vector3f(0.0f, 0.0f, -1.0f),
@@ -98,11 +102,11 @@ public class Game {
             mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
             if (mCurrentNode != -1) {
-                if(mGameSession.tree.getNode(mCurrentNode).getState() == Node.NODESTATE.OPEN) {
+                /*if(mGameSession.tree.getNode(mCurrentNode).getState() == Node.NODESTATE.OPEN) {
                     createWindow(getQuestion(mCurrentNode));
                     switchMode(MODE.QUESTION);
-                }
-
+                }*/
+                openNodeQuestion(mCurrentNode);
             }
         }
     };
@@ -114,7 +118,7 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
-            Button.STATE answered;
+            /*Button.STATE answered;
             answered = mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
             if (mCurrentNode >= 0 && mCurrentNode < mGameSession.tree.getNodesAmount()) {
                 if (answered == Button.STATE.CORRECT) mGameSession.tree.setNodeCorrect(mCurrentNode);
@@ -126,7 +130,8 @@ public class Game {
                 now.setToNow();
                 mTimer = now.toMillis(false);
                 Log.e("Debug", new StringBuilder("Set").append(mTimer).toString());
-            }
+            }*/
+            mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
 
             /*
             killWindow();
@@ -144,6 +149,11 @@ public class Game {
             killWindow();
             switchMode(MODE.TREE);
         }
+
+        @Override
+        public void onAnswer(WindowEvent e) {
+            updateNodeStatus(mCurrentNode, e.isAnsweredCorrectly());
+        }
     }
 
 
@@ -154,7 +164,7 @@ public class Game {
         //mCurrentBackground = mTreeBackground;
 
         mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGameSession.tree);
-        setMode(MODE.TREE);
+        switchMode(MODE.TREE);
     }
 
 
@@ -212,6 +222,10 @@ public class Game {
         }
     }
 
+    private void updateBackground() {
+        mTreeBackground.setShift(mHeight - mMinHeight, mBackgroundShiftFactor);
+    }
+
     private void updateCameraPosition() {
         Vector3f updPos = mCamera.getPos();
         updPos.y = mHeight;
@@ -227,10 +241,17 @@ public class Game {
     //</editor-fold>
 
 
-    private void updateNode(int nodeId, boolean answered) {
+    private void updateNodeStatus(int nodeId, boolean answered) {
         if (nodeId >= 0 && nodeId < mGameSession.tree.getNodesAmount()) {
             if (answered) mGameSession.tree.setNodeCorrect(nodeId);
             else mGameSession.tree.setNodeWrong(mCurrentNode);
+        }
+    }
+
+    private void openNodeQuestion(int nodeId) {
+        if(mGameSession.tree.getNode(nodeId).getState() == Node.NODESTATE.OPEN) {
+            createWindow(getQuestion(nodeId));
+            switchMode(MODE.QUESTION);
         }
     }
 
@@ -437,15 +458,19 @@ public class Game {
     }
 
     private void switchMode (MODE mode) {
-        /*if (mode == MODE.QUESTION)
-            createWindow(this.getQuestion(1));
-        else {
-            killWindow();
-            mWindow = null;
-        }*/
+        switch (mode) {
+            case TREE:
+                mCurrentRenderables = mTreeRenderables;
+                mTouchHandler = mTreeTouchHandler;
+                break;
+            case QUESTION:
+                mCurrentRenderables = mQuestionRenderables;
+                mTouchHandler = mWindowTouchHandler;
+                break;
+        }
 
-
-        setMode(mode);
+        mDrawmode = mode;
+        //setMode(mode);
     }
     //</editor-fold>
 
@@ -453,27 +478,12 @@ public class Game {
     public void update() {
         if (mMomentum.nonZero()) {
             updateHeight();
+            updateBackground();
             updateAngle();
             updateMomentum();
         }
 
         updateCameraPosition();
-
-        //Log.e("Debug", new StringBuilder().append(Calendar.getInstance().get(Calendar.MILLISECOND) - mTimer).toString());
-        //Log.e("Debug", new StringBuilder().append(mTimer).toString());
-
-        if (mTimer != -1) {
-            Time now = new Time();
-            now.setToNow();
-            /*if (now.toMillis(false) - mTimer > mBlinkTime) {
-                killWindow();
-                mWindow = null;
-
-                switchMode(MODE.TREE);
-
-                mTimer = -1;
-            }*/
-        }
     }
 
 }

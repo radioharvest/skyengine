@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics.text;
+package aq.oceanbase.skyscroll.graphics.elements.text;
 
 import android.content.Context;
 import android.content.res.AssetManager;

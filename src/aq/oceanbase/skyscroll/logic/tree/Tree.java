@@ -136,11 +136,11 @@ public class Tree implements Renderable {
 
     public boolean setNodeOpen(int id) {
         switch (nodes[id].getState()) {
-            case WRONG:
+            /*case WRONG:
                 nodes[id].setState(Node.NODESTATE.OPEN);
                 updateNodeConnections(id, nodes[id].getInboundConnections());
                 updateNodeConnections(id, nodes[id].getOutboundConnections());
-                break;
+                break;*/
             case IDLE:
                 nodes[id].setState(Node.NODESTATE.OPEN);
                 break;

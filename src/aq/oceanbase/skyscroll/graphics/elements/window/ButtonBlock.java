@@ -1,8 +1,9 @@
-package aq.oceanbase.skyscroll.graphics.windows;
+package aq.oceanbase.skyscroll.graphics.elements.window;
 
 import android.graphics.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
+import aq.oceanbase.skyscroll.graphics.elements.window.Button;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
@@ -10,6 +11,7 @@ public class ButtonBlock {
     private Button[] mButtons;
 
     private int mHighlighted = -1;
+    private int mPressedButton = -1;
 
     private Vector3f mPos;
 
@@ -56,6 +58,19 @@ public class ButtonBlock {
     public Button getButton(int i) {
         if (i <= mButtons.length - 1) return mButtons[i];
         else return null;
+    }
+
+    public void setPressedButtonState(Button.STATE state) {
+        if (mPressedButton != -1 && mPressedButton >= 0 && mPressedButton < mButtons.length) {
+            mButtons[mPressedButton].setState(state);
+        }
+    }
+
+    public Button.STATE getPressedButtonState() {
+        if (mPressedButton != -1 && mPressedButton >= 0 && mPressedButton < mButtons.length)
+            return mButtons[mPressedButton].getState();
+        else
+            return Button.STATE.NEUTRAL;
     }
 
     public boolean isButtonHighlighted() {
@@ -204,6 +219,7 @@ public class ButtonBlock {
 
             if ( x >= 0 && x <= metrics[0]) {
                 if ( y >= 0 && y <= metrics[1]) {
+                    mPressedButton = i;
                     return i;
                 }
             }

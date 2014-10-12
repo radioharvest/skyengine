@@ -1,21 +1,28 @@
 package aq.oceanbase.skyscroll.logic.events;
 
+import aq.oceanbase.skyscroll.logic.Game;
+
 import java.util.EventObject;
 
 public class WindowEvent extends EventObject {
-    public static enum ANSWER {
-        CORRECT, WRONG
+
+    private Game.ANSWER mAnswer = Game.ANSWER.NONE;
+
+    public WindowEvent(Object source, Game.ANSWER answerState) {
+        super(source);
+        mAnswer = answerState;
     }
-
-    private boolean mClose;
-
 
     public WindowEvent(Object source) {
         super(source);
-        mClose = true;
     }
 
-    public boolean isClosing() {
-        return mClose;
+    public boolean isAnsweredCorrectly() {
+        if (mAnswer == Game.ANSWER.CORRECT) return true;
+        else return false;
+    }
+
+    public Game.ANSWER getAnswerState() {
+        return this.mAnswer;
     }
 }

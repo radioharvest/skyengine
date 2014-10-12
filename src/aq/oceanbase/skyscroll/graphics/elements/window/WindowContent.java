@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics.windows;
+package aq.oceanbase.skyscroll.graphics.elements.window;
 
 import android.graphics.*;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;

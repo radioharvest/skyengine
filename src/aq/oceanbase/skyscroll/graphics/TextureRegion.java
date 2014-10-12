@@ -9,8 +9,6 @@ public class TextureRegion {
     public float u1, v1;            //Top Left UV coordinate
     public float u2, v2;            //Bottom Right UV coordinate
 
-    private FloatBuffer textureCoordinateBuffer;
-
     public TextureRegion() {
         this.u1 = 0.0f;
         this.v1 = 0.0f;
@@ -38,15 +36,19 @@ public class TextureRegion {
     }
 
     public void moveVertically(float amount, float min, float max) {
-        if ( this.v1 + amount < min ) {
-            amount = min - this.v1;
+        if ( this.v1 - amount < min ) {
+            //amount = min - this.v1;
+            this.v1 = min;
+            amount = 0;
         }
-        if ( this.v2 + amount > max ) {
-            amount = max - this.v2;
+        if ( this.v2 - amount > max ) {             //else?
+            this.v2 = max;
+            //amount = max - this.v2;
+            amount = 0;
         }
 
-        this.v1 += amount;
-        this.v2 += amount;
+        this.v1 -= amount;
+        this.v2 -= amount;
     }
 
     public void moveHorizontally(float amount) {

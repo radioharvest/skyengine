@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics.windows;
+package aq.oceanbase.skyscroll.graphics.elements.window;
 
 /**
  * Window is container class for different types of info: text, images, etc
@@ -9,12 +9,12 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.text.format.Time;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.graphics.SpriteBatch;
+import aq.oceanbase.skyscroll.logic.Game;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
@@ -31,7 +31,6 @@ import java.nio.ShortBuffer;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 public class Window implements Renderable {
     public static enum ALIGN {
@@ -327,7 +326,7 @@ public class Window implements Renderable {
     public void scrollContent(int amount) {
         if (mContent != null && !(mContent.mTexRgn.v1 == 0.0f && mContent.mTexRgn.v2 == 1.0f)) {
             float uvAmount = (float)amount / (float)mContent.getHeight();
-            mContent.mTexRgn.moveVertically(uvAmount, 0.0f, mContent.mUpperLimit);
+            mContent.mTexRgn.moveVertically(-uvAmount, 0.0f, mContent.mUpperLimit);
             mContent.rebuildTextureBuffer();
         }
     }
@@ -345,10 +344,12 @@ public class Window implements Renderable {
 
             if (buttonId == mQuestion.getAnswer()) {
                 mButtonBlock.highlightButton(buttonId, Button.STATE.CORRECT);
+                fireAnswerEvent(Game.ANSWER.CORRECT);
                 return Button.STATE.CORRECT;
             }
             else {
                 mButtonBlock.highlightButton(buttonId, Button.STATE.WRONG);
+                fireAnswerEvent(Game.ANSWER.WRONG);
                 return Button.STATE.WRONG;
             }
         }
@@ -369,10 +370,22 @@ public class Window implements Renderable {
 
     private void fireCloseEvent() {
         WindowEvent event = new WindowEvent(this);
+
         if (!mEventListeners.isEmpty()) {
             for (int i = 0; i < mEventListeners.size(); i++) {
                 WindowEventListener listener = (WindowEventListener)mEventListeners.get(i);
                 listener.onClose(event);
+            }
+        }
+    }
+
+    private void fireAnswerEvent(Game.ANSWER answer) {
+        WindowEvent event = new WindowEvent(this, answer);
+
+        if (!mEventListeners.isEmpty()) {
+            for (int i = 0; i < mEventListeners.size(); i++) {
+                WindowEventListener listener = (WindowEventListener)mEventListeners.get(i);
+                listener.onAnswer(event);
             }
         }
     }
