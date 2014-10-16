@@ -60,10 +60,15 @@ public class Game {
     public Window mWindow;
 
     //Backgrounds
-    private float mBackgroundShiftFactor = 1.0f / ((mMaxHeight - mMinHeight) + 1.0f);
+    private int mGridTiles;
+    private float mGridTileSize = 0.0f;
+    private float mGridShiftFactor = 0.0f;
+    private float mBackgroundShiftFactor = 0.3f / ((mMaxHeight - mMinHeight) + 1.0f);
+
 
     private Background mCurrentBackground;
-    public Background mTreeBackground = new Background(R.drawable.bckgnd1, mBackgroundShiftFactor);
+    public Background mTreeBackground;
+    private Background mGridBackground;
     private Background mQuestionBackground = mTreeBackground;
 
 
@@ -100,12 +105,7 @@ public class Game {
         @Override
         public void onTap(float x, float y) {
             mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
-            //Log.e("Draw", new StringBuilder().append("Pos: ").append(x).append(" ").append(y).toString());
             if (mCurrentNode != -1) {
-                /*if(mGameSession.tree.getNode(mCurrentNode).getState() == Node.NODESTATE.OPEN) {
-                    createWindow(getQuestion(mCurrentNode));
-                    switchMode(MODE.QUESTION);
-                }*/
                 openNodeQuestion(mCurrentNode);
             }
         }
@@ -118,27 +118,7 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
-            /*Button.STATE answered;
-            answered = mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
-            if (mCurrentNode >= 0 && mCurrentNode < mGameSession.tree.getNodesAmount()) {
-                if (answered == Button.STATE.CORRECT) mGameSession.tree.setNodeCorrect(mCurrentNode);
-                else if (answered == Button.STATE.WRONG) mGameSession.tree.setNodeWrong(mCurrentNode);
-            }
-
-            if (answered != Button.STATE.NEUTRAL) {
-                Time now = new Time();
-                now.setToNow();
-                mTimer = now.toMillis(false);
-                Log.e("Debug", new StringBuilder("Set").append(mTimer).toString());
-            }*/
             mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
-
-            /*
-            killWindow();
-            mWindow = null;
-
-            switchMode(MODE.TREE);
-            */
         }
     };
 
@@ -163,10 +143,14 @@ public class Game {
         populateQuestionDB();
         //mCurrentBackground = mTreeBackground;
 
-        mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGameSession.tree);
+        mGridTiles = 1;
+
+        mTreeBackground = new Background(R.drawable.bckgnd2, 0.5f);
+        mGridBackground = new Background(R.drawable.grid, 1.0f);
+
+        mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
         switchMode(MODE.TREE);
     }
-
 
     //<editor-fold desc="Getters and Setters">
     public Camera getCamera() {
@@ -189,6 +173,7 @@ public class Game {
 
     public void setScreenMetrics(int[] screenMetrics) {
         this.mScreenMetrics = screenMetrics;
+        this.onScreenMetricsUpdate();
     }
 
     public void setContext (Context context) {
@@ -201,7 +186,7 @@ public class Game {
     //</editor-fold>
 
 
-    //<editor-fold desc="Camera updaters">
+    //<editor-fold desc="Updaters">
     private void updateAngle() {
         mGameSession.tree.updateAngle(mMomentum.x);
     }
@@ -223,7 +208,8 @@ public class Game {
     }
 
     private void updateBackground() {
-        mTreeBackground.setShift(mHeight - mMinHeight, mBackgroundShiftFactor);
+        mTreeBackground.setShift(mHeight - mMinHeight, mBackgroundShiftFactor, 0.7f);
+        mGridBackground.setShift(mHeight - mMinHeight, mGridShiftFactor, mGridTileSize);
     }
 
     private void updateCameraPosition() {
@@ -238,9 +224,21 @@ public class Game {
         mCamera.setDir(updDir);
         mCamera.updateCamera();
     }
+
+    public void onScreenMetricsUpdate() {
+        mGridTileSize = (float)mScreenMetrics[3]/(float)mScreenMetrics[2];
+        //mGridTileSize = 1.3f;
+        mGridShiftFactor = mGridTiles / (((mMaxHeight - mMinHeight) + 1.0f) * mGridTileSize);
+        updateBackground();
+
+        Log.e("Debug", "Width: " + mScreenMetrics[2] + "Height: " + mScreenMetrics[3]);
+        Log.e("Debug", "Grid Factor " + mGridShiftFactor);
+        Log.e("Debug", "Tiles At Screen " + mGridTileSize);
+    }
     //</editor-fold>
 
 
+    //<editor-fold desc="Node processing">
     private void updateNodeStatus(int nodeId, boolean answered) {
         if (nodeId >= 0 && nodeId < mGameSession.tree.getNodesAmount()) {
             if (answered) mGameSession.tree.setNodeCorrect(nodeId);
@@ -254,6 +252,7 @@ public class Game {
             switchMode(MODE.QUESTION);
         }
     }
+    //</editor-fold>
 
 
     //<editor-fold desc="Questions">

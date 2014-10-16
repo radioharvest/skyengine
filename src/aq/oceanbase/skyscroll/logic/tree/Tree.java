@@ -311,7 +311,7 @@ public class Tree implements Renderable {
         for (int i = 0; i < connections.length; i++) {
             switch (connections[i].getState()) {
                 case IDLE:
-                    GLES20.glVertexAttrib4f(colorHandler, 0.5f, 0.5f, 0.5f, 1.0f);
+                    GLES20.glVertexAttrib4f(colorHandler, 0.7f, 0.7f, 0.7f, 1.0f);
                     GLES20.glDisableVertexAttribArray(colorHandler);
                     GLES20.glLineWidth(2.0f);
                     break;
@@ -331,7 +331,7 @@ public class Tree implements Renderable {
                     GLES20.glLineWidth(2.0f);
                     break;
                 default:
-                    GLES20.glVertexAttrib4f(colorHandler, 0.5f, 0.5f, 0.5f, 1.0f);
+                    GLES20.glVertexAttrib4f(colorHandler, 0.7f, 0.7f, 0.7f, 1.0f);
                     GLES20.glDisableVertexAttribArray(colorHandler);
                     GLES20.glLineWidth(2.0f);
                     break;
@@ -379,7 +379,7 @@ public class Tree implements Renderable {
                     color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
                     break;
                 default:            //when IDLE
-                    color = new float[] {0.5f, 0.5f, 0.5f, 1.0f};
+                    color = new float[] {0.7f, 0.7f, 0.7f, 1.0f};
                     break;
             }
 

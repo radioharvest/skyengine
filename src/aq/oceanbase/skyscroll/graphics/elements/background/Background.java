@@ -21,17 +21,14 @@ public class Background implements Renderable {
     private FloatBuffer mVertexBuffer;
     private FloatBuffer mTextureCoordinateBuffer;
 
-    private TextureRegion mTexRgn;
+    private TextureRegion mTexRgn = new TextureRegion();
 
     private int mTextureId;
     private int mTextureHandler;
 
     private int mShaderProgram;
 
-    public Background(final int resourceId, float shiftFactor) {
-
-        this.mTexRgn = new TextureRegion();
-        mTexRgn.v1 = 1.0f - shiftFactor;
+    public Background(final int resourceId) {
 
         this.mTextureId = resourceId;
 
@@ -70,15 +67,29 @@ public class Background implements Renderable {
         mOrderBuffer.put(orderData).position(0);
     }
 
-    public Background(final int resourceId) {
-        this(resourceId, 1.0f);
+    public Background(final int resourceId, float shiftFactor) {
+        this(resourceId);
+        mTexRgn.v1 = 1.0f - shiftFactor;
+        updateTexRegion();
     }
 
-    public void setShift(float amount, float factor) {
-        mTexRgn.v1 = 1.0f - factor * (amount+1);        // Remember, that 0, 0 UV coordinate is UP left
-        mTexRgn.v2 = 1.0f - factor * amount;            // NOT DOWN left.
+    // offset is a part of image that should appear on the screen whilst factor - is fraction of amount
+    // on which background should be moved. fraction is needed for background to move accordingly to
+    // camera's height and reach end at the same time as camera reaches it's limit.
+    // Inputs:
+    //      amount - amount of camera movement
+    //      factor - fraction to calculate amount of movement for background
+    //      offset - fraction of texture that should be on the background at a time
+    public void setShift(float amount, float factor, float offset) {
+        mTexRgn.v1 = 1.0f - offset - factor * amount;         // Remember, that 0, 0 UV coordinate is UP left
+        mTexRgn.v2 = 1.0f - factor * amount;                    // NOT DOWN left.
 
         updateTexRegion();
+    }
+
+    // factor is used as a matter of offset since there's no texture repeating and factor equals offset in original func
+    public void setShift(float amount, float factor) {
+        this.setShift(amount, factor, factor);
     }
 
     private void updateTexRegion() {
