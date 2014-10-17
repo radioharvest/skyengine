@@ -5,6 +5,7 @@ import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.data.QuestionDBHelper;
 import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.elements.text.ScoreBar;
 import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.elements.background.Background;
 import aq.oceanbase.skyscroll.graphics.elements.window.Window;
@@ -56,6 +57,9 @@ public class Game {
 
     private int mCurrentNode;
 
+    //Gameplay variables
+    private int mScore = 0;
+
     //Windows
     public Window mWindow;
 
@@ -71,6 +75,8 @@ public class Game {
     private Background mGridBackground;
     private Background mQuestionBackground = mTreeBackground;
 
+    // HUD
+    private ScoreBar mScoreBar;
 
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
@@ -133,10 +139,17 @@ public class Game {
         @Override
         public void onAnswer(WindowEvent e) {
             updateNodeStatus(mCurrentNode, e.isAnsweredCorrectly());
+            if (e.isAnsweredCorrectly()) {
+                mScore += 100;
+                mScoreBar.setScore(mScore);
+                Log.e("Debug", "" + mScore);
+            }
         }
     }
 
-
+    ///////////////////////////////////////
+    ///////////// CONSTRUCTOR /////////////
+    ///////////////////////////////////////
     public Game(Context context) {
         mGameSession = new GameSession();
         mContext = context;
@@ -148,9 +161,41 @@ public class Game {
         mTreeBackground = new Background(R.drawable.bckgnd2, 0.5f);
         mGridBackground = new Background(R.drawable.grid, 1.0f);
 
-        mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
+        //mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
         switchMode(MODE.TREE);
     }
+
+
+
+    public void setScreenMetrics(int[] screenMetrics) {
+        this.mScreenMetrics = screenMetrics;
+        this.onScreenMetricsUpdate();
+    }
+
+    public void onRenderStarted() {
+        mTreeRenderables.addRenderable(mTreeBackground)
+                        .addRenderable(mGridBackground)
+                        .addRenderable(mGameSession.tree)
+                        .addRenderable(mScoreBar);
+
+        switchMode(MODE.TREE);
+    }
+
+    public void onScreenMetricsUpdate() {
+        mGridTileSize = (float)mScreenMetrics[3]/(float)mScreenMetrics[2];
+        //mGridTileSize = 1.3f;
+        mGridShiftFactor = mGridTiles / (((mMaxHeight - mMinHeight) + 1.0f) * mGridTileSize);
+        updateBackground();
+
+        mScoreBar = new ScoreBar(mScreenMetrics[2] - 10, mScreenMetrics[3] + 5, ScoreBar.SCOREALIGN.RIGHT, 70, mScreenMetrics);
+        mScoreBar.setScore(mScore);
+
+        Log.e("Debug", "Width: " + mScreenMetrics[2] + "Height: " + mScreenMetrics[3]);
+        Log.e("Debug", "Grid Factor " + mGridShiftFactor);
+        Log.e("Debug", "Tiles At Screen " + mGridTileSize);
+    }
+
+
 
     //<editor-fold desc="Getters and Setters">
     public Camera getCamera() {
@@ -169,11 +214,6 @@ public class Game {
         if (height < mMinHeight) this.mHeight = mMinHeight;
         else if (height > mMaxHeight) this.mHeight = mMaxHeight;
         else this.mHeight = height;
-    }
-
-    public void setScreenMetrics(int[] screenMetrics) {
-        this.mScreenMetrics = screenMetrics;
-        this.onScreenMetricsUpdate();
     }
 
     public void setContext (Context context) {
@@ -225,16 +265,7 @@ public class Game {
         mCamera.updateCamera();
     }
 
-    public void onScreenMetricsUpdate() {
-        mGridTileSize = (float)mScreenMetrics[3]/(float)mScreenMetrics[2];
-        //mGridTileSize = 1.3f;
-        mGridShiftFactor = mGridTiles / (((mMaxHeight - mMinHeight) + 1.0f) * mGridTileSize);
-        updateBackground();
 
-        Log.e("Debug", "Width: " + mScreenMetrics[2] + "Height: " + mScreenMetrics[3]);
-        Log.e("Debug", "Grid Factor " + mGridShiftFactor);
-        Log.e("Debug", "Tiles At Screen " + mGridTileSize);
-    }
     //</editor-fold>
 
 

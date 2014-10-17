@@ -25,8 +25,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private int mScreenHeight;
 
     private boolean mResolutionChanged = false;
+    private boolean mStartedFirstTime = true;
 
-    private final String mShaderFolder;
     private ProgramManager mProgramManager;
 
     //Rendering settings
@@ -49,7 +49,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     public MainRenderer(Context context, String shaderFolder) {
         mContext = context;
-        mShaderFolder = shaderFolder;
         mProgramManager = new ProgramManager(shaderFolder);
 
         mNearPlane = 1.0f;
@@ -58,7 +57,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     public MainRenderer(Context context, String shaderFolder, float nearPlane, float farPlane) {
         mContext = context;
-        mShaderFolder = shaderFolder;
         mProgramManager = new ProgramManager(shaderFolder);
 
         mNearPlane = nearPlane;
@@ -129,7 +127,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         mTime = new Date().getTime();
         mFrameCounter = 0;
-
         mProgramManager.reload();
         mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
         /*mGameInstance.mTreeBackground.initialize(mContext, mShaderFolder);
@@ -152,11 +149,17 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mScreenHeight = height;
 
         mGameInstance.setScreenMetrics(new int[] {0, 0, mScreenWidth, mScreenHeight});
+        if (mStartedFirstTime) {
+            mGameInstance.onRenderStarted();
+            //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
+            mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
+            mStartedFirstTime = false;
+        }
 
         Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
 
         mCamera.setProjM(projectionMatrix);
-        //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
+
         Log.e("Debug", new StringBuilder().append("SurfaceChanged").toString());
     }
 

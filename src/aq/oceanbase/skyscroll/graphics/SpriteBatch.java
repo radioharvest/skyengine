@@ -31,6 +31,7 @@ public class SpriteBatch implements Renderable {
 
     private boolean mInitialized = false;               // Initialization flag
     private boolean mFiltered = false;
+    private boolean mIgnoreCamera = false;
 
     private Camera mCam;                        // Camera instance
 
@@ -93,6 +94,10 @@ public class SpriteBatch implements Renderable {
 
     public void setFiltered(boolean value) {
         this.mFiltered = value;
+    }
+
+    public void set2DMode(boolean value) {
+        this.mIgnoreCamera = value;
     }
 
     // -- Begin batching -- //
@@ -309,7 +314,8 @@ public class SpriteBatch implements Renderable {
 
 
         Matrix.setIdentityM(VPMatrix, 0);
-        Matrix.multiplyMM(VPMatrix, 0, cam.getProjM(), 0, cam.getViewM(), 0);
+        if (!mIgnoreCamera)
+            Matrix.multiplyMM(VPMatrix, 0, cam.getProjM(), 0, cam.getViewM(), 0);
 
         GLES20.glUniformMatrix4fv(VPMatrixHandle, 1, false, VPMatrix, 0);
         GLES20.glUniformMatrix4fv(orientationMatrixHandle, 1, false, mOrientationMatrix, 0);
