@@ -9,11 +9,11 @@ package aq.oceanbase.skyscroll.touch;
  */
 
 public abstract class TouchHandler {
-    public void onSwipeHorizontal(float amount) {};
+    public void onSwipeHorizontal(float amount) {}
 
-    public void onSwipeVertical(float amount) {};
+    public void onSwipeVertical(float amount) {}
 
-    public void onScale(float span) {};
+    public void onScale(float span) {}
 
-    public void onTap(float x, float y) {};
+    public void onTap(float x, float y) {}
 }

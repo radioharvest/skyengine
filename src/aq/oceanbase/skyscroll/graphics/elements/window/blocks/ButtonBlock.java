@@ -1,50 +1,58 @@
-package aq.oceanbase.skyscroll.graphics.elements.window;
+package aq.oceanbase.skyscroll.graphics.elements.window.blocks;
 
+import android.content.Context;
 import android.graphics.*;
+import android.opengl.Matrix;
+import android.opengl.GLES20;
 import android.util.Log;
+import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.graphics.elements.window.Button;
+import aq.oceanbase.skyscroll.graphics.elements.window.Window;
+import aq.oceanbase.skyscroll.graphics.elements.window.WindowBlock;
+import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
+import aq.oceanbase.skyscroll.logic.Question;
+import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
-public class ButtonBlock {
+public class ButtonBlock extends WindowBlock {
+
+    private int mTextureHandle;
+
     private Button[] mButtons;
+    private String[] mButtonValues;
+    private SpriteBatch mButtonBatch;
 
     private int mHighlighted = -1;
     private int mPressedButton = -1;
 
-    private Vector3f mPos;
-
-    private float mOffset;
+    private float mOffset = 0.0f;
+    private float mInterval = 0.1f;
 
     private Bitmap mBitmap;
 
-    private float[] mMetrics;
-    private int[] mPixelMetrics;
+    public ButtonBlock(Window root, float fraction) {
+        super(root, fraction);
+        mOffset = 0.1f;
+    }
 
-    public ButtonBlock(Vector3f position, float[] floatMetrics, int[] pixelMetrics, float offset, String[] answers) {
-        this.mPos = position;
+    public ButtonBlock(Window root, float fraction, String[] buttonValues, float interval, float offset) {
+        super(root, fraction);
+        this.mInterval = interval;
         this.mOffset = offset;
-        this.mMetrics = floatMetrics;
-        this.mPixelMetrics = pixelMetrics;
+        mButtonValues = buttonValues;
+    }
 
+    //<editor-fold desc="Getters and Setters">
+    public ButtonBlock setOffset(float offset) {
+        this.mOffset = offset;
+        return this;
+    }
+
+    public ButtonBlock setAnswers(String[] answers) {
         this.computeButtonsMetrics(answers);
-    }
-
-    public Vector3f getPos() {
-        return this.mPos;
-    }
-
-    public float getPosX() {
-        return this.mPos.x;
-    }
-
-    public float getPosY() {
-        return this.mPos.y;
-    }
-
-    public float getPosZ() {
-        return this.mPos.z;
+        return this;
     }
 
     public int getButtonsAmount() {
@@ -77,18 +85,20 @@ public class ButtonBlock {
         if (mHighlighted != -1) return true;
         return false;
     }
+    //</editor-fold>
 
 
+    //<editor-fold desc="Metrics and Texture">
     private void computeButtonsMetrics(String[] buttonValues) {
         this.mButtons = new Button[buttonValues.length];
         int buttonCount = (int)Math.ceil(buttonValues.length / 2);
 
         // Width and height are calculated for one single button.
         // The calculation is based on case when there are two buttons on one line
-        float buttonWidth = (mMetrics[0] - 3*mOffset) / 2.0f;     //width of one button
-        float buttonHeight = (mMetrics[1] - (buttonCount + 1)*mOffset);
+        float buttonWidth = (mWidth - 2*mOffset - mInterval) / 2.0f;     //width of one button
+        float buttonHeight = (mHeight - ((buttonCount - 1)*mInterval) + 2*mOffset);
 
-        int buttonPixelWidth = (int)Math.ceil(buttonWidth * mPixelMetrics[0] / mMetrics[0]);
+        int buttonPixelWidth = (int)Math.ceil(buttonWidth * mPixelMetrics[0] / mWidth);
         int buttonPixelHeight;
 
         int remainder = buttonValues.length % 2;
@@ -97,32 +107,28 @@ public class ButtonBlock {
 
         if (buttonHeight > 0) {
             buttonHeight /= (float)buttonCount;
-            buttonPixelHeight = (int)Math.ceil(buttonHeight * mPixelMetrics[1] / mMetrics[1]);
+            buttonPixelHeight = (int)Math.ceil(buttonHeight * mPixelMetrics[1] / mHeight);
 
             Vector3f position = new Vector3f(mOffset + (buttonWidth/2.0f), -mOffset - (buttonHeight/2.0f), 0.0f);
 
             int k = buttonValues.length;
             for ( int i = 0; i < buttonValues.length; i++, k-- ) {
                 if ( k == 1 && remainder == 1) {
-                    buttonWidth = mMetrics[0] - 2*mOffset;
-                    buttonPixelWidth = (int)Math.ceil(buttonWidth * mPixelMetrics[0] / mMetrics[0]);
+                    buttonWidth = mWidth - 2*mOffset;
+                    buttonPixelWidth = (int)Math.ceil(buttonWidth * mPixelMetrics[0] / mWidth);
                 }
 
-                //position.print("Draw", "CurrentPosition");
                 mButtons[i] = new Button(new Vector3f(position), new float[] {buttonWidth, buttonHeight},
                         new int[] {buttonPixelWidth, buttonPixelHeight}, buttonValues[i]);
 
                 lineFillCounter++;
 
-                //if ( (position.x + buttonWidth + mOffset) >= mMetrics[0] ) {
                 if ( lineFillCounter == 2 ) {
                     position.x = mOffset + (buttonWidth/2.0f);
-                    position.y -= (buttonHeight + mOffset);
-                    //Log.e("Draw", new StringBuilder().append("Changed").toString());
-                    //position.print("Draw", "Updated position");
+                    position.y -= (buttonHeight + mInterval);
                     lineFillCounter = 0;
                 }
-                else position.x += (buttonWidth + mOffset);
+                else position.x += (buttonWidth + mInterval);
             }
         }
     }
@@ -158,9 +164,6 @@ public class ButtonBlock {
         for ( int i = 0; i < mButtons.length; i++ ) {
             int textWidth = (int)paint.measureText(mButtons[i].getText());
             int halfWidth = textWidth/2;
-
-            //Log.e("Draw", new StringBuilder("Text: ").append(textWidth).append(" Button: ").append(mButtons[i].getPixelWidth()).toString());
-
 
             if (textWidth >= mButtons[i].getPixelWidth()) {
                 //y = i * cellHeight + cellHeight / 6 + (int)Math.abs(fm.top);
@@ -203,32 +206,10 @@ public class ButtonBlock {
         }
 
     }
+    //</editor-fold>
 
 
-    public int findPressedButton(float touchX, float touchY) {
-        Vector3f pos;
-        float x, y;
-        float[] metrics;
-        for ( int i = 0; i < mButtons.length; i++ ) {
-            pos = mButtons[i].getPos();
-            metrics = mButtons[i].getMetrics();
-
-            //pos.print("Draw", "Pos");
-            x = touchX - (pos.x - metrics[0]/2);
-            y = touchY - (pos.y - metrics[1]/2);
-
-            if ( x >= 0 && x <= metrics[0]) {
-                if ( y >= 0 && y <= metrics[1]) {
-                    mPressedButton = i;
-                    return i;
-                }
-            }
-        }
-
-        return -1;
-    }
-
-
+    //<editor-fold desc="Button highlighting">
     public void highlightButton(int id, Button.STATE state) {
         if (mHighlighted != -1) {
             mButtons[mHighlighted].setState(Button.STATE.NEUTRAL);
@@ -257,5 +238,92 @@ public class ButtonBlock {
             if (mButtons[mHighlighted].getState() == Button.STATE.WRONG) color = new float[] {1.0f, 0.0f, 0.0f, 1.0f};
             this.blink(mHighlighted, color, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
         }
+    }
+    //</editor-fold>
+
+
+    @Override
+    public void onTap(float x, float y) {
+        Log.e("Touch", "BlockTap: " + x + " " + y);
+        float curX, curY;
+        Vector3f pos;
+        float[] metrics;
+        for ( int i = 0; i < mButtons.length; i++ ) {
+            pos = mButtons[i].getPos().addV(mPos);
+            metrics = mButtons[i].getMetrics();
+
+            //pos.print("Draw", "Pos");
+            curX = x - (pos.x - metrics[0]/2);
+            curY = y - (pos.y - metrics[1]/2);
+
+            if ( curX >= 0 && curX <= metrics[0]) {
+                if ( curY >= 0 && curY <= metrics[1]) {
+                    mPressedButton = i;
+                    mRoot.onButtonPressed(this, i);
+                }
+            }
+        }
+    }
+
+
+    @Override
+    public void initialize(Context context, ProgramManager programManager) {
+        super.initialize(context, programManager);
+        this.computeButtonsMetrics(mButtonValues);
+        this.generateBitmap(mRoot.getTypeface());
+
+        //TODO: check if I really need that handle as a class member
+        mTextureHandle = TextureLoader.loadTexture(mBitmap);
+
+        mButtonBatch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, mTextureHandle);
+        mButtonBatch.initialize(context, programManager);
+    }
+
+    @Override
+    public void release() {
+        super.release();
+        GLES20.glDeleteTextures(1, new int[] {mTextureHandle}, 0);
+        mButtonBatch.release();
+    }
+
+    @Override
+    public void draw(Camera cam) {
+        float[] buttonMatrix = new float[16];
+        float[] blockMatrix = new float[16];
+
+        Matrix.setIdentityM(blockMatrix, 0);
+        Matrix.translateM(blockMatrix, 0, mRoot.getModelMatrix(), 0, mPos.x, mPos.y, mPos.z);
+
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        mButtonBatch.beginBatch(cam);
+
+        /*if (mButtonBlock.isButtonHighlighted()) {
+            Time now = new Time();
+            now.setToNow();
+            if (now.toMillis(false) - mTimer > mButtonBlinkPeriod) {
+                mButtonBlock.blink();
+                Log.e("Debug", new StringBuilder("Times: ").append(now.toMillis(false)).append(" ").append(mTimer).toString());
+                mTimer = now.toMillis(false);
+            }
+            now.clear("any");
+
+        }*/
+
+        for ( int i = 0; i < this.mButtons.length; i++ ) {
+
+            Vector3f pos = new Vector3f(mButtons[i].getPos());
+
+            float[] metrics = mButtons[i].getMetrics();
+
+            float[] color = mButtons[i].getColor();
+
+            Matrix.setIdentityM(buttonMatrix, 0);
+            Matrix.translateM(buttonMatrix, 0, blockMatrix, 0, pos.x, pos.y, pos.z);
+
+            mButtonBatch.batchElement(metrics[0], metrics[1], color, mButtons[i].getTexRgn(), buttonMatrix);
+        }
+
+        mButtonBatch.endBatch();
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

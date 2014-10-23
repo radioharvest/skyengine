@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics.elements.window;
+package aq.oceanbase.skyscroll.graphics.elements.window.blocks;
 
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;

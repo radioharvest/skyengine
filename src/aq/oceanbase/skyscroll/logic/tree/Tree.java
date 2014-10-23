@@ -56,13 +56,13 @@ public class Tree implements Renderable {
         buildNodeConnections();
 
         final float[] nodesPositionData = getNodesPositionData();
-        nodesPositionsBuffer = ByteBuffer.allocateDirect(nodesPositionData.length * MainRenderer.mBytesPerFloat)
+        nodesPositionsBuffer = ByteBuffer.allocateDirect(nodesPositionData.length * (Float.SIZE / 8))
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         nodesPositionsBuffer.put(nodesPositionData).position(0);
 
         final float[] linesPositionData = getConnectionsPositionData();
         for ( int i = 0; i < linesPositionData.length; i++ ) Log.e("Debug", new StringBuilder().append(linesPositionData[i]).toString());
-        linesPositionsBuffer = ByteBuffer.allocateDirect(linesPositionData.length * MainRenderer.mBytesPerFloat)
+        linesPositionsBuffer = ByteBuffer.allocateDirect(linesPositionData.length * (Float.SIZE / 8))
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         linesPositionsBuffer.put(linesPositionData).position(0);
 

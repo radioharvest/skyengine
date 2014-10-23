@@ -54,11 +54,11 @@ public class Background implements Renderable {
                         3, 1, 2
                 };
 
-        mVertexBuffer = ByteBuffer.allocateDirect(vertexData.length * MainRenderer.mBytesPerFloat).
+        mVertexBuffer = ByteBuffer.allocateDirect(vertexData.length * (Float.SIZE / 8)).
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
         mVertexBuffer.put(vertexData).position(0);
 
-        mTextureCoordinateBuffer = ByteBuffer.allocateDirect(textureCoordinateData.length * MainRenderer.mBytesPerFloat).
+        mTextureCoordinateBuffer = ByteBuffer.allocateDirect(textureCoordinateData.length * (Float.SIZE / 8)).
                 order(ByteOrder.nativeOrder()).asFloatBuffer();
         mTextureCoordinateBuffer.put(textureCoordinateData).position(0);
 

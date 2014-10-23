@@ -118,15 +118,29 @@ public class Game {
     };
     private final TouchHandler mWindowTouchHandler = new TouchHandler() {
         @Override
+        public void onSwipeHorizontal(float amount) {
+            mWindow.onSwipeHorizontal(amount);
+        }
+
+        @Override
         public void onSwipeVertical(float amount) {
-            mWindow.scrollContent((int)(-amount * 40));
+            mWindow.onSwipeVertical(amount);
+        }
+
+        @Override
+        public void onScale(float span) {
+            mWindow.onScale(span);
         }
 
         @Override
         public void onTap(float x, float y) {
-            mWindow.pressButton((int) x, (int) y, mCamera, mScreenMetrics);
+            Vector3f touch = new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics)
+                    .getPointPositionOnRay(mCamera.getPosZ() - mWindow.getPosition().z);
+
+            mWindow.onTap(touch.x, touch.y);
         }
     };
+
 
     //Events
     public class WindowListener implements WindowEventListener {
@@ -459,7 +473,7 @@ public class Game {
     private void createWindow(Question question) {
         mQuestionRenderables.clear();
         mWindow = new Window(20, 100, 2.0f, mCamera, mScreenMetrics);
-        mWindow.setQuestion(question);
+        mWindow.addQuestion(question);
         mWindow.addWindowEventListener(new WindowListener());
         mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mWindow);
     }

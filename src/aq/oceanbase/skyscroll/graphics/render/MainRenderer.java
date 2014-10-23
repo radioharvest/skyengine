@@ -20,7 +20,6 @@ public class MainRenderer implements GLSurfaceView.Renderer {
     private final Context mContext;
 
     //Constants and sizes
-    public static final int mBytesPerFloat = 4;
     private int mScreenWidth;
     private int mScreenHeight;
 
