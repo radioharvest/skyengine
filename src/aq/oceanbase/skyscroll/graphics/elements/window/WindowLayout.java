@@ -25,6 +25,11 @@ public class WindowLayout extends WindowBlock {
     }
 
 
+    public void setLayoutType(LAYOUT type) {
+        this.mLayoutType = type;
+    }
+
+
     public void addChild(WindowBlock object) {
         this.mChildren.add(object);
     }
@@ -107,33 +112,39 @@ public class WindowLayout extends WindowBlock {
         }
     }
 
+
+    @Override
+    public void update() {
+        for (WindowBlock item : mChildren) {
+            item.update();
+        }
+    }
+
+
     @Override
     public void initialize(Context context, ProgramManager programManager) {
         super.initialize(context, programManager);
         this.buildChildrenMetrics();
 
-        if (!mChildren.isEmpty()) {
-            for (WindowBlock item : mChildren) {
-                item.initialize(context, programManager);
-            }
+        for (WindowBlock item : mChildren) {
+            item.initialize(context, programManager);
         }
     }
 
+    @Override
     public void release() {
         super.release();
 
-        if (!mChildren.isEmpty()) {
-            for (WindowBlock item : mChildren) {
-                item.release();
-            }
+        for (WindowBlock item : mChildren) {
+            item.release();
         }
     }
 
+    @Override
     public void draw(Camera cam) {
-        if (!mChildren.isEmpty()) {
-            for (WindowBlock item : mChildren) {
-                item.draw(cam);
-            }
+
+        for (WindowBlock item : mChildren) {
+            item.draw(cam);
         }
     }
 }

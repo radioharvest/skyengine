@@ -3,14 +3,12 @@ package aq.oceanbase.skyscroll.graphics.elements.window.blocks;
 import android.content.Context;
 import android.graphics.*;
 import android.opengl.GLES20;
-import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.graphics.elements.window.WindowBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.MathMisc;
-import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -23,7 +21,7 @@ import java.util.ArrayList;
  * Contents are firstly generated as texture, then applied to quad
  */
 
-public class WindowContent extends WindowBlock {
+public class ContentBlock extends WindowBlock {
     private ShortBuffer mOrderBuffer;
     private FloatBuffer mVertexBuffer;
     private FloatBuffer mTextureCoordinateBuffer;
@@ -47,7 +45,7 @@ public class WindowContent extends WindowBlock {
     // Desc:
     // Inputs:
     //      text: text, that should be displayed in content
-    public WindowContent(Window root, float fraction) {
+    public ContentBlock(Window root, float fraction) {
         super(root, fraction);
 
         this.mText = "NULL";
@@ -57,28 +55,28 @@ public class WindowContent extends WindowBlock {
         this.mPicture = null;
     }
 
-    public WindowContent(Window root, float fraction, String text) {
+    public ContentBlock(Window root, float fraction, String text) {
         this(root, fraction);
         this.mText = text;
     }
 
-    public WindowContent(Window root, float fraction, String text, int fontsize) {
+    public ContentBlock(Window root, float fraction, String text, int fontsize) {
         this(root, fraction, text);
         this.mFontsize = fontsize;
     }
 
 
-    public WindowContent setText(String text) {
+    public ContentBlock setText(String text) {
         this.mText = text;
         return this;
     }
 
-    public WindowContent setFontsize(int size) {
+    public ContentBlock setFontsize(int size) {
         this.mFontsize = size;
         return this;
     }
 
-    public WindowContent addPicture(Bitmap pic) {
+    public ContentBlock addPicture(Bitmap pic) {
         this.mPicture = pic;
         return this;
     }
@@ -298,8 +296,8 @@ public class WindowContent extends WindowBlock {
         GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, mTextureCoordinateBuffer);
         GLES20.glEnableVertexAttribArray(texCoordHandle);
 
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mOrderBuffer);
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

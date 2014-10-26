@@ -27,19 +27,24 @@ public abstract class WindowBlock extends TouchHandler implements Renderable {
         this.mParentFraction = fraction;
     }
 
-
-
     public void setMetrics(Vector3f pos, float width, float height, int[] pixelMetrics) {
         this.mPos = pos;
         this.mWidth = width;
         this.mHeight = height;
         this.mPixelMetrics = pixelMetrics;
         Log.e("Debug", "New Metrics: " + pos.x + " " + pos.y + " " + pos.z + " " + mWidth + " " + mHeight);
+
+        onMetricsSet();
     }
+
+    protected void onMetricsSet() {}
 
     public float getFraction() {
         return this.mParentFraction;
     }
+
+
+    public void update() {}
 
 
     public boolean isInitialized() {
@@ -54,7 +59,5 @@ public abstract class WindowBlock extends TouchHandler implements Renderable {
         mInitialized = false;
     }
 
-    public void draw(Camera cam) {
-        Log.e("Debug", "Parent Drawn");
-    }
+    public void draw(Camera cam) {}
 }

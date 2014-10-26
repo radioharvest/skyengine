@@ -6,6 +6,7 @@ import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.data.QuestionDBHelper;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.text.ScoreBar;
+import aq.oceanbase.skyscroll.graphics.elements.window.QuestionWindow;
 import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.elements.background.Background;
 import aq.oceanbase.skyscroll.graphics.elements.window.Window;
@@ -61,7 +62,7 @@ public class Game {
     private int mScore = 0;
 
     //Windows
-    public Window mWindow;
+    public QuestionWindow mQuestionWindow;
 
     //Backgrounds
     private int mGridTiles;
@@ -119,25 +120,25 @@ public class Game {
     private final TouchHandler mWindowTouchHandler = new TouchHandler() {
         @Override
         public void onSwipeHorizontal(float amount) {
-            mWindow.onSwipeHorizontal(amount);
+            mQuestionWindow.onSwipeHorizontal(amount);
         }
 
         @Override
         public void onSwipeVertical(float amount) {
-            mWindow.onSwipeVertical(amount);
+            mQuestionWindow.onSwipeVertical(amount);
         }
 
         @Override
         public void onScale(float span) {
-            mWindow.onScale(span);
+            mQuestionWindow.onScale(span);
         }
 
         @Override
         public void onTap(float x, float y) {
             Vector3f touch = new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics)
-                    .getPointPositionOnRay(mCamera.getPosZ() - mWindow.getPosition().z);
+                    .getPointPositionOnRay(mCamera.getPosZ() - mQuestionWindow.getPosition().z);
 
-            mWindow.onTap(touch.x, touch.y);
+            mQuestionWindow.onTap(touch.x, touch.y);
         }
     };
 
@@ -472,14 +473,14 @@ public class Game {
     //<editor-fold desc="Windows">
     private void createWindow(Question question) {
         mQuestionRenderables.clear();
-        mWindow = new Window(20, 100, 2.0f, mCamera, mScreenMetrics);
-        mWindow.addQuestion(question);
-        mWindow.addWindowEventListener(new WindowListener());
-        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mWindow);
+        mQuestionWindow = new QuestionWindow(20, 100, 2.0f, mCamera, mScreenMetrics);
+        mQuestionWindow.addQuestion(question);
+        mQuestionWindow.addWindowEventListener(new WindowListener());
+        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mQuestionWindow);
     }
 
     private void killWindow() {
-        mWindow = null;
+        mQuestionWindow = null;
         mQuestionRenderables.clear();
     }
     //</editor-fold>

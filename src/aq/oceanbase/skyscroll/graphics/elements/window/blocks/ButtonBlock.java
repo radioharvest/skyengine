@@ -241,6 +241,10 @@ public class ButtonBlock extends WindowBlock {
     }
     //</editor-fold>
 
+    @Override
+    protected void onMetricsSet() {
+        this.computeButtonsMetrics(mButtonValues);
+    }
 
     @Override
     public void onTap(float x, float y) {
@@ -269,7 +273,6 @@ public class ButtonBlock extends WindowBlock {
     @Override
     public void initialize(Context context, ProgramManager programManager) {
         super.initialize(context, programManager);
-        this.computeButtonsMetrics(mButtonValues);
         this.generateBitmap(mRoot.getTypeface());
 
         //TODO: check if I really need that handle as a class member
@@ -294,7 +297,7 @@ public class ButtonBlock extends WindowBlock {
         Matrix.setIdentityM(blockMatrix, 0);
         Matrix.translateM(blockMatrix, 0, mRoot.getModelMatrix(), 0, mPos.x, mPos.y, mPos.z);
 
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         mButtonBatch.beginBatch(cam);
 
         /*if (mButtonBlock.isButtonHighlighted()) {
@@ -324,6 +327,6 @@ public class ButtonBlock extends WindowBlock {
         }
 
         mButtonBatch.endBatch();
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

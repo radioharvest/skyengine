@@ -13,7 +13,7 @@ import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.window.blocks.Button;
 import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ButtonBlock;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.WindowContent;
+import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ContentBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.Game;
@@ -23,6 +23,7 @@ import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.Question;
+import aq.oceanbase.skyscroll.utils.misc.Timer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -54,22 +55,20 @@ public class Window extends TouchHandler implements Renderable {
     private float[] mColor;
     private float mOpacity;
 
-    private WindowLayout mLayout;
+    protected WindowLayout mLayout;
 
     private int mBorderPixelOffset;
     private float mBorderOffset;
     private float mBorderWidth;
 
-    private List<Object> mEventListeners = new ArrayList<Object>();
+    protected List<Object> mEventListeners = new ArrayList<Object>();
 
     private int mFontSize;
     private Typeface mTypeface;
 
-    private long mTimer = -1;
-    private int mClosingTime = 700;
-    private int mBlinkPeriod = 300;
-
-    private Question mQuestion;
+    protected int mCloseTime = 700;               //TODO: really needed in parent class?
+    protected boolean mClosing = false;
+    protected Timer mTimer;
 
     public Window (float x, float y, float z, float width, float height, Camera cam, int[] screenMetrics) {
         this.mPos = new Vector3f(x, y, z);
@@ -92,6 +91,7 @@ public class Window extends TouchHandler implements Renderable {
         this.setDefaultSettings();
     }
 
+    //<editor-fold desc="Additional constructors">
     public Window (Vector3f position, float width, float height, Camera cam, int[] screenMetrics) {
         this(position.x, position.y, position.z, width, height, cam, screenMetrics);
     }
@@ -103,7 +103,7 @@ public class Window extends TouchHandler implements Renderable {
     public Window (int offset, float depth, Camera cam, int[] screenMetrics) {
         this(offset, offset, depth, screenMetrics[2] - 2*offset, screenMetrics[3] - 2*offset, cam, screenMetrics);
     }
-
+    //</editor-fold>
 
 
 
@@ -112,34 +112,49 @@ public class Window extends TouchHandler implements Renderable {
         return mPos;
     }
 
-    public float[] getColor() {
-        return mColor;
-    }
-
-    public float[] getWindowMetrics() {
-        return mWindowMetrics;
-    }
-
-    public float getBorderOffset() {
-        return this.mBorderOffset;
-    }
-
-    public int[] getWindowPixelMetrics() {
-        return mWindowPixelMetrics;
-    }
-
-    public int getFontSize() {
-        return mFontSize;
-    }
-
     public float[] getModelMatrix() { return this.mModelMatrix; }
 
     public float[] getMVPMatrix() {
         return this.mMVPMatrix;
     }
 
+
+    public float[] getColor() {
+        return mColor;
+    }
+
+
+    public float getBorderOffset() {
+        return this.mBorderOffset;
+    }
+
+    public float getBorderWidth() { return this.mBorderWidth; }
+
+
+    public float[] getWindowMetrics() {
+        return mWindowMetrics;
+    }
+
+    public int[] getWindowPixelMetrics() {
+        return mWindowPixelMetrics;
+    }
+
+
+    public int getFontSize() {
+        return mFontSize;
+    }
+
     public Typeface getTypeface() {
         return this.mTypeface;
+    }
+
+
+    public Timer getTimer() {
+        return mTimer;
+    }
+
+    public boolean isClosing() {
+        return this.mClosing;
     }
 
 
@@ -226,33 +241,32 @@ public class Window extends TouchHandler implements Renderable {
         float width = mWindowMetrics[0] - 2*mBorderOffset;
         float height = (mWindowMetrics[1] - 2*mBorderOffset);
 
-        this.mLayout = new WindowLayout(WindowLayout.LAYOUT.VERTICAL, this, 1.0f);
+        this.mLayout = new WindowLayout(type, this, 1.0f);
         this.mLayout.setMetrics(pos, width, height, pixelMetrics);
-    }
-
-    public void addQuestion(Question question) {
-        this.mQuestion = question;
-
-        Log.e("Debug", "Win Metrics: " + mPos.x + " " + mPos.y + " " + mPos.z + " " + mWindowMetrics[0] + " " + mWindowMetrics[1]);
-
-        this.mLayout.addChild(new WindowContent(this, 1, mQuestion.getBody(), 35));
-        this.mLayout.addChild(new ButtonBlock(this, 1, mQuestion.getVariants(), mBorderOffset, 0.0f));
     }
     //</editor-fold>
 
 
     //<editor-fold desc="Touch functions">
-    public void onButtonPressed(ButtonBlock buttonBlock, int buttonId) {
-        mTimer = new Date().getTime();
+    @Override
+    public void onSwipeHorizontal(float amount) {
+        mLayout.onSwipeHorizontal(amount);
+    }
 
-        if (buttonId == mQuestion.getAnswer()) {
-            buttonBlock.highlightButton(buttonId, Button.STATE.CORRECT);
-            fireAnswerEvent(Game.ANSWER.CORRECT);
-        }
-        else {
-            buttonBlock.highlightButton(buttonId, Button.STATE.WRONG);
-            fireAnswerEvent(Game.ANSWER.WRONG);
-        }
+    @Override
+    public void onSwipeVertical(float amount) {
+        mLayout.onSwipeVertical(amount);
+    }
+
+    @Override
+    public void onScale(float span) {
+        mLayout.onScale(span);
+    }
+
+    @Override
+    public void onTap(float x, float y) {
+        mLayout.onTap(x - mPos.x, y - mPos.y);
+        Log.e("Touch", "WindowTap: " + x + " " + y);
     }
     //</editor-fold>
 
@@ -266,7 +280,7 @@ public class Window extends TouchHandler implements Renderable {
         mEventListeners.remove(obj);
     }
 
-    private void fireCloseEvent() {
+    protected void fireCloseEvent() {
         WindowEvent event = new WindowEvent(this);
 
         if (!mEventListeners.isEmpty()) {
@@ -277,16 +291,7 @@ public class Window extends TouchHandler implements Renderable {
         }
     }
 
-    private void fireAnswerEvent(Game.ANSWER answer) {
-        WindowEvent event = new WindowEvent(this, answer);
-
-        if (!mEventListeners.isEmpty()) {
-            for (int i = 0; i < mEventListeners.size(); i++) {
-                WindowEventListener listener = (WindowEventListener)mEventListeners.get(i);
-                listener.onAnswer(event);
-            }
-        }
-    }
+    public void onButtonPressed(ButtonBlock buttonBlock, int buttonId) {}
     //</editor-fold>
 
 
@@ -318,28 +323,6 @@ public class Window extends TouchHandler implements Renderable {
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
     //</editor-fold>
-
-
-    @Override
-    public void onSwipeHorizontal(float amount) {
-        mLayout.onSwipeHorizontal(amount);
-    }
-
-    @Override
-    public void onSwipeVertical(float amount) {
-        mLayout.onSwipeVertical(amount);
-    }
-
-    @Override
-    public void onScale(float span) {
-        mLayout.onScale(span);
-    }
-
-    @Override
-    public void onTap(float x, float y) {
-        mLayout.onTap(x - mPos.x, y - mPos.y);
-        Log.e("Touch", "WindowTap: " + x + " " + y);
-    }
 
 
     public boolean isInitialized() {
@@ -386,8 +369,8 @@ public class Window extends TouchHandler implements Renderable {
     }
 
 
-    private void update() {
-        if (mTimer != -1 && new Date().getTime() - mTimer >= mClosingTime) fireCloseEvent();
+    protected void update() {
+        mLayout.update();
     }
 
     public void draw(Camera cam) {
@@ -396,7 +379,9 @@ public class Window extends TouchHandler implements Renderable {
 
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);     //S*alpha + D*(1-alpha)
         this.drawWindow(cam);
+        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         this.mLayout.draw(cam);
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         this.update();
     }
