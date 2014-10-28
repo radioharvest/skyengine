@@ -473,10 +473,11 @@ public class Game {
     //<editor-fold desc="Windows">
     private void createWindow(Question question) {
         mQuestionRenderables.clear();
-        mQuestionWindow = new QuestionWindow(20, 100, 2.0f, mCamera, mScreenMetrics);
+        mQuestionWindow = new QuestionWindow(10, 10, 2.0f, mCamera, mScreenMetrics);
         mQuestionWindow.addQuestion(question);
         mQuestionWindow.addWindowEventListener(new WindowListener());
-        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mQuestionWindow);
+        mQuestionWindow.setOpacity(0.23f);
+        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mQuestionWindow);
     }
 
     private void killWindow() {

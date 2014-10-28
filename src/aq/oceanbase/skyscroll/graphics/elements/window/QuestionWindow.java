@@ -1,11 +1,9 @@
 package aq.oceanbase.skyscroll.graphics.elements.window;
 
 import android.content.Context;
+import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.Button;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ButtonBlock;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ContentBlock;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.TimerBarBlock;
+import aq.oceanbase.skyscroll.graphics.elements.window.blocks.*;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.logic.Game;
 import aq.oceanbase.skyscroll.logic.Question;
@@ -40,6 +38,10 @@ public class QuestionWindow extends Window {
         super(offset, offset, depth, screenMetrics[2] - 2 * offset, screenMetrics[3] - 2 * offset, cam, screenMetrics);
     }
 
+    public QuestionWindow(Camera cam, int[] screenMetrics) {
+        super(cam, screenMetrics);
+    }
+
 
     public void addQuestion(Question question) {
         this.mQuestion = question;
@@ -47,8 +49,9 @@ public class QuestionWindow extends Window {
         this.mLayout.setLayoutType(WindowLayout.LAYOUT.HORIZONTAL);
 
         WindowLayout rightSide = new WindowLayout(WindowLayout.LAYOUT.VERTICAL, this, 0.95f);
-        rightSide.addChild(new ContentBlock(this, 1, mQuestion.getBody(), 35));
-        rightSide.addChild(new ButtonBlock(this, 1, mQuestion.getVariants(), this.getBorderOffset(), 0.0f));
+        rightSide.addChild(new NodeDisplayBlock(this, 12, R.drawable.node_display_score_100));
+        rightSide.addChild(new ContentBlock(this, 8, mQuestion.getBody(), 27));
+        rightSide.addChild(new ButtonBlock(this, 9, mQuestion.getVariants(), this.getBorderOffset(), 0.0f));
 
         this.mLayout.addChild(new TimerBarBlock(this, 0.05f));
         this.mLayout.addChild(rightSide);
@@ -84,19 +87,22 @@ public class QuestionWindow extends Window {
 
     @Override
     protected void update() {
-        super.update();
+        if (mTimer == null) {
+            mTimer = new Timer(mTimeToAnswer).start();
+        }
 
         if (!mTimer.isRunning()) {
             if (!mClosing) fireAnswerEvent(Game.ANSWER.WRONG);
             fireCloseEvent();
         }
 
+        super.update();
     }
 
     @Override
     public void initialize(Context context, ProgramManager programManager) {
         super.initialize(context, programManager);
 
-        mTimer = new Timer(mTimeToAnswer).start();
+
     }
 }

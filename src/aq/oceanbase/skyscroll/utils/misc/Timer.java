@@ -6,6 +6,8 @@ public class Timer {
     private int mDelay = -1;
     private long mStartTime = -1;
 
+    private boolean mStarted = false;
+
     public Timer() {
 
     }
@@ -44,11 +46,13 @@ public class Timer {
 
     public Timer start() {
         this.mStartTime = new Date().getTime();
+        this.mStarted = true;
         return this;
     }
 
     public Timer stop() {
         this.mStartTime = -1;
+        this.mStarted = false;
         return this;
     }
 
@@ -58,5 +62,9 @@ public class Timer {
         if (mDelay != -1 && (new Date().getTime() - mStartTime >= mDelay) ) return false;
 
         return true;
+    }
+
+    public boolean isStarted() {
+        return this.mStarted;
     }
 }

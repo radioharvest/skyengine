@@ -419,10 +419,12 @@ public class Tree implements Renderable {
         Matrix.rotateM(modelMatrix, 0, angle, 0.0f, 1.0f, 0.0f);
 
         //TODO: redo enable/disable switch when performance optimizations are done
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         drawConnections(cam);
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
         drawNodes(cam);
+
+        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

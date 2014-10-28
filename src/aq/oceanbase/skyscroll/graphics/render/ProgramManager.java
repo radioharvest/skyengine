@@ -4,13 +4,14 @@ import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 
 public class ProgramManager {
     public static enum PROGRAM {
-        BACKGROUND, LINE, SPRITEBATCH, WINDOW, WINDOWCONTENT
+        BACKGROUND, LINE, SPRITE, SPRITEBATCH, WINDOW, WINDOWCONTENT
     }
 
     private String shaderFolder;
 
     private int bckgrndShaderProgram = 0;
     private int lineShaderProgram = 0;
+    private int spriteShaderProgram = 0;
     private int spriteBatchShaderProgram = 0;
     private int windowShaderProgram = 0;
     private int windowContentShaderProgram = 0;
@@ -31,6 +32,11 @@ public class ProgramManager {
                     lineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
                 }
                 return lineShaderProgram;
+            case SPRITE:
+                if (spriteShaderProgram == 0) {
+                    spriteShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
+                }
+                return spriteShaderProgram;
             case SPRITEBATCH:
                 if (spriteBatchShaderProgram == 0) {
                     spriteBatchShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");
@@ -57,6 +63,9 @@ public class ProgramManager {
 
         if (lineShaderProgram != 0)
             lineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
+
+        if (spriteShaderProgram != 0)
+            spriteShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
 
         if (spriteBatchShaderProgram != 0)
             spriteBatchShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteBatchVertex.glsl", shaderFolder + "/sprites/spriteBatchFragment.glsl");

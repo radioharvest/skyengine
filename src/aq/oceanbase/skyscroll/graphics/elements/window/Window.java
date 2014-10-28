@@ -91,6 +91,15 @@ public class Window extends TouchHandler implements Renderable {
         this.setDefaultSettings();
     }
 
+    public Window(Camera cam, int[] screenMetrics) {
+        this.mPos = new Vector3f(-1.0f, 1.0f, cam.getPosZ() - 2.0f);
+
+        this.mWindowMetrics = new float[] {2.0f, 2.0f};
+        this.mWindowPixelMetrics = new int[] {screenMetrics[2], screenMetrics[3]};
+
+        this.setDefaultSettings();
+    }
+
     //<editor-fold desc="Additional constructors">
     public Window (Vector3f position, float width, float height, Camera cam, int[] screenMetrics) {
         this(position.x, position.y, position.z, width, height, cam, screenMetrics);
@@ -120,7 +129,11 @@ public class Window extends TouchHandler implements Renderable {
 
 
     public float[] getColor() {
-        return mColor;
+        return new float[] {mColor[0], mColor[1], mColor[2], mOpacity};
+    }
+
+    public float getOpacity() {
+        return this.mOpacity;
     }
 
 
@@ -198,7 +211,8 @@ public class Window extends TouchHandler implements Renderable {
         this.mBorderPixelOffset = (int)(((mBorderOffset) / mWindowMetrics[0]) * mWindowPixelMetrics[0]);
 
         this.mBorderWidth = 3.0f;
-        this.mColor = new float[] {1.0f, 1.0f, 1.0f, 0.3f};
+        this.mColor = new float[] {1.0f, 1.0f, 1.0f};
+        this.mOpacity = 0.3f;
         this.mFontSize = 10;
 
         this.addLayout(WindowLayout.LAYOUT.VERTICAL);
@@ -313,7 +327,7 @@ public class Window extends TouchHandler implements Renderable {
         GLES20.glVertexAttribPointer(positionHandler, 3, GLES20.GL_FLOAT, false, 0, mVertexBuffer);
         GLES20.glEnableVertexAttribArray(positionHandler);
 
-        GLES20.glVertexAttrib4f(colorHandler, mColor[0], mColor[1], mColor[2], mColor[3]);
+        GLES20.glVertexAttrib4f(colorHandler, mColor[0], mColor[1], mColor[2], mOpacity);
         GLES20.glDisableVertexAttribArray(colorHandler);
 
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
@@ -374,6 +388,8 @@ public class Window extends TouchHandler implements Renderable {
     }
 
     public void draw(Camera cam) {
+        this.update();
+
         Matrix.setIdentityM(mModelMatrix, 0);
         Matrix.translateM(mModelMatrix, 0, mPos.x, mPos.y, mPos.z);
 
@@ -382,7 +398,5 @@ public class Window extends TouchHandler implements Renderable {
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         this.mLayout.draw(cam);
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-
-        this.update();
     }
 }
