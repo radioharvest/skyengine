@@ -5,7 +5,7 @@ import android.graphics.*;
 import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.SpriteBatch;
+import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;

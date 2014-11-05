@@ -45,9 +45,9 @@ public class Game {
     private RenderContainer mQuestionRenderables = new RenderContainer();
 
     //Constraints
-    private float mMinHeight = 4.0f;
+    private float mMinHeight = 0.0f;
     private float mMaxHeight = 30.0f;
-    private float mMinDist = 8.0f;
+    private float mMinDist = 5.0f;
     private float mMaxDist = 30.0f;
 
     private int mBlinkTime = 800;

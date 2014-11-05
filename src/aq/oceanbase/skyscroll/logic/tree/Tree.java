@@ -6,13 +6,14 @@ import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
+import aq.oceanbase.skyscroll.graphics.elements.Line;
+import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
-import aq.oceanbase.skyscroll.graphics.render.MainRenderer;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
@@ -41,6 +42,8 @@ public class Tree implements Renderable {
     private FloatBuffer nodesPositionsBuffer;
     private FloatBuffer linesPositionsBuffer;
 
+    private Line line;
+
     private int lineShaderProgram;
 
     private int textureDataHandler;
@@ -61,7 +64,7 @@ public class Tree implements Renderable {
         nodesPositionsBuffer.put(nodesPositionData).position(0);
 
         final float[] linesPositionData = getConnectionsPositionData();
-        for ( int i = 0; i < linesPositionData.length; i++ ) Log.e("Debug", new StringBuilder().append(linesPositionData[i]).toString());
+        //for ( int i = 0; i < linesPositionData.length; i++ ) Log.e("Debug", new StringBuilder().append(linesPositionData[i]).toString());
         linesPositionsBuffer = ByteBuffer.allocateDirect(linesPositionData.length * (Float.SIZE / 8))
                 .order(ByteOrder.nativeOrder()).asFloatBuffer();
         linesPositionsBuffer.put(linesPositionData).position(0);
@@ -81,7 +84,7 @@ public class Tree implements Renderable {
             posData[i*3 + 0] = nodes[i].posX;
             posData[i*3 + 1] = nodes[i].posY;
             posData[i*3 + 2] = nodes[i].posZ;
-            Log.e("Debug", new StringBuilder("Nodeid: ").append(nodes[i].id).toString());
+            //Log.e("Debug", new StringBuilder("Nodeid: ").append(nodes[i].id).toString());
         }
 
         return posData;
@@ -91,10 +94,10 @@ public class Tree implements Renderable {
         float[] posData = new float[connections.length * 6];
         Node node;
         NodeConnectionSocket socket;
-        Log.e("Error", new StringBuilder("ConnLength: ").append(posData.length).toString());
+        //Log.e("Error", new StringBuilder("ConnLength: ").append(posData.length).toString());
 
         for (int i = 0; i < connections.length; i++) {
-            Log.e("Debug", new StringBuilder("Connection ").append(i).append(" Origin: ").append(connections[i].originNode).append(" End: ").append(connections[i].endNode).toString());
+            //Log.e("Debug", new StringBuilder("Connection ").append(i).append(" Origin: ").append(connections[i].originNode).append(" End: ").append(connections[i].endNode).toString());
             node = nodes[connections[i].originNode];
             socket = node.getSocket(i);
             posData[i*6 + 0] = node.posX + socket.posX;
@@ -219,7 +222,6 @@ public class Tree implements Renderable {
 
         for (int i = 0; i < this.nodes.length; i++) {
             nodes[i].setInboundConnections(inboundList.get(i));
-            Log.e("Debug", new StringBuilder("Sockets ").append(i).append(" ").append(sockets.get(i).size()).toString());
             nodes[i].setSockets(sockets.get(i).toArray(new NodeConnectionSocket[sockets.get(i).size()]));
         }
 
@@ -408,6 +410,7 @@ public class Tree implements Renderable {
         batch.initialize(context, programManager);
 
         this.initialized = true;
+
     }
 
     public void release() {
@@ -426,5 +429,7 @@ public class Tree implements Renderable {
         drawNodes(cam);
 
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
+
+
     }
 }

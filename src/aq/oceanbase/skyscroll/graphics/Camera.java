@@ -23,6 +23,14 @@ public class Camera {
         this.updateCamera();
     }
 
+    public Camera (Camera orig) {
+        this.mPos = orig.mPos;
+        this.mDir = orig.mDir;
+        this.mUp = orig.mUp;
+        this.mViewMatrix = orig.mViewMatrix;
+        this.mProjectionMatrix = orig.mProjectionMatrix;
+    }
+
 
     //<editor-fold desc="Getters and Setters">
     public Vector3f getPos() {
@@ -49,16 +57,19 @@ public class Camera {
         return this.mPos.z;
     }
 
-    public void setPos(Vector3f pos) {
+    public Camera setPos(Vector3f pos) {
         this.mPos = pos;
+        return this;
     }
 
-    public void setDir(Vector3f dir) {
+    public Camera setDir(Vector3f dir) {
         this.mDir = dir;
+        return this;
     }
 
-    public void setUp(Vector3f up) {
+    public Camera setUp(Vector3f up) {
         this.mUp = up;
+        return this;
     }
 
     public void setPosX(float x) {

@@ -1,8 +1,10 @@
-package aq.oceanbase.skyscroll.graphics;
+package aq.oceanbase.skyscroll.graphics.elements;
 
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 

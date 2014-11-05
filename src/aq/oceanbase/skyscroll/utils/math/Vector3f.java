@@ -73,6 +73,20 @@ public class Vector3f {
         return (this.x*op.x + this.y*op.y + this.z*op.z);
     }
 
+    public float projectOnV(Vector3f op) {
+        return this.dotV(op.normalize());
+    }
+
+    public Vector3f crossV(Vector3f op) {
+        return new Vector3f( this.y*op.z - this.z*op.y,
+                             this.z*op.x - this.x*op.z,
+                             this.x*op.y - this.y*op.x );
+    }
+
+    public Vector3f reverse() {
+        return new Vector3f(-this.x, -this.y, -this.z);
+    }
+
     public Vector3f rotate(float a, float origX, float origY, float origZ) {
         float[] rotationMatrix = new float[16];
         float[] inVec = new float[4];
@@ -89,9 +103,4 @@ public class Vector3f {
 
         return new Vector3f(outVec[0], outVec[1], outVec[2]);
     }
-
-    public float projectOnV(Vector3f op) {
-        return this.dotV(op.normalize());
-    }
-
 }

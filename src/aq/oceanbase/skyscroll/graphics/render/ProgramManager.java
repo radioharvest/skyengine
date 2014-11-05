@@ -4,13 +4,14 @@ import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
 
 public class ProgramManager {
     public static enum PROGRAM {
-        BACKGROUND, LINE, SPRITE, SPRITEBATCH, WINDOW, WINDOWCONTENT
+        BACKGROUND, LINE, LINE3D, SPRITE, SPRITEBATCH, WINDOW, WINDOWCONTENT
     }
 
     private String shaderFolder;
 
     private int bckgrndShaderProgram = 0;
     private int lineShaderProgram = 0;
+    private int line3DShaderProgram = 0;
     private int spriteShaderProgram = 0;
     private int spriteBatchShaderProgram = 0;
     private int windowShaderProgram = 0;
@@ -32,6 +33,11 @@ public class ProgramManager {
                     lineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
                 }
                 return lineShaderProgram;
+            case LINE3D:
+                if (line3DShaderProgram == 0) {
+                    line3DShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/line3D/line3DVertex.glsl", shaderFolder + "/line3D/line3DFragment.glsl");
+                }
+                return line3DShaderProgram;
             case SPRITE:
                 if (spriteShaderProgram == 0) {
                     spriteShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
@@ -63,6 +69,9 @@ public class ProgramManager {
 
         if (lineShaderProgram != 0)
             lineShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/lines/lineVertex.glsl", shaderFolder + "/lines/lineFragment.glsl");
+
+        if (line3DShaderProgram != 0)
+            line3DShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/line3D/line3DVertex.glsl", shaderFolder + "/line3D/line3DFragment.glsl");
 
         if (spriteShaderProgram != 0)
             spriteShaderProgram = ShaderLoader.getShaderProgram(shaderFolder + "/sprites/spriteVertex.glsl", shaderFolder + "/sprites/spriteFragment.glsl");
