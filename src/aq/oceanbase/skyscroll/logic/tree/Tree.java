@@ -3,10 +3,8 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
-import aq.oceanbase.skyscroll.graphics.elements.Line;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
@@ -41,8 +39,6 @@ public class Tree implements Renderable {
 
     private FloatBuffer nodesPositionsBuffer;
     private FloatBuffer linesPositionsBuffer;
-
-    private Line line;
 
     private int lineShaderProgram;
 

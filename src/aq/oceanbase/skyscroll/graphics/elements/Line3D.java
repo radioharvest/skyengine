@@ -6,7 +6,6 @@ import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
-import aq.oceanbase.skyscroll.utils.math.MathMisc;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -14,7 +13,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class Line implements Renderable {
+public class Line3D implements Renderable {
     private boolean mInititialized = false;
 
     private int mShaderProgram;
@@ -36,14 +35,14 @@ public class Line implements Renderable {
     private float[] mColor = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
 
 
-    public Line(Vector3f startPos, Vector3f endPos) {
+    public Line3D(Vector3f startPos, Vector3f endPos) {
         this.mStartPos = startPos;
         this.mEndPos = endPos;
 
         this.buildLine();
     }
 
-    public Line(Vector3f startPos, Vector3f endPos, float width, float[] color) {
+    public Line3D(Vector3f startPos, Vector3f endPos, float width, float[] color) {
         this(startPos, endPos);
         this.mWidth = width;
         this.mColor = color;
