@@ -5,6 +5,8 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
+import aq.oceanbase.skyscroll.graphics.elements.Line3D;
+import aq.oceanbase.skyscroll.graphics.elements.Line3DBatch;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
@@ -47,6 +49,9 @@ public class Tree implements Renderable {
     private float angle;
     private float[] modelMatrix = new float[16];
     private SpriteBatch batch;
+    private Line3DBatch mConnectionsBatch;
+
+    private Line3D mLine;
 
     public Tree() {
         TreeGenerator generator = new TreeGenerator();
@@ -405,6 +410,11 @@ public class Tree implements Renderable {
         batch.setFiltered(true);
         batch.initialize(context, programManager);
 
+        mConnectionsBatch = new Line3DBatch(textureDataHandler);
+        mConnectionsBatch.initialize(context, programManager);
+
+        mLine = new Line3D(new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(6.0f, 2.0f, 0.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
+        mLine.initialize(context, programManager);
         this.initialized = true;
 
     }
@@ -426,6 +436,17 @@ public class Tree implements Renderable {
 
         GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
+        Camera updCam = new Camera(cam);
+        updCam.setPos(updCam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
 
+        /*Line.setModelMatrix(modelMatrix);
+        mLine.draw(updCam);*/
+
+        mConnectionsBatch.beginBatch(updCam, modelMatrix);
+        mConnectionsBatch.batchElement(new Line3D(new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(6.0f, 2.0f, 0.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
+        mConnectionsBatch.batchElement(new Line3D(new Vector3f(7.0f, 5.0f, 3.0f), new Vector3f(1.0f, 2.0f, -3.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
+        mConnectionsBatch.batchElement(new Line3D(new Vector3f(0.0f, 2.0f, 5.0f), new Vector3f(0.0f, 2.0f, -5.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
+        mConnectionsBatch.batchElement(new Line3D(new Vector3f(5.0f, 6.0f, -5.0f), new Vector3f(-5.0f, 5.0f, 5.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
+        mConnectionsBatch.endBatch();
     }
 }

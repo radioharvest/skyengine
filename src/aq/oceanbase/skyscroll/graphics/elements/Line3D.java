@@ -4,6 +4,7 @@ import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
+import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -15,6 +16,7 @@ import java.nio.ShortBuffer;
 
 public class Line3D implements Renderable {
     private boolean mInititialized = false;
+    private boolean mSmooth = false;
 
     private int mShaderProgram;
 
@@ -32,7 +34,11 @@ public class Line3D implements Renderable {
     private float mLength;
     private float mWidth = 0.5f;
 
+    private Vertex[] mVertexArray;
+
     private float[] mColor = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+
+    private TextureRegion mTexRgn = new TextureRegion();
 
 
     public Line3D(Vector3f startPos, Vector3f endPos) {
@@ -48,8 +54,39 @@ public class Line3D implements Renderable {
         this.mColor = color;
     }
 
+    public Line3D(Vector3f startPos, Vector3f endPos, float width, float[] color, float[] textureData) {
+        this(startPos, endPos, width, color);
+
+    }
+
     public void setModelMatrix(float[] matrix) {
         this.mModelMatrix = matrix;
+    }
+
+    public void setWidth(float width) {
+        this.mWidth = width;
+        rebuildVertices();
+    }
+
+
+    public Vector3f getCenterPos() {
+        return mCenter;
+    }
+
+    public Vector3f getDirectionNorm() {
+        return mDirectionNorm;
+    }
+
+    public float getLength() {
+        return mLength;
+    }
+
+    public Vertex getVertex(int id) {
+        return mVertexArray[id];
+    }
+
+    public Vertex[] getVertexArray() {
+        return mVertexArray;
     }
 
 
@@ -58,6 +95,21 @@ public class Line3D implements Renderable {
         mCenter = mStartPos.addV(diff.multiplySf(0.5f));
         mDirectionNorm = diff.normalize();
         mLength = diff.length();
+
+        if (mSmooth) mVertexArray = new Vertex[8];
+        else mVertexArray = new Vertex[4];
+
+        mVertexArray[0] = new Vertex(-mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);
+        mVertexArray[1] = new Vertex(-mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);
+        mVertexArray[2] = new Vertex( mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);
+        mVertexArray[3] = new Vertex( mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);
+    }
+
+    private void rebuildVertices() {
+        mVertexArray[0] = new Vertex(-mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);
+        mVertexArray[1] = new Vertex(-mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);
+        mVertexArray[2] = new Vertex( mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);
+        mVertexArray[3] = new Vertex( mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);
     }
 
     public boolean isInitialized() {
@@ -67,10 +119,10 @@ public class Line3D implements Renderable {
     public void initialize(Context context, ProgramManager programManager) {
         float[] vertexData =
                 new float[] {
-                        -mWidth/2, mLength/2, 0.0f,
-                        -mWidth/2, -mLength/2, 0.0f,
-                        mWidth/2, -mLength/2, 0.0f,
-                        mWidth/2, mLength/2, 0.0f,
+                        mVertexArray[0].getX(), mVertexArray[0].getY(), mVertexArray[0].getZ(),
+                        mVertexArray[1].getX(), mVertexArray[1].getY(), mVertexArray[1].getZ(),
+                        mVertexArray[2].getX(), mVertexArray[2].getY(), mVertexArray[2].getZ(),
+                        mVertexArray[3].getX(), mVertexArray[3].getY(), mVertexArray[3].getZ(),
                 };
 
         short[] orderData =

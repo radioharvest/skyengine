@@ -286,7 +286,7 @@ public class SpriteBatch implements Renderable {
     // Desc: standard initialize function from Renderable interface. Function initializes program and binds texture.
     // TODO: possible optimization: move buffers initialization here
     public void initialize(Context context, ProgramManager programManager) {
-        mProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITEBATCH);
+        mProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITE_BATCH);
 
         this.mInitialized = true;
     }
