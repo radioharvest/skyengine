@@ -1,6 +1,8 @@
-package aq.oceanbase.skyscroll.logic.tree;
+package aq.oceanbase.skyscroll.logic.tree.connections;
 
+import aq.oceanbase.skyscroll.graphics.elements.Line3D;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
+import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class NodeConnection {
     public static enum CONNECTIONSTATE {
@@ -8,6 +10,8 @@ public class NodeConnection {
     }
 
     public int id;
+
+    private Line3D mLine;
 
     public int originNode;
     public int endNode;
@@ -19,6 +23,7 @@ public class NodeConnection {
         this.id = id;
         this.originNode = origin;
         this.endNode = end;
+        this.mLine = new Line3D(Vector3f.getZero(), Vector3f.getZero());
     }
 
     public NodeConnection(int origin, int end, int id, CONNECTIONSTATE state) {
@@ -26,6 +31,11 @@ public class NodeConnection {
         this.state = state;
     }
 
+    public void setLine(Vector3f startPos, Vector3f endPos) {
+        this.mLine = new Line3D(startPos, endPos);
+        this.mLine.getStartPos().print("Debug", "New Line Pos");
+        updateLineState();
+    }
 
     public void setState(CONNECTIONSTATE state) {
         this.state = state;
@@ -68,9 +78,35 @@ public class NodeConnection {
                         break;
                 }
         }
+
+        updateLineState();
+    }
+
+    private void updateLineState() {
+        switch (state) {
+            case IDLE:
+                this.mLine.setWidthAndColor(0.1f,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
+                break;
+            case OPEN:
+                this.mLine.setWidthAndColor(0.13f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(true);
+                break;
+            case ACTIVE:
+                this.mLine.setWidthAndColor(0.18f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(false);
+                break;
+            case INACTIVE:
+                this.mLine.setWidthAndColor(0.13f, new float[] {0.8f, 0.0f, 0.0f, 1.0f}).setDotted(false);
+                break;
+            default:
+                this.mLine.setWidthAndColor(0.1f,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
+                break;
+        }
     }
 
     public CONNECTIONSTATE getState() {
         return this.state;
+    }
+
+    public Line3D getLine() {
+        return this.mLine;
     }
 }

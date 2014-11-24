@@ -33,7 +33,7 @@ public class Line3DBatch implements Renderable {
 
 
     private int mShaderProgram;
-    private int mTextureHandle = 0;
+    protected int mTextureHandle = 0;
     private boolean mInitialized = false;
 
     // line type info
@@ -46,12 +46,10 @@ public class Line3DBatch implements Renderable {
     // arrays
     private short[] mIndices;
     private float[] mVertices;
-    private float[] mColors;
 
     // buffers
     private ShortBuffer mOrderBuffer;
     private FloatBuffer mVertexBuffer;
-    private FloatBuffer mColorBuffer;
 
     // constants
     private int mVertexStride;
@@ -120,6 +118,10 @@ public class Line3DBatch implements Renderable {
 
     public Line3DBatch() {
         this(0, false, MAX_BATCHSIZE);
+    }
+
+    public int getBatchSize() {
+        return this.mBatchSize;
     }
 
     private void generateOrderData() {

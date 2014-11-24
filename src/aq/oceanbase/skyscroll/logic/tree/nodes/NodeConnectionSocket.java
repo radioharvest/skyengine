@@ -24,4 +24,8 @@ public class NodeConnectionSocket {
     public NodeConnectionSocket(Vector3f pos, int connId, int endNode) {
         this(pos.x, pos.y, pos.z, connId, endNode);
     }
+
+    public Vector3f getPos() {
+        return new Vector3f(posX, posY, posZ);
+    }
 }

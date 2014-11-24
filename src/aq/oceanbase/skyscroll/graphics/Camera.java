@@ -34,15 +34,15 @@ public class Camera {
 
     //<editor-fold desc="Getters and Setters">
     public Vector3f getPos() {
-        return this.mPos;
+        return new Vector3f(this.mPos);
     }
 
     public Vector3f getDir() {
-        return mDir;
+        return new Vector3f(mDir);
     }
 
     public Vector3f getUp() {
-        return mUp;
+        return new Vector3f(mUp);
     }
 
     public float getPosX() {

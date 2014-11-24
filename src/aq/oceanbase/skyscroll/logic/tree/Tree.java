@@ -3,14 +3,18 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.Line3D;
 import aq.oceanbase.skyscroll.graphics.elements.Line3DBatch;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
+import aq.oceanbase.skyscroll.graphics.elements.window.DottedLine3DBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
+import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
+import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnectionOrderUnit;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -50,6 +54,7 @@ public class Tree implements Renderable {
     private float[] modelMatrix = new float[16];
     private SpriteBatch batch;
     private Line3DBatch mConnectionsBatch;
+    private DottedLine3DBatch mDottedBatch;
 
     private Line3D mLine;
 
@@ -188,17 +193,19 @@ public class Tree implements Renderable {
 
     public void updateAngle(float amount) {
         this.angle = this.angle + amount;
-        if (this.angle >= 360.0f) this.angle -= 360.0f;     //could be a problem with -=
+        if (this.angle >= 360.0f) this.angle -= 360.0f;         //could be a problem with -=
         if (this.angle <= -360.0f) this.angle += 360.0f;        //could be a problem with +=. if works - change first line
     }
 
 
+    // take outcoming connections from node and build connections array
     private void buildNodeConnections() {
-        List<List<Integer>> inboundList = new ArrayList<List<Integer>>();
-        List<List<NodeConnectionSocket>> sockets = new ArrayList<List<NodeConnectionSocket>>();
+        List<List<Integer>> inboundList = new ArrayList<List<Integer>>();              // list of inbound connections for each node
+        List<List<NodeConnectionSocket>> sockets = new ArrayList<List<NodeConnectionSocket>>();     // list of sockets for each node
 
-        List<NodeConnection> connectionList = new ArrayList<NodeConnection>();
+        List<NodeConnection> connectionList = new ArrayList<NodeConnection>();          // list of node connections
 
+        // filling up lists
         for (int i = 0; i < this.nodes.length; i++) {
             inboundList.add(new ArrayList<Integer>());
             sockets.add(new ArrayList<NodeConnectionSocket>());
@@ -210,23 +217,35 @@ public class Tree implements Renderable {
             for (int k = 0; k < outArray.length; k++) {
                 inboundList.get(outArray[k]).add(i);
 
+                // because of going from bottom to the top
+                // it is checked whether current out id is higher, then current node id
                 if (outArray[k] > i) {
                     int connId = connectionList.size();
 
-                    connectionList.add(new NodeConnection(i, outArray[k], connId));
+                    // TODO: add socket position calculation here
+                    NodeConnectionSocket currNodeSocket = new NodeConnectionSocket(0, 0, 0, connId, outArray[k]);
+                    NodeConnectionSocket endNodeSocket = new NodeConnectionSocket(0, 0, 0, connId, i);
 
-                    sockets.get(i).add(new NodeConnectionSocket(0, 0, 0, connId, outArray[k]));
-                    sockets.get(outArray[k]).add(new NodeConnectionSocket(0, 0, 0, connId, i));
+                    Vector3f startPos = nodes[i].getPosV().addV(currNodeSocket.getPos());
+                    Vector3f endPos = nodes[outArray[k]].getPosV().addV(endNodeSocket.getPos());
+
+                    NodeConnection currConnection = new NodeConnection(i, outArray[k], connId);
+                    currConnection.setLine( startPos, endPos );
+
+                    connectionList.add(currConnection);
+
+                    sockets.get(i).add(currNodeSocket);
+                    sockets.get(outArray[k]).add(endNodeSocket);
                 }
             }
         }
 
         for (int i = 0; i < this.nodes.length; i++) {
             nodes[i].setInboundConnections(inboundList.get(i));
-            nodes[i].setSockets(sockets.get(i).toArray(new NodeConnectionSocket[sockets.get(i).size()]));
+            nodes[i].setSockets(sockets.get(i).toArray( new NodeConnectionSocket[ sockets.get(i).size() ] ));
         }
 
-        this.connections = connectionList.toArray(new NodeConnection[connectionList.size()]);
+        this.connections = connectionList.toArray( new NodeConnection[connectionList.size()] );
     }
 
 
@@ -276,6 +295,19 @@ public class Tree implements Renderable {
         return drawOrder;
     }
 
+    private NodeConnectionOrderUnit[] buildConnectionDrawOrder(Vector3f camPos) {
+        NodeConnectionOrderUnit[] drawOrder = new NodeConnectionOrderUnit[connections.length];
+        float[] tempPos = new float[4];
+
+        for (int i = 0; i < connections.length; i++) {
+            drawOrder[i] = new NodeConnectionOrderUnit(i, connections[i].getLine(), camPos);
+        }
+
+        Arrays.sort(drawOrder);
+
+        return drawOrder;
+    }
+
     private void drawLines(Camera cam) {
         float[] MVPMatrix = new float[16];
         GLES20.glUseProgram(lineShaderProgram);
@@ -296,56 +328,25 @@ public class Tree implements Renderable {
     }
 
     private void drawConnections(Camera cam) {
-        float[] MVPMatrix = new float[16];
-        GLES20.glUseProgram(lineShaderProgram);
+        Camera updCam = new Camera(cam);
+        updCam.setPos(cam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
 
-        int MVPMatrixHandler = GLES20.glGetUniformLocation(lineShaderProgram, "u_MVPMatrix");
-        int positionHandler = GLES20.glGetAttribLocation(lineShaderProgram, "a_Position");
-        int colorHandler = GLES20.glGetAttribLocation(lineShaderProgram, "a_Color");
+        NodeConnectionOrderUnit[] renderOrder = buildConnectionDrawOrder(updCam.getPos());
 
-        GLES20.glVertexAttribPointer(positionHandler, posDataSize, GLES20.GL_FLOAT, false, 0, linesPositionsBuffer);
-        GLES20.glEnableVertexAttribArray(positionHandler);
+        mConnectionsBatch.beginBatch(updCam, modelMatrix);
+        mDottedBatch.beginBatch(updCam, modelMatrix);
 
-        Matrix.multiplyMM(MVPMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);
-        Matrix.multiplyMM(MVPMatrix, 0, cam.getProjM(), 0, MVPMatrix, 0);
+        for (int i = 0; i < renderOrder.length; i++) {
+            Line3D currentLine = connections[renderOrder[i].getId()].getLine();
 
-        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, MVPMatrix, 0);
-
-        for (int i = 0; i < connections.length; i++) {
-            switch (connections[i].getState()) {
-                case IDLE:
-                    GLES20.glVertexAttrib4f(colorHandler, 0.7f, 0.7f, 0.7f, 1.0f);
-                    GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(2.0f);
-                    break;
-                case OPEN:
-                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 1.0f, 1.0f, 1.0f);
-                    GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(2.0f);
-                    break;
-                case ACTIVE:
-                    GLES20.glVertexAttrib4f(colorHandler, 1.0f, 1.0f, 1.0f, 1.0f);
-                    GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(5.0f);
-                    break;
-                case INACTIVE:
-                    GLES20.glVertexAttrib4f(colorHandler, 0.8f, 0.0f, 0.0f, 1.0f);
-                    GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(2.0f);
-                    break;
-                default:
-                    GLES20.glVertexAttrib4f(colorHandler, 0.7f, 0.7f, 0.7f, 1.0f);
-                    GLES20.glDisableVertexAttribArray(colorHandler);
-                    GLES20.glLineWidth(2.0f);
-                    break;
-            }
-            /*if (connections[i].getState() == NodeConnection.CONNECTIONSTATE.IDLE) GLES20.glLineWidth(2.0f);
-            else GLES20.glLineWidth(5.0f);*/
-            GLES20.glDrawArrays(GLES20.GL_LINES, i*2, 2);
-
+            if (currentLine.isDotted())
+                mDottedBatch.batchElement(currentLine);
+            else
+                mConnectionsBatch.batchElement(currentLine);
         }
-        /*GLES20.glLineWidth(2.0f);
-        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);*/
+
+        mConnectionsBatch.endBatch();
+        mDottedBatch.endBatch();
     }
 
     public void drawNodes(Camera cam) {
@@ -390,9 +391,11 @@ public class Tree implements Renderable {
             Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX, nodes[cur].posY, nodes[cur].posZ);
 
             batch.batchElement(2.2f, 2.2f, color, texRgn, spriteMatrix);
+
         }
 
         batch.endBatch();
+
     }
 
 
@@ -403,18 +406,21 @@ public class Tree implements Renderable {
     public void initialize(Context context, ProgramManager programManager) {
         lineShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE);
 
-        textureDataHandler = TextureLoader.loadTexture(context, R.drawable.node);
+        textureDataHandler = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
+        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
         batch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);
         batch.setFiltered(true);
         batch.initialize(context, programManager);
 
-        mConnectionsBatch = new Line3DBatch(textureDataHandler);
+        mConnectionsBatch = new Line3DBatch();
         mConnectionsBatch.initialize(context, programManager);
 
-        mLine = new Line3D(new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(6.0f, 2.0f, 0.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f});
-        mLine.initialize(context, programManager);
+        mDottedBatch = new DottedLine3DBatch(0.7f, 0.8f);
+        mDottedBatch.initialize(context, programManager);
+
         this.initialized = true;
 
     }
@@ -428,25 +434,14 @@ public class Tree implements Renderable {
         Matrix.rotateM(modelMatrix, 0, angle, 0.0f, 1.0f, 0.0f);
 
         //TODO: redo enable/disable switch when performance optimizations are done
+        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         drawConnections(cam);
-        GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
         drawNodes(cam);
 
-        GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-
-        Camera updCam = new Camera(cam);
-        updCam.setPos(updCam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
-
-        /*Line.setModelMatrix(modelMatrix);
-        mLine.draw(updCam);*/
-
-        mConnectionsBatch.beginBatch(updCam, modelMatrix);
-        mConnectionsBatch.batchElement(new Line3D(new Vector3f(1.0f, 0.0f, 0.0f), new Vector3f(6.0f, 2.0f, 0.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
-        mConnectionsBatch.batchElement(new Line3D(new Vector3f(7.0f, 5.0f, 3.0f), new Vector3f(1.0f, 2.0f, -3.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
-        mConnectionsBatch.batchElement(new Line3D(new Vector3f(0.0f, 2.0f, 5.0f), new Vector3f(0.0f, 2.0f, -5.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
-        mConnectionsBatch.batchElement(new Line3D(new Vector3f(5.0f, 6.0f, -5.0f), new Vector3f(-5.0f, 5.0f, 5.0f), 0.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}));
-        mConnectionsBatch.endBatch();
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }

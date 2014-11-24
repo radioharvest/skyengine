@@ -19,4 +19,16 @@ public class Vector2f {
         if (x != 0.0f || y!= 0.0f) return true;
         else return false;
     }
+
+    public Vector2f subtractV(Vector2f op) {
+        return new Vector2f(this.x - op.x, this.y - op.y);
+    }
+
+    public float crossV(Vector2f op) {
+        return (this.x * op.y - this.y * op.x);
+    }
+
+    public static Vector2f getZero() {
+        return new Vector2f(0.0f, 0.0f);
+    }
 }

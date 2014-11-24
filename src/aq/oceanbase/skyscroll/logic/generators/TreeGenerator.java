@@ -1,6 +1,6 @@
 package aq.oceanbase.skyscroll.logic.generators;
 
-import aq.oceanbase.skyscroll.logic.tree.NodeConnection;
+import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 
 import java.util.ArrayList;

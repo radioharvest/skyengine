@@ -97,7 +97,7 @@ public class NodeDisplayBlock extends WindowBlock {
         //options.inSampleSize = (int)(512 / mPixelMetrics[0] * (mPicSide / mWidth));
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-        mNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.node_display, options);
+        mNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.node_display, options, GLES20.GL_LINEAR);
         mScoreTextureHandle = TextureLoader.loadTexture(context, mScoreResourceId, options);
     }
 

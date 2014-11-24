@@ -1,10 +1,8 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
 import android.util.Log;
-import aq.oceanbase.skyscroll.logic.tree.NodeConnection;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Node {

@@ -7,6 +7,7 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -17,6 +18,7 @@ import java.nio.ShortBuffer;
 public class Line3D implements Renderable {
     private boolean mInititialized = false;
     private boolean mSmooth = false;
+    private boolean mDotted = false;
 
     private int mShaderProgram;
 
@@ -52,6 +54,8 @@ public class Line3D implements Renderable {
         this(startPos, endPos);
         this.mWidth = width;
         this.mColor = color;
+
+        rebuildVertices();
     }
 
     public Line3D(Vector3f startPos, Vector3f endPos, float width, float[] color, float[] textureData) {
@@ -63,18 +67,63 @@ public class Line3D implements Renderable {
         this.mModelMatrix = matrix;
     }
 
-    public void setWidth(float width) {
+    public Line3D setWidth(float width) {
         this.mWidth = width;
+        rebuildVertices();
+
+        return this;
+    }
+
+    public Line3D setColor(float[] color) {
+        if (color.length == 4) this.mColor = color;
+
+        if (color.length == 3)
+            this.mColor = new float[] {color[0], color[1], color[2], 1.0f};
+
+        if (color.length > 4)
+            this.mColor = new float[] {color[0], color[1], color[2], color[3]};
+
+        rebuildVertices();
+        return this;
+    }
+
+    public Line3D setWidthAndColor(float width, float[] color) {
+        this.mWidth = width;
+
+        if (color.length == 4) this.mColor = color;
+
+        if (color.length == 3)
+            this.mColor = new float[] {color[0], color[1], color[2], 1.0f};
+
+        if (color.length > 4)
+            this.mColor = new float[] {color[0], color[1], color[2], color[3]};
+
+        rebuildVertices();
+
+        return this;
+    }
+
+    public void setTexRgn(TextureRegion texRgn) {
+        this.mTexRgn = texRgn;
         rebuildVertices();
     }
 
+    public Line3D setDotted(boolean value) {
+        this.mDotted = value;
+        return this;
+    }
+
+
+    public Vector3f getStartPos() {
+        return new Vector3f(mStartPos);
+    }
 
     public Vector3f getCenterPos() {
-        return mCenter;
+        return new Vector3f(mCenter);
     }
 
     public Vector3f getDirectionNorm() {
-        return mDirectionNorm;
+        return new Vector3f(mDirectionNorm);
     }
 
     public float getLength() {
@@ -89,6 +138,11 @@ public class Line3D implements Renderable {
         return mVertexArray;
     }
 
+    public boolean isDotted() {
+        return this.mDotted;
+    }
+
+
 
     private void buildLine() {
         Vector3f diff = mEndPos.subtractV(mStartPos);
@@ -99,10 +153,7 @@ public class Line3D implements Renderable {
         if (mSmooth) mVertexArray = new Vertex[8];
         else mVertexArray = new Vertex[4];
 
-        mVertexArray[0] = new Vertex(-mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);
-        mVertexArray[1] = new Vertex(-mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);
-        mVertexArray[2] = new Vertex( mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);
-        mVertexArray[3] = new Vertex( mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);
+        rebuildVertices();
     }
 
     private void rebuildVertices() {
@@ -111,6 +162,57 @@ public class Line3D implements Renderable {
         mVertexArray[2] = new Vertex( mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);
         mVertexArray[3] = new Vertex( mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);
     }
+
+
+    public Vector3f intersectsLine(Line3D line) {
+        Vector3f intersection = Vector3f.getZero();
+        //first check in 2D XY
+        Vector2f fractions = checkIntersection2D(
+                new Vector2f(this.mStartPos.x, this.mStartPos.y),
+                new Vector2f(this.mEndPos.x, this.mEndPos.y),
+                new Vector2f(line.mStartPos.x, line.mStartPos.y),
+                new Vector2f(line.mEndPos.x, line.mEndPos.y)
+                );
+
+        if (fractions == null)
+            return null;
+
+        Vector3f origDelta = mEndPos.subtractV(mStartPos).multiplySf(fractions.x);
+        Vector3f inpDelta = line.mEndPos.subtractV(line.mStartPos).multiplySf(fractions.y);
+        float collideDistanceSqr = (float)Math.pow((this.mWidth/2 + line.mWidth/2), 2.0f);
+
+        if (origDelta.subtractV(inpDelta).lengthSqr() <= collideDistanceSqr) {
+            return new Vector3f(mStartPos).addV(origDelta);
+        }
+
+        return null;
+    }
+
+    private Vector2f checkIntersection2D(Vector2f origStart, Vector2f origEnd, Vector2f inpStart, Vector2f inpEnd) {
+        Vector2f intersect = Vector2f.getZero();
+        Vector2f origDelta = origEnd.subtractV(origStart);
+        Vector2f inpDelta = inpEnd.subtractV(inpStart);
+
+        // math logic taken from this stackoverflow topic: http://stackoverflow.com/questions/563198
+        // two lines: origStart + t*origDelta, inpStart + u*inpDelta
+        // formula 1: t = ( inpStart - origStart ) x inpDelta / ( origDelta x inpDelta )
+        // formula 2: u = ( inpStart - origStart ) x origDelta / ( origDelta x inpDelta )
+        float numerator = inpStart.subtractV(origStart).crossV(origDelta);
+        float denominator = origDelta.crossV(inpDelta);
+
+        if ( (numerator == 0 && denominator == 0) || (numerator != 0 && denominator == 0) )
+            return null;
+
+        float u = numerator / denominator;
+        if ( 0.0f <= u && u <= 1.0f ) {
+            float t = inpStart.subtractV(origStart).crossV(inpDelta) / denominator;
+            if ( 0.0f <= t && t <= 1.0f)
+                return new Vector2f(t, u);
+        }
+
+        return null;
+    }
+
 
     public boolean isInitialized() {
         return this.mInititialized;
