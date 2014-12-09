@@ -73,8 +73,20 @@ public class Vector3f {
         return (this.x*op.x + this.y*op.y + this.z*op.z);
     }
 
-    public float projectOnV(Vector3f op) {
+    public float projectionLengthOnV(Vector3f op) {
         return this.dotV(op.normalize());
+    }
+
+    public float projectionLengthOnNormV(Vector3f op) {
+        return this.dotV(op);
+    }
+
+    public Vector3f projectOnV(Vector3f op) {
+        return projectOnNormV(op.normalize());
+    }
+
+    public Vector3f projectOnNormV(Vector3f op) {
+        return op.multiplySf( this.projectionLengthOnNormV(op) );
     }
 
     public Vector3f crossV(Vector3f op) {

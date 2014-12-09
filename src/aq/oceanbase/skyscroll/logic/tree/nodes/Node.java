@@ -1,6 +1,7 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
 import android.util.Log;
+import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.util.List;
@@ -18,6 +19,11 @@ public class Node {
     public float posZ;
 
     private int type;           // type is int for 3 subjects which are set up in Game
+
+    private float mRadius = 1.1f;
+    // TODO: switch all node drawing to radius mechanics
+
+
 
     private NODESTATE state;    // state of the Node
     private boolean selected;   // selected flag
@@ -134,6 +140,42 @@ public class Node {
             if (sockets[i].endNode == endNodeId) return sockets[i].connectionId;
         }
         return -1;
+    }
+
+    public float getRadius() {
+        return this.mRadius;
+    }
+
+
+    public void updateSocketPosition(Vector3f camPos, NodeConnection connection, int socketId) {
+        this.updateSocketPosition(camPos, connection, socketId, false);
+    }
+
+    public void updateSocketPosition(Vector3f camPos, NodeConnection connection, int socketId, boolean occlude) {
+        if ( sockets[socketId].connectionId != connection.getId() )
+            return;
+
+        Vector3f inCamVectorNorm = camPos.subtractV(this.getPosV()).normalize();
+        Vector3f lineVectorNorm = connection.getLine().getDirectionNorm();
+
+        if ( this.id == connection.endNode )
+            lineVectorNorm.multiplySf(-1.0f);
+
+        Vector3f rightVectorNorm = inCamVectorNorm.crossV(lineVectorNorm).normalize();
+        Vector3f socketPositionNorm = rightVectorNorm.crossV(inCamVectorNorm).normalize();
+
+        sockets[socketId].setPos(socketPositionNorm.multiplySf(mRadius));
+
+        float segmentLength = mRadius / socketPositionNorm.dotV(lineVectorNorm);
+
+        if ( occlude ) {
+            if ( this.id == connection.originNode ) {
+                connection.getLine().occludeStartPoint( segmentLength );
+            } else {
+                connection.getLine().occludeEndPoint( segmentLength );
+            }
+        }
+
     }
 
 

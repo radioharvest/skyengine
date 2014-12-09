@@ -220,6 +220,8 @@ public class Line3DBatch implements Renderable {
 
             mBatchSize++;
         }
+
+        line.checkOcclusion();
     }
 
     public void endBatch() {

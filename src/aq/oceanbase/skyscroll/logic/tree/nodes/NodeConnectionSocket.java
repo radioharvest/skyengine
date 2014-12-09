@@ -25,6 +25,12 @@ public class NodeConnectionSocket {
         this(pos.x, pos.y, pos.z, connId, endNode);
     }
 
+    public void setPos(Vector3f newPos) {
+        this.posX = newPos.x;
+        this.posY = newPos.y;
+        this.posZ = newPos.z;
+    }
+
     public Vector3f getPos() {
         return new Vector3f(posX, posY, posZ);
     }

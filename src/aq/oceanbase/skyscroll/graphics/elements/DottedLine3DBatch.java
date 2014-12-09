@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.graphics.elements.window;
+package aq.oceanbase.skyscroll.graphics.elements;
 
 import android.content.Context;
 import android.graphics.Bitmap;

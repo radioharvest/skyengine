@@ -109,4 +109,8 @@ public class NodeConnection {
     public Line3D getLine() {
         return this.mLine;
     }
+
+    public int getId() {
+        return this.id;
+    }
 }

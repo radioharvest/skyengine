@@ -119,7 +119,7 @@ public class TouchRay {
     public boolean pointOnRay(Vector3f input) {
         if (!this.pointInsideBox(input)) return false;
         input = input.subtractV(this.mNear);
-        float projection = input.projectOnV(this.mDelta);
+        float projection = input.projectionLengthOnV(this.mDelta);
         float intersectionSqr = this.mRadius*this.mRadius - input.lengthSqr() + projection*projection;
 
         if (intersectionSqr >= 0) return true;

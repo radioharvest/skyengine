@@ -98,4 +98,23 @@ public class Vertex {
     public float getTexV() {
         return mTexV;
     }
+
+
+    public void setPos(Vector3f pos) {
+        mPosX = pos.x;
+        mPosY = pos.y;
+        mPosZ = pos.z;
+    }
+
+    public void setPosX(float pos) {
+        mPosX = pos;
+    }
+
+    public void setPosY(float pos) {
+        mPosY = pos;
+    }
+
+    public void setPosZ(float pos) {
+        mPosZ = pos;
+    }
 }

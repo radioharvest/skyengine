@@ -3,13 +3,12 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.Line3D;
 import aq.oceanbase.skyscroll.graphics.elements.Line3DBatch;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
-import aq.oceanbase.skyscroll.graphics.elements.window.DottedLine3DBatch;
+import aq.oceanbase.skyscroll.graphics.elements.DottedLine3DBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
@@ -193,8 +192,8 @@ public class Tree implements Renderable {
 
     public void updateAngle(float amount) {
         this.angle = this.angle + amount;
-        if (this.angle >= 360.0f) this.angle -= 360.0f;         //could be a problem with -=
-        if (this.angle <= -360.0f) this.angle += 360.0f;        //could be a problem with +=. if works - change first line
+        if (this.angle >= 360.0f) this.angle -= 360.0f;         // could be a problem with -=
+        if (this.angle <= -360.0f) this.angle += 360.0f;        // could be a problem with +=. if works - change first line
     }
 
 
@@ -248,7 +247,6 @@ public class Tree implements Renderable {
         this.connections = connectionList.toArray( new NodeConnection[connectionList.size()] );
     }
 
-
     public int performRaySelection(TouchRay tRay) {
         Matrix.setRotateM(this.modelMatrix, 0, -this.angle, 0.0f, 1.0f, 0.0f);      //derotating to world coordinates
 
@@ -281,6 +279,8 @@ public class Tree implements Renderable {
 
 
 
+
+
     private NodeOrderUnit[] buildDrawOrder(float[] conversionMatrix) {
         NodeOrderUnit[] drawOrder = new NodeOrderUnit[nodes.length];
         float[] tempPos = new float[4];
@@ -308,6 +308,23 @@ public class Tree implements Renderable {
         return drawOrder;
     }
 
+    private void computeNodeSocketsPositions(Vector3f camPos) {
+        // for each node call updateSocketPosition for each connection
+        // returning vector will be the culling position. update the positions
+        // but DO NOT update the line itself - it have to be updated in buildConnectionDrawOrder
+        // for double calculation reduction (updating line once for both points
+        // instead of updating once for each point)
+        for ( int i = 0; i < nodes.length; i++ ) {
+            NodeConnectionSocket[] sockets = nodes[i].getSockets();
+            for ( int k = 0; k < sockets.length; k++ ) {
+
+                nodes[i].updateSocketPosition(camPos, connections[ sockets[k].connectionId ], k, true);
+
+            }
+        }
+    }
+
+
     private void drawLines(Camera cam) {
         float[] MVPMatrix = new float[16];
         GLES20.glUseProgram(lineShaderProgram);
@@ -328,13 +345,10 @@ public class Tree implements Renderable {
     }
 
     private void drawConnections(Camera cam) {
-        Camera updCam = new Camera(cam);
-        updCam.setPos(cam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
+        NodeConnectionOrderUnit[] renderOrder = buildConnectionDrawOrder(cam.getPos());
 
-        NodeConnectionOrderUnit[] renderOrder = buildConnectionDrawOrder(updCam.getPos());
-
-        mConnectionsBatch.beginBatch(updCam, modelMatrix);
-        mDottedBatch.beginBatch(updCam, modelMatrix);
+        mConnectionsBatch.beginBatch(cam, modelMatrix);
+        mDottedBatch.beginBatch(cam, modelMatrix);
 
         for (int i = 0; i < renderOrder.length; i++) {
             Line3D currentLine = connections[renderOrder[i].getId()].getLine();
@@ -390,7 +404,9 @@ public class Tree implements Renderable {
             Matrix.setIdentityM(spriteMatrix, 0);
             Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX, nodes[cur].posY, nodes[cur].posZ);
 
-            batch.batchElement(2.2f, 2.2f, color, texRgn, spriteMatrix);
+            float diam = nodes[cur].getRadius() * 2;
+
+            batch.batchElement(diam, diam, color, texRgn, spriteMatrix);
 
         }
 
@@ -433,10 +449,14 @@ public class Tree implements Renderable {
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.rotateM(modelMatrix, 0, angle, 0.0f, 1.0f, 0.0f);
 
+        Camera updCam = new Camera(cam);
+        updCam.setPos(cam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
+
+        computeNodeSocketsPositions(updCam.getPos());
         //TODO: redo enable/disable switch when performance optimizations are done
         //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        drawConnections(cam);
+        drawConnections(updCam);
         //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
         //GLES20.glEnable(GLES20.GL_DEPTH_TEST);

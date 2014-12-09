@@ -19,6 +19,8 @@ public class Line3D implements Renderable {
     private boolean mInititialized = false;
     private boolean mSmooth = false;
     private boolean mDotted = false;
+    private boolean mOccluded = false;
+    private boolean mOcclusionResetDirty = false;
 
     private int mShaderProgram;
 
@@ -113,6 +115,13 @@ public class Line3D implements Renderable {
         return this;
     }
 
+    public void setStartPosWithoutUpdate(Vector3f pos) {
+        this.mStartPos = new Vector3f(pos);
+    }
+
+    public void setEndPosWithoutUpdate(Vector3f pos) {
+        this.mEndPos = new Vector3f(pos);
+    }
 
     public Vector3f getStartPos() {
         return new Vector3f(mStartPos);
@@ -146,9 +155,10 @@ public class Line3D implements Renderable {
 
     private void buildLine() {
         Vector3f diff = mEndPos.subtractV(mStartPos);
-        mCenter = mStartPos.addV(diff.multiplySf(0.5f));
-        mDirectionNorm = diff.normalize();
+
         mLength = diff.length();
+        mDirectionNorm = diff.normalize();
+        mCenter = mStartPos.addV(diff.multiplySf(0.5f));
 
         if (mSmooth) mVertexArray = new Vertex[8];
         else mVertexArray = new Vertex[4];
@@ -157,10 +167,42 @@ public class Line3D implements Renderable {
     }
 
     private void rebuildVertices() {
-        mVertexArray[0] = new Vertex(-mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);
-        mVertexArray[1] = new Vertex(-mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);
-        mVertexArray[2] = new Vertex( mWidth/2, -mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);
-        mVertexArray[3] = new Vertex( mWidth/2,  mLength/2, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);
+        float halfWidth = mWidth/2;
+        float halfLength = mLength/2;
+
+        mVertexArray[0] = new Vertex(-halfWidth,  halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);          // top left
+        mVertexArray[1] = new Vertex(-halfWidth, -halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);          // bottom left
+        mVertexArray[2] = new Vertex( halfWidth, -halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v2);          // bottom right
+        mVertexArray[3] = new Vertex( halfWidth,  halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u2, mTexRgn.v1);          // top right
+    }
+
+    // the update is done WITHOUT recalculating norm
+    public void occludeStartPoint(float amount) {
+        float halfLength = mLength/2;
+
+        mVertexArray[1].setPosY(-halfLength + amount);
+        mVertexArray[2].setPosY(-halfLength + amount);
+
+        mOccluded = true;
+    }
+
+    public void occludeEndPoint(float amount) {
+        float halfLength = mLength/2;
+
+        mVertexArray[0].setPosY(halfLength - amount);
+        mVertexArray[3].setPosY(halfLength - amount);
+
+        mOccluded = true;
+    }
+
+    public void checkOcclusion() {
+        if ( mOccluded ) {
+            mOccluded = false;
+            mOcclusionResetDirty = true;
+        } else if ( mOcclusionResetDirty ) {
+            rebuildVertices();
+            mOcclusionResetDirty = false;
+        }
     }
 
 
