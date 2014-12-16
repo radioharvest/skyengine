@@ -116,6 +116,11 @@ public class Vector3f {
         return new Vector3f(outVec[0], outVec[1], outVec[2]);
     }
 
+
+    public boolean equalsV(Vector3f inp) {
+        return ( (this.x == inp.x) && (this.y == inp.y) && (this.z == inp.z) );
+    }
+
     public boolean isZero() {
         if (this.x == 0.0f && this.y == 0.0f && this.z == 0.0f)
             return true;

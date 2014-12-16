@@ -1,6 +1,7 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
 import android.util.Log;
+import aq.oceanbase.skyscroll.graphics.elements.Sprite;
 import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
@@ -19,6 +20,8 @@ public class Node {
     public float posZ;
 
     private int type;           // type is int for 3 subjects which are set up in Game
+
+    private Sprite mSprite;
 
     private float mRadius = 1.1f;
     // TODO: switch all node drawing to radius mechanics
@@ -47,6 +50,8 @@ public class Node {
 
         this.state = NODESTATE.IDLE;
 
+        this.mSprite = new Sprite(this.getPosV(), mRadius*2, mRadius*2);
+
         Log.e("Debug", new StringBuilder().append(sockets.length).toString());
     }
 
@@ -60,6 +65,10 @@ public class Node {
 
     public float[] getPos4f() {
         return new float[] {this.posX, this.posY, this.posZ, 1.0f};     //w is 1 for point, 0 for direction
+    }
+
+    public Sprite getSprite() {
+        return this.mSprite;
     }
 
 

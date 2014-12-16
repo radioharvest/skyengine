@@ -1,5 +1,6 @@
 package aq.oceanbase.skyscroll.logic.tree.nodes;
 
+import aq.oceanbase.skyscroll.graphics.elements.Sprite;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class NodeConnectionSocket {
@@ -11,6 +12,8 @@ public class NodeConnectionSocket {
     public int connectionId;
 
     public int endNode;
+
+    private Sprite mSprite;
 
     public NodeConnectionSocket(float x, float y, float z, int connId, int endNode) {
         this.posX = x;
@@ -33,5 +36,9 @@ public class NodeConnectionSocket {
 
     public Vector3f getPos() {
         return new Vector3f(posX, posY, posZ);
+    }
+
+    public Sprite getSprite() {
+        return this.mSprite;
     }
 }

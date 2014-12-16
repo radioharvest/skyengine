@@ -5,10 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
-import aq.oceanbase.skyscroll.graphics.elements.Line3D;
-import aq.oceanbase.skyscroll.graphics.elements.Line3DBatch;
-import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
-import aq.oceanbase.skyscroll.graphics.elements.DottedLine3DBatch;
+import aq.oceanbase.skyscroll.graphics.elements.*;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
@@ -49,11 +46,17 @@ public class Tree implements Renderable {
 
     private int textureDataHandler;
 
+    private int mCorrectNodeTextureHandle;
+    private int mWrongNodeTextureHandle;
+
     private float angle;
     private float[] modelMatrix = new float[16];
-    private SpriteBatch batch;
+    private SpriteBatch mNodeBatch;
+    private SpriteBatch mSocketBatch;
     private Line3DBatch mConnectionsBatch;
     private DottedLine3DBatch mDottedBatch;
+
+    private Sprite mSprite;
 
     private Line3D mLine;
 
@@ -325,25 +328,6 @@ public class Tree implements Renderable {
     }
 
 
-    private void drawLines(Camera cam) {
-        float[] MVPMatrix = new float[16];
-        GLES20.glUseProgram(lineShaderProgram);
-
-        int MVPMatrixHandler = GLES20.glGetUniformLocation(lineShaderProgram, "u_MVPMatrix");
-        int positionHandler = GLES20.glGetAttribLocation(lineShaderProgram, "a_Position");
-
-        GLES20.glVertexAttribPointer(positionHandler, posDataSize, GLES20.GL_FLOAT, false, 0, linesPositionsBuffer);
-        GLES20.glEnableVertexAttribArray(positionHandler);
-
-        Matrix.multiplyMM(MVPMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);
-        Matrix.multiplyMM(MVPMatrix, 0, cam.getProjM(), 0, MVPMatrix, 0);
-
-        GLES20.glUniformMatrix4fv(MVPMatrixHandler, 1, false, MVPMatrix, 0);
-
-        GLES20.glLineWidth(2.0f);
-        GLES20.glDrawArrays(GLES20.GL_LINES, 0, 56);
-    }
-
     private void drawConnections(Camera cam) {
         NodeConnectionOrderUnit[] renderOrder = buildConnectionDrawOrder(cam.getPos());
 
@@ -363,7 +347,7 @@ public class Tree implements Renderable {
         mDottedBatch.endBatch();
     }
 
-    public void drawNodes(Camera cam) {
+    public void drawNodesBatched(Camera cam) {
         int cur;
         TextureRegion texRgn = new TextureRegion();
         float[] color;
@@ -377,7 +361,7 @@ public class Tree implements Renderable {
         Matrix.setIdentityM(rotationMatrix, 0);
         Matrix.rotateM(rotationMatrix, 0, -angle, 0.0f, 1.0f, 0.0f);
 
-        batch.beginBatch(cam, rotationMatrix);
+        mNodeBatch.beginBatch(cam, rotationMatrix);
         //batch.beginBatch(cam);
 
         for (int i = 0; i < renderOrder.length; i++) {
@@ -406,13 +390,63 @@ public class Tree implements Renderable {
 
             float diam = nodes[cur].getRadius() * 2;
 
-            batch.batchElement(diam, diam, color, texRgn, spriteMatrix);
+            mNodeBatch.batchElement(diam, diam, color, texRgn, spriteMatrix);
 
         }
 
-        batch.endBatch();
+        mNodeBatch.endBatch();
 
     }
+
+    public void drawNodes(Camera cam) {
+        int cur;
+        float[] color;
+        float[] spriteMatrix = new float[16];
+        float[] rotationMatrix = new float[16];
+        float[] convMatrix = new float[16];
+
+        Matrix.multiplyMM(convMatrix, 0, cam.getViewM(), 0, modelMatrix, 0);        //multiply view matrix by model to calc distances from cam
+        NodeOrderUnit[] renderOrder = this.buildDrawOrder(convMatrix);
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.rotateM(rotationMatrix, 0, -angle, 0.0f, 1.0f, 0.0f);
+
+        for (int i = 0; i < renderOrder.length; i++) {
+
+            cur = renderOrder[i].getId();
+
+            /*if (nodes[cur].isSelected()) color = new float[] {0.1f, 0.1f, 0.7f, 1.0f};
+            else color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};*/
+            switch (nodes[cur].getState()) {
+                case CORRECT:
+                    color = new float[] {0.0f, 0.8f, 0.0f, 1.0f};
+                    nodes[cur].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                    break;
+                case WRONG:
+                    color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+                    nodes[cur].getSprite().setColor(color).setTexture(mWrongNodeTextureHandle);
+                    break;
+                case OPEN:
+                    color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+                    nodes[cur].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                    break;
+                default:            //when IDLE
+                    color = new float[] {0.7f, 0.7f, 0.7f, 1.0f};
+                    nodes[cur].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                    break;
+            }
+
+            Matrix.setIdentityM(spriteMatrix, 0);
+            Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX, nodes[cur].posY, nodes[cur].posZ);
+
+            nodes[cur].getSprite().setModelMatrix(spriteMatrix).setOrientationMatrix(rotationMatrix).draw(cam);
+
+        }
+
+
+    }
+
+
 
 
     public boolean isInitialized() {
@@ -425,17 +459,37 @@ public class Tree implements Renderable {
         textureDataHandler = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
+        int socketTextureDataHandler = TextureLoader.loadTexture(context, R.drawable.node_socket, GLES20.GL_LINEAR);
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
-        batch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);
-        batch.setFiltered(true);
-        batch.initialize(context, programManager);
+        mCorrectNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
+        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+
+        mWrongNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game210);
+        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+
+        mNodeBatch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);
+        mNodeBatch.setFiltered(true);
+        mNodeBatch.initialize(context, programManager);
+
+        mSocketBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, socketTextureDataHandler);
+        mSocketBatch.setFiltered(true);
+        mNodeBatch.initialize(context, programManager);
 
         mConnectionsBatch = new Line3DBatch();
         mConnectionsBatch.initialize(context, programManager);
 
         mDottedBatch = new DottedLine3DBatch(0.7f, 0.8f);
         mDottedBatch.initialize(context, programManager);
+
+        mSprite = new Sprite(Vector3f.getZero(), 2.0f, 2.0f);
+        mSprite.setFiltered(true);
+        mSprite.setTexture(textureDataHandler);
+        mSprite.initialize(context, programManager);
+
+        for (int i = 0; i < nodes.length; i++) {
+            nodes[i].getSprite().setFiltered(true).initialize(context, programManager);
+        }
 
         this.initialized = true;
 
@@ -450,7 +504,7 @@ public class Tree implements Renderable {
         Matrix.rotateM(modelMatrix, 0, angle, 0.0f, 1.0f, 0.0f);
 
         Camera updCam = new Camera(cam);
-        updCam.setPos(cam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));
+        updCam.setPos(cam.getPos().rotate(-angle, 0.0f, 1.0f, 0.0f));                   // camera position is changed WITHOUT updating matrices
 
         computeNodeSocketsPositions(updCam.getPos());
         //TODO: redo enable/disable switch when performance optimizations are done
@@ -460,8 +514,15 @@ public class Tree implements Renderable {
         //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
 
         //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
-        drawNodes(cam);
+        drawNodes(updCam);
 
         //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
     }
 }
+
+// TODO: implement order drawing
+// TODO: implement node drawing with sockets
+// TODO: fix the displaying of dotted line
+// TODO: fix calculation of occluded part if line is in front of the node, not behind it
+// TODO: change IF structure in ProgramManager to CASE
+// TODO: probably, it's a good idea to make the TextureManager
