@@ -3,6 +3,7 @@ package aq.oceanbase.skyscroll.logic.tree.nodes;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.elements.Sprite;
 import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
+import aq.oceanbase.skyscroll.utils.math.Ray3v;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.util.List;
@@ -122,6 +123,7 @@ public class Node {
         return this;
     }
 
+
     public int[] getInboundConnections() {
         return this.inboundConnections;
     }
@@ -136,6 +138,10 @@ public class Node {
     }
 
     public NodeConnectionSocket getSocket(int id) {
+        return this.sockets[id];
+    }
+
+    public NodeConnectionSocket getSocketByConnectionId(int id) {
         for (int i = 0; i <= sockets.length; i++)
         {
             if (sockets[i].connectionId == id) return sockets[i];
@@ -156,7 +162,7 @@ public class Node {
     }
 
 
-    public void updateSocketPosition(Vector3f camPos, NodeConnection connection, int socketId) {
+/*    public void updateSocketPosition(Vector3f camPos, NodeConnection connection, int socketId) {
         this.updateSocketPosition(camPos, connection, socketId, false);
     }
 
@@ -183,6 +189,29 @@ public class Node {
             } else {
                 connection.getLine().occludeEndPoint( segmentLength );
             }
+        }
+
+    }*/
+
+    public void updateSocketPosition(Vector3f camPos, NodeConnection connection, int socketId, boolean occlude) {
+        if ( sockets[socketId].connectionId != connection.getId() )
+            return;
+
+        Vector3f lineEndPoint;
+
+        if ( this.id == connection.endNode )
+            lineEndPoint = connection.getLine().getRay().getStartPos();
+        else
+            lineEndPoint = connection.getLine().getRay().getEndPos();
+
+
+        Vector3f intersection = new Ray3v( camPos, lineEndPoint ).findIntersectionWithPlane( this.getPosV(), this.mSprite.getLookVector() );
+        intersection = intersection.subtractV(this.getPosV());
+
+        if ( intersection.lengthSqr() < Math.pow(mRadius, 2.0f) ) {
+            sockets[socketId].setPos(Vector3f.getZero());
+        } else {
+            sockets[socketId].setPos(intersection.normalize().multiplySf(mRadius));
         }
 
     }

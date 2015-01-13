@@ -89,6 +89,10 @@ public class Vector3f {
         return op.multiplySf( this.projectionLengthOnNormV(op) );
     }
 
+    public Vector3f projectOnPlaneV(Vector3f planeOrigin, Vector3f planeNorm) {
+        return this.subtractV( planeNorm.multiplySf( this.subtractV(planeOrigin).dotV(planeNorm) ) );       // this - dot(this - planeOrigin, planeNorm) * planeNorm
+    }
+
     public Vector3f crossV(Vector3f op) {
         return new Vector3f( this.y*op.z - this.z*op.y,
                              this.z*op.x - this.x*op.z,

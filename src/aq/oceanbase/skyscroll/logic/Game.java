@@ -7,15 +7,15 @@ import aq.oceanbase.skyscroll.data.QuestionDBHelper;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.text.ScoreBar;
 import aq.oceanbase.skyscroll.graphics.elements.window.QuestionWindow;
+import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.elements.background.Background;
-import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
-import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.MathUtilities;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
@@ -26,7 +26,7 @@ public class Game {
     public static final int QUESTIONS_AMOUNT = 4;
 
     public static enum MODE {
-        TREE, QUESTION
+        TREE, QUESTION, MENU
     }
 
     public static enum ANSWER {
@@ -42,7 +42,10 @@ public class Game {
 
     public RenderContainer mCurrentRenderables;
     private RenderContainer mTreeRenderables = new RenderContainer();
-    private RenderContainer mQuestionRenderables = new RenderContainer();
+    private RenderContainer mWindowRenderables = new RenderContainer();
+
+    private RenderContainer mQuestionWindowRenderables = new RenderContainer();
+    private RenderContainer mMenuWindowRenderables = new RenderContainer();
 
     //Constraints
     private float mMinHeight = 0.0f;
@@ -63,6 +66,7 @@ public class Game {
 
     //Windows
     public QuestionWindow mQuestionWindow;
+    public Window mMenuWindow;
 
     //Backgrounds
     private int mGridTiles;
@@ -254,11 +258,11 @@ public class Game {
 
     private void updateMomentum() {
         if (mMomentum.x != 0.0f) {
-            mMomentum.x = MathMisc.decrementConvergingValue(mMomentum.x, 1.7f);
+            mMomentum.x = MathUtilities.decrementConvergingValue(mMomentum.x, 1.7f);
         }
 
         if (mMomentum.y != 0.0f) {
-            mMomentum.y = MathMisc.decrementConvergingValue(mMomentum.y, 0.1f);
+            mMomentum.y = MathUtilities.decrementConvergingValue(mMomentum.y, 0.1f);
         }
     }
 
@@ -294,7 +298,7 @@ public class Game {
 
     private void openNodeQuestion(int nodeId) {
         if(mGameSession.tree.getNode(nodeId).getState() == Node.NODESTATE.OPEN) {
-            createWindow(getQuestion(nodeId));
+            createQuestionWindow(getQuestion(nodeId));
             switchMode(MODE.QUESTION);
         }
     }
@@ -471,18 +475,26 @@ public class Game {
 
 
     //<editor-fold desc="Windows">
-    private void createWindow(Question question) {
-        mQuestionRenderables.clear();
+    private void createQuestionWindow(Question question) {
+        mQuestionWindowRenderables.clear();
         mQuestionWindow = new QuestionWindow(10, 10, 2.0f, mCamera, mScreenMetrics);
         mQuestionWindow.addQuestion(question);
         mQuestionWindow.addWindowEventListener(new WindowListener());
         mQuestionWindow.setOpacity(0.23f);
-        mQuestionRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mQuestionWindow);
+        mWindowRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mQuestionWindow);
+    }
+
+    private void createMenuWindow() {
+        mMenuWindowRenderables.clear();
+        mMenuWindow = new Window(10, 10, 2.0f, mCamera, mScreenMetrics);
+        mMenuWindow.addWindowEventListener(new WindowListener());
+        mQuestionWindow.setOpacity(0.23f);
+        mWindowRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mMenuWindow);
     }
 
     private void killWindow() {
         mQuestionWindow = null;
-        mQuestionRenderables.clear();
+        mWindowRenderables.clear();
     }
     //</editor-fold>
 
@@ -495,7 +507,7 @@ public class Game {
                 mTouchHandler = mTreeTouchHandler;
                 break;
             case QUESTION:
-                mCurrentRenderables = mQuestionRenderables;
+                mCurrentRenderables = mWindowRenderables;
                 mTouchHandler = mWindowTouchHandler;
                 break;
         }
@@ -510,7 +522,7 @@ public class Game {
                 mTouchHandler = mTreeTouchHandler;
                 break;
             case QUESTION:
-                mCurrentRenderables = mQuestionRenderables;
+                mCurrentRenderables = mWindowRenderables;
                 mTouchHandler = mWindowTouchHandler;
                 break;
         }

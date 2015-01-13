@@ -145,6 +145,32 @@ public class Sprite implements Renderable {
     }
 
 
+    public Vector3f getRightVector() {
+        if (mOrientationMatrix.length < 16)
+            return Vector3f.getZero();
+
+        return new Vector3f(mOrientationMatrix[0], mOrientationMatrix[1], mOrientationMatrix[2]);
+    }
+
+    public Vector3f getUpVector() {
+        if (mOrientationMatrix.length < 16)
+            return Vector3f.getZero();
+
+        return new Vector3f(mOrientationMatrix[4], mOrientationMatrix[5], mOrientationMatrix[6]);
+    }
+
+    public Vector3f getLookVector() {
+        if (mOrientationMatrix.length < 16)
+            return Vector3f.getZero();
+
+        return new Vector3f(mOrientationMatrix[8], mOrientationMatrix[9], mOrientationMatrix[10]);
+    }
+
+    public TextureRegion getTexRgn() {
+        return this.mTexRgn;
+    }
+
+
     public boolean isInitialized() {
         return mInitialized;
     }

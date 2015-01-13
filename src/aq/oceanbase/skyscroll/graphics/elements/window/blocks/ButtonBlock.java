@@ -12,7 +12,7 @@ import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.graphics.elements.window.WindowBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
-import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.MathUtilities;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class ButtonBlock extends WindowBlock {
@@ -41,6 +41,13 @@ public class ButtonBlock extends WindowBlock {
         this.mInterval = interval;
         this.mOffset = offset;
         mButtonValues = buttonValues;
+    }
+
+    public ButtonBlock(Window root, float fraction, Button[] buttons, float interval, float offset) {
+        super(root, fraction);
+        mButtons = buttons;
+        this.mInterval = interval;
+        this.mOffset = offset;
     }
 
     //<editor-fold desc="Getters and Setters">
@@ -138,8 +145,8 @@ public class ButtonBlock extends WindowBlock {
         for ( int i = 0; i < mButtons.length; i++ )if (mButtons[i].getWidth() > maxWidth ) maxWidth = mButtons[i].getPixelWidth();
         int cellHeight = mButtons[0].getPixelHeight();
 
-        int bmpWidth = MathMisc.getClosestPowerOfTwo(maxWidth);
-        int bmpHeight = MathMisc.getClosestPowerOfTwo(cellHeight * mButtons.length);
+        int bmpWidth = MathUtilities.getClosestPowerOfTwo(maxWidth);
+        int bmpHeight = MathUtilities.getClosestPowerOfTwo(cellHeight * mButtons.length);
 
         Paint paint = new Paint();
         paint.setTypeface(tf);

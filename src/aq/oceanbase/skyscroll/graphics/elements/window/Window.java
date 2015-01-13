@@ -11,26 +11,21 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.Button;
 import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ButtonBlock;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ContentBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
-import aq.oceanbase.skyscroll.logic.Game;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
-import aq.oceanbase.skyscroll.logic.Question;
-import aq.oceanbase.skyscroll.utils.misc.Timer;
+import aq.oceanbase.skyscroll.utils.Timer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 //TODO: add touch handling.

@@ -181,10 +181,10 @@ public class Line3DBatch implements Renderable {
         float[] orientationMatrix;
 
 
-        Vector3f center = line.getCenterPos();
+        Vector3f center = line.getRay().getCenterPos();
 
         Vector3f lookAxis = mCam.getPos().subtractV(center).normalize();
-        Vector3f upAxis = new Vector3f(line.getDirectionNorm());
+        Vector3f upAxis = new Vector3f(line.getRay().getDirectionNorm());
         Vector3f rightAxis = upAxis.crossV(lookAxis).normalize();
         lookAxis = rightAxis.crossV(upAxis);
 

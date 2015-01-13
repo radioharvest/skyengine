@@ -10,7 +10,7 @@ import aq.oceanbase.skyscroll.logic.Question;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
-import aq.oceanbase.skyscroll.utils.misc.Timer;
+import aq.oceanbase.skyscroll.utils.Timer;
 
 public class QuestionWindow extends Window {
 

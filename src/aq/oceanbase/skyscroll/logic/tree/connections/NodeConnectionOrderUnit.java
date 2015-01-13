@@ -9,7 +9,7 @@ public class NodeConnectionOrderUnit implements Comparable {
 
     public NodeConnectionOrderUnit(int origid, Line3D line, Vector3f camPos) {
         this.mId = origid;
-        this.mCamDistSqr = camPos.subtractV( line.getCenterPos() ).lengthSqr();
+        this.mCamDistSqr = camPos.subtractV( line.getRay().getCenterPos() ).lengthSqr();
     }
 
     public int getId() {

@@ -3,9 +3,11 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.*;
+import aq.oceanbase.skyscroll.graphics.render.OrderUnit;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
@@ -13,11 +15,13 @@ import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
 import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnectionOrderUnit;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
+import aq.oceanbase.skyscroll.utils.math.Ray3v;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
 
+import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -48,6 +52,7 @@ public class Tree implements Renderable {
 
     private int mCorrectNodeTextureHandle;
     private int mWrongNodeTextureHandle;
+    private int mNodeSocketTextureHandle;
 
     private float angle;
     private float[] modelMatrix = new float[16];
@@ -107,13 +112,13 @@ public class Tree implements Renderable {
         for (int i = 0; i < connections.length; i++) {
             //Log.e("Debug", new StringBuilder("Connection ").append(i).append(" Origin: ").append(connections[i].originNode).append(" End: ").append(connections[i].endNode).toString());
             node = nodes[connections[i].originNode];
-            socket = node.getSocket(i);
+            socket = node.getSocketByConnectionId(i);
             posData[i*6 + 0] = node.posX + socket.posX;
             posData[i*6 + 1] = node.posY + socket.posY;
             posData[i*6 + 2] = node.posZ + socket.posZ;
 
             node = nodes[connections[i].endNode];
-            socket = node.getSocket(i);
+            socket = node.getSocketByConnectionId(i);
             posData[i*6 + 3] = node.posX + socket.posX;
             posData[i*6 + 4] = node.posY + socket.posY;
             posData[i*6 + 5] = node.posZ + socket.posZ;
@@ -228,8 +233,8 @@ public class Tree implements Renderable {
                     NodeConnectionSocket currNodeSocket = new NodeConnectionSocket(0, 0, 0, connId, outArray[k]);
                     NodeConnectionSocket endNodeSocket = new NodeConnectionSocket(0, 0, 0, connId, i);
 
-                    Vector3f startPos = nodes[i].getPosV().addV(currNodeSocket.getPos());
-                    Vector3f endPos = nodes[outArray[k]].getPosV().addV(endNodeSocket.getPos());
+                    Vector3f startPos = nodes[i].getPosV().addV(currNodeSocket.getPosV());
+                    Vector3f endPos = nodes[outArray[k]].getPosV().addV(endNodeSocket.getPosV());
 
                     NodeConnection currConnection = new NodeConnection(i, outArray[k], connId);
                     currConnection.setLine( startPos, endPos );
@@ -282,7 +287,31 @@ public class Tree implements Renderable {
 
 
 
+    private OrderUnit[] buildCompleteDrawOrder(Vector3f camPos) {
+        OrderUnit[] drawOrder = new OrderUnit[connections.length + nodes.length];
 
+        int index = 0;
+
+        for (int i = 0; i < connections.length; i++, index++) {
+
+            drawOrder[index] = new OrderUnit(   connections[i].getId(),
+                                                OrderUnit.ORDERUNITTYPE.Connection,
+                                                connections[i].getLine().getRay().getCenterPos(),
+                                                camPos  );
+        }
+
+        for (int i = 0; i < nodes.length; i++, index++) {
+
+            drawOrder[index] = new OrderUnit(   nodes[i].id,
+                                                OrderUnit.ORDERUNITTYPE.Node,
+                                                nodes[i].getPosV(),
+                                                camPos  );
+        }
+
+        Arrays.sort(drawOrder);
+
+        return drawOrder;
+    }
 
     private NodeOrderUnit[] buildDrawOrder(float[] conversionMatrix) {
         NodeOrderUnit[] drawOrder = new NodeOrderUnit[nodes.length];
@@ -317,11 +346,37 @@ public class Tree implements Renderable {
         // but DO NOT update the line itself - it have to be updated in buildConnectionDrawOrder
         // for double calculation reduction (updating line once for both points
         // instead of updating once for each point)
+
         for ( int i = 0; i < nodes.length; i++ ) {
             NodeConnectionSocket[] sockets = nodes[i].getSockets();
             for ( int k = 0; k < sockets.length; k++ ) {
+                Vector3f lineEndPoint;
 
-                nodes[i].updateSocketPosition(camPos, connections[ sockets[k].connectionId ], k, true);
+
+                if ( connections[ sockets[k].connectionId ].endNode == i )              // inverse point from current node
+                    lineEndPoint = connections[ sockets[k].connectionId ].getLine().getRay().getStartPos();
+                else
+                    lineEndPoint = connections[ sockets[k].connectionId ].getLine().getRay().getEndPos();
+
+
+                Vector3f intersection = new Ray3v( camPos, lineEndPoint ).findIntersectionWithPlane( nodes[i].getPosV(), nodes[i].getSprite().getLookVector() );
+                intersection = intersection.subtractV( nodes[i].getPosV() );
+
+
+                if ( intersection.lengthSqr() < Math.pow(nodes[i].getRadius(), 2.0f) )
+                    nodes[i].getSocket(k).setPos(Vector3f.getZero());
+                else
+                    nodes[i].getSocket(k).setPos(intersection.normalize().multiplySf(nodes[i].getRadius()));
+
+
+                float fraction = nodes[i].getRadius()/intersection.length();
+                float amount = connections[ sockets[k].connectionId ].getLine().getRay().getLength() * fraction;
+                Log.e("Debug", "Fraction: " + fraction);
+
+                if ( connections[ sockets[k].connectionId ].originNode == i )
+                    connections[ sockets[k].connectionId ].getLine().occludeStartPoint( amount );
+                else
+                    connections[ sockets[k].connectionId ].getLine().occludeEndPoint( amount );
 
             }
         }
@@ -441,7 +496,108 @@ public class Tree implements Renderable {
 
             nodes[cur].getSprite().setModelMatrix(spriteMatrix).setOrientationMatrix(rotationMatrix).draw(cam);
 
+            NodeConnectionSocket[] sockets = nodes[cur].getSockets();
+            mSocketBatch.beginBatch(cam, rotationMatrix);
+
+            for (int k = 0; k < sockets.length; k++) {
+                Matrix.setIdentityM(spriteMatrix, 0);
+                Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[cur].posX + sockets[k].posX, nodes[cur].posY + sockets[k].posY, nodes[cur].posZ + sockets[k].posZ);
+
+                //sockets[k].getPosV().print("Debug", "Node " + i + " socket " + k);
+
+                float diam = sockets[k].getRadius() * 2;
+
+                mSocketBatch.batchElement(diam, diam, sockets[k].getSprite().getTexRgn(), spriteMatrix);
+            }
+
+            mSocketBatch.endBatch();
         }
+
+
+    }
+
+    private void drawOneNode(int id, float[] rotationMatrix, Camera cam) {
+        float[] color;
+        float[] spriteMatrix = new float[16];
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.rotateM(rotationMatrix, 0, -angle, 0.0f, 1.0f, 0.0f);
+
+        switch (nodes[id].getState()) {
+            case CORRECT:
+                color = new float[] {0.0f, 0.8f, 0.0f, 1.0f};
+                nodes[id].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                break;
+            case WRONG:
+                color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+                nodes[id].getSprite().setColor(color).setTexture(mWrongNodeTextureHandle);
+                break;
+            case OPEN:
+                color = new float[] {1.0f, 1.0f, 1.0f, 1.0f};
+                nodes[id].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                break;
+            default:            //when IDLE
+                color = new float[] {0.7f, 0.7f, 0.7f, 1.0f};
+                nodes[id].getSprite().setColor(color).setTexture(mCorrectNodeTextureHandle);
+                break;
+        }
+
+        Matrix.setIdentityM(spriteMatrix, 0);
+        Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[id].posX, nodes[id].posY, nodes[id].posZ);
+
+        nodes[id].getSprite().setModelMatrix(spriteMatrix).setOrientationMatrix(rotationMatrix).draw(cam);
+
+
+        NodeConnectionSocket[] sockets = nodes[id].getSockets();
+        mSocketBatch.beginBatch(cam, rotationMatrix);
+
+
+        for (int k = 0; k < sockets.length; k++) {
+            Matrix.setIdentityM(spriteMatrix, 0);
+            Matrix.translateM(spriteMatrix, 0, modelMatrix, 0, nodes[id].posX + sockets[k].posX, nodes[id].posY + sockets[k].posY, nodes[id].posZ + sockets[k].posZ);
+
+            float diam = sockets[k].getRadius() * 2;
+
+            mSocketBatch.batchElement(diam, diam, sockets[k].getSprite().getTexRgn(), spriteMatrix);
+        }
+
+        mSocketBatch.endBatch();
+
+    }
+
+    public void drawAll(Camera cam) {
+        float[] rotationMatrix = new float[16];
+        boolean typeSwitchDirty = false;
+
+        OrderUnit[] renderOrder = buildCompleteDrawOrder( cam.getPos() );
+
+        Matrix.setIdentityM(rotationMatrix, 0);
+        Matrix.rotateM(rotationMatrix, 0, -angle, 0.0f, 1.0f, 0.0f);
+
+        for (int i = 0; i < renderOrder.length; i++) {
+            if (renderOrder[i].getType() == OrderUnit.ORDERUNITTYPE.Node) {
+                if ( !typeSwitchDirty ) {
+                    mConnectionsBatch.endBatch();
+                    mDottedBatch.endBatch();
+                }
+
+                drawOneNode(renderOrder[i].getId(), rotationMatrix, cam);
+                typeSwitchDirty = true;
+            } else {
+                if (typeSwitchDirty) {
+                    mConnectionsBatch.beginBatch(cam, modelMatrix);
+                    mDottedBatch.beginBatch(cam, modelMatrix);
+                    typeSwitchDirty = false;
+                }
+
+                Line3D currentLine = connections[renderOrder[i].getId()].getLine();
+                if (currentLine.isDotted())
+                    mDottedBatch.batchElement(currentLine);
+                else
+                    mConnectionsBatch.batchElement(currentLine);
+            }
+        }
+
 
 
     }
@@ -474,7 +630,8 @@ public class Tree implements Renderable {
 
         mSocketBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, socketTextureDataHandler);
         mSocketBatch.setFiltered(true);
-        mNodeBatch.initialize(context, programManager);
+        mSocketBatch.useDepthTest(false);
+        mSocketBatch.initialize(context, programManager);
 
         mConnectionsBatch = new Line3DBatch();
         mConnectionsBatch.initialize(context, programManager);
@@ -520,9 +677,9 @@ public class Tree implements Renderable {
     }
 }
 
-// TODO: implement order drawing
-// TODO: implement node drawing with sockets
 // TODO: fix the displaying of dotted line
 // TODO: fix calculation of occluded part if line is in front of the node, not behind it
 // TODO: change IF structure in ProgramManager to CASE
-// TODO: probably, it's a good idea to make the TextureManager
+// TODO: probably, it's a good idea to make the TextureManager that will hold references to loaded textures. maybe map will be good way to do this
+// TODO: Renderable object as detached drawing object to include as a member to logic classes
+// TODO: update SpriteBatch to fit Sprite architecture

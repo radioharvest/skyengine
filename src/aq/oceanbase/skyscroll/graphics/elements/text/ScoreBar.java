@@ -10,7 +10,7 @@ import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
-import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.MathUtilities;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class ScoreBar implements Renderable {
@@ -74,8 +74,8 @@ public class ScoreBar implements Renderable {
         paint.setTextSize(mFontSize);
         fm = paint.getFontMetrics();
 
-        int bmpWidth = MathMisc.getClosestPowerOfTwo((int)paint.measureText("0123456789"));
-        int bmpHeight = MathMisc.getClosestPowerOfTwo(mPixelHeight);
+        int bmpWidth = MathUtilities.getClosestPowerOfTwo((int) paint.measureText("0123456789"));
+        int bmpHeight = MathUtilities.getClosestPowerOfTwo(mPixelHeight);
 
         buildDigitMetrics(paint, bmpWidth, bmpHeight);
 

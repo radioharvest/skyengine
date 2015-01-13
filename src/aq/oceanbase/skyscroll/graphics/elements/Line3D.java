@@ -7,6 +7,7 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.utils.math.Ray3v;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
@@ -30,12 +31,7 @@ public class Line3D implements Renderable {
 
     private float[] mModelMatrix = new float[16];
 
-    private Vector3f mStartPos;
-    private Vector3f mEndPos;
-    private Vector3f mCenter;
-    private Vector3f mDirectionNorm;
-
-    private float mLength;
+    private Ray3v mRay;
     private float mWidth = 0.5f;
 
     private Vertex[] mVertexArray;
@@ -46,8 +42,7 @@ public class Line3D implements Renderable {
 
 
     public Line3D(Vector3f startPos, Vector3f endPos) {
-        this.mStartPos = startPos;
-        this.mEndPos = endPos;
+        this.mRay = new Ray3v(startPos, endPos);
 
         this.buildLine();
     }
@@ -62,7 +57,6 @@ public class Line3D implements Renderable {
 
     public Line3D(Vector3f startPos, Vector3f endPos, float width, float[] color, float[] textureData) {
         this(startPos, endPos, width, color);
-
     }
 
     public void setModelMatrix(float[] matrix) {
@@ -115,28 +109,8 @@ public class Line3D implements Renderable {
         return this;
     }
 
-    public void setStartPosWithoutUpdate(Vector3f pos) {
-        this.mStartPos = new Vector3f(pos);
-    }
-
-    public void setEndPosWithoutUpdate(Vector3f pos) {
-        this.mEndPos = new Vector3f(pos);
-    }
-
-    public Vector3f getStartPos() {
-        return new Vector3f(mStartPos);
-    }
-
-    public Vector3f getCenterPos() {
-        return new Vector3f(mCenter);
-    }
-
-    public Vector3f getDirectionNorm() {
-        return new Vector3f(mDirectionNorm);
-    }
-
-    public float getLength() {
-        return mLength;
+    public Ray3v getRay() {
+        return this.mRay;
     }
 
     public Vertex getVertex(int id) {
@@ -154,12 +128,6 @@ public class Line3D implements Renderable {
 
 
     private void buildLine() {
-        Vector3f diff = mEndPos.subtractV(mStartPos);
-
-        mLength = diff.length();
-        mDirectionNorm = diff.normalize();
-        mCenter = mStartPos.addV(diff.multiplySf(0.5f));
-
         if (mSmooth) mVertexArray = new Vertex[8];
         else mVertexArray = new Vertex[4];
 
@@ -168,7 +136,7 @@ public class Line3D implements Renderable {
 
     private void rebuildVertices() {
         float halfWidth = mWidth/2;
-        float halfLength = mLength/2;
+        float halfLength = mRay.getLength()/2;
 
         mVertexArray[0] = new Vertex(-halfWidth,  halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v1);          // top left
         mVertexArray[1] = new Vertex(-halfWidth, -halfLength, 0.0f, mColor[0], mColor[1], mColor[2], mColor[3], mTexRgn.u1, mTexRgn.v2);          // bottom left
@@ -178,7 +146,7 @@ public class Line3D implements Renderable {
 
     // the update is done WITHOUT recalculating norm
     public void occludeStartPoint(float amount) {
-        float halfLength = mLength/2;
+        float halfLength = this.mRay.getLength()/2;
 
         mVertexArray[1].setPosY(-halfLength + amount);
         mVertexArray[2].setPosY(-halfLength + amount);
@@ -187,7 +155,7 @@ public class Line3D implements Renderable {
     }
 
     public void occludeEndPoint(float amount) {
-        float halfLength = mLength/2;
+        float halfLength = this.mRay.getLength()/2;
 
         mVertexArray[0].setPosY(halfLength - amount);
         mVertexArray[3].setPosY(halfLength - amount);
@@ -203,56 +171,6 @@ public class Line3D implements Renderable {
             rebuildVertices();
             mOcclusionResetDirty = false;
         }
-    }
-
-
-    public Vector3f intersectsLine(Line3D line) {
-        Vector3f intersection = Vector3f.getZero();
-        //first check in 2D XY
-        Vector2f fractions = checkIntersection2D(
-                new Vector2f(this.mStartPos.x, this.mStartPos.y),
-                new Vector2f(this.mEndPos.x, this.mEndPos.y),
-                new Vector2f(line.mStartPos.x, line.mStartPos.y),
-                new Vector2f(line.mEndPos.x, line.mEndPos.y)
-                );
-
-        if (fractions == null)
-            return null;
-
-        Vector3f origDelta = mEndPos.subtractV(mStartPos).multiplySf(fractions.x);
-        Vector3f inpDelta = line.mEndPos.subtractV(line.mStartPos).multiplySf(fractions.y);
-        float collideDistanceSqr = (float)Math.pow((this.mWidth/2 + line.mWidth/2), 2.0f);
-
-        if (origDelta.subtractV(inpDelta).lengthSqr() <= collideDistanceSqr) {
-            return new Vector3f(mStartPos).addV(origDelta);
-        }
-
-        return null;
-    }
-
-    private Vector2f checkIntersection2D(Vector2f origStart, Vector2f origEnd, Vector2f inpStart, Vector2f inpEnd) {
-        Vector2f intersect = Vector2f.getZero();
-        Vector2f origDelta = origEnd.subtractV(origStart);
-        Vector2f inpDelta = inpEnd.subtractV(inpStart);
-
-        // math logic taken from this stackoverflow topic: http://stackoverflow.com/questions/563198
-        // two lines: origStart + t*origDelta, inpStart + u*inpDelta
-        // formula 1: t = ( inpStart - origStart ) x inpDelta / ( origDelta x inpDelta )
-        // formula 2: u = ( inpStart - origStart ) x origDelta / ( origDelta x inpDelta )
-        float numerator = inpStart.subtractV(origStart).crossV(origDelta);
-        float denominator = origDelta.crossV(inpDelta);
-
-        if ( (numerator == 0 && denominator == 0) || (numerator != 0 && denominator == 0) )
-            return null;
-
-        float u = numerator / denominator;
-        if ( 0.0f <= u && u <= 1.0f ) {
-            float t = inpStart.subtractV(origStart).crossV(inpDelta) / denominator;
-            if ( 0.0f <= t && t <= 1.0f)
-                return new Vector2f(t, u);
-        }
-
-        return null;
     }
 
 
@@ -306,16 +224,16 @@ public class Line3D implements Renderable {
         int positionHandle = GLES20.glGetAttribLocation(mShaderProgram, "a_Position");
         int colorHandle = GLES20.glGetAttribLocation(mShaderProgram, "a_Color");
 
-        Vector3f lookAxis = cam.getPos().subtractV(mCenter).normalize();
-        Vector3f upAxis = new Vector3f(mDirectionNorm);
+        Vector3f lookAxis = cam.getPos().subtractV(mRay.getCenterPos()).normalize();
+        Vector3f upAxis = new Vector3f(mRay.getDirectionNorm());
         Vector3f rightAxis = upAxis.crossV(lookAxis).normalize();
         lookAxis = rightAxis.crossV(upAxis);
 
         orientationMatrix = new float[] {
-                rightAxis.x, rightAxis.y, rightAxis.z, 0.0f,
-                upAxis.x,    upAxis.y,    upAxis.z,    0.0f,
-                lookAxis.x,  lookAxis.y,  lookAxis.z,  0.0f,
-                mCenter.x,   mCenter.y,   mCenter.z,   1.0f
+                rightAxis.x,            rightAxis.y,            rightAxis.z,            0.0f,
+                upAxis.x,               upAxis.y,               upAxis.z,               0.0f,
+                lookAxis.x,             lookAxis.y,             lookAxis.z,             0.0f,
+                mRay.getCenterPos().x,  mRay.getCenterPos().y,  mRay.getCenterPos().z,  1.0f
         };
 
         Matrix.multiplyMM(VPMatrix, 0, cam.getProjM(), 0, cam.getViewM(), 0);

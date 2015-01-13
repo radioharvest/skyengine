@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="libs">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../facebook-android-sdk-3.21.1/facebook/libs/bolts-android-1.1.2.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../facebook-android-sdk-3.21.1/facebook/libs/android-support-v4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

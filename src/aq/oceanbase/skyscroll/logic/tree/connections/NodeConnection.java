@@ -2,6 +2,7 @@ package aq.oceanbase.skyscroll.logic.tree.connections;
 
 import aq.oceanbase.skyscroll.graphics.elements.Line3D;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
+import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class NodeConnection {
@@ -33,7 +34,7 @@ public class NodeConnection {
 
     public void setLine(Vector3f startPos, Vector3f endPos) {
         this.mLine = new Line3D(startPos, endPos);
-        this.mLine.getStartPos().print("Debug", "New Line Pos");
+        this.mLine.getRay().getStartPos().print("Debug", "New Line Pos");
         updateLineState();
     }
 
@@ -100,6 +101,10 @@ public class NodeConnection {
                 this.mLine.setWidthAndColor(0.1f,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
                 break;
         }
+    }
+
+    public void occludeLine(Vector3f socketPos, Vector3f camPos) {
+
     }
 
     public CONNECTIONSTATE getState() {

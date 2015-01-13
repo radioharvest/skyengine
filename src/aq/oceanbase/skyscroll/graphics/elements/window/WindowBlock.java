@@ -9,7 +9,7 @@ import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 
-public abstract class WindowBlock extends TouchHandler implements Renderable {
+public class WindowBlock extends TouchHandler implements Renderable {
     //TODO: check if fields could really be private and class could be non-abstract
     protected Vector3f mPos;                // position of upper left corner
     protected float mWidth;

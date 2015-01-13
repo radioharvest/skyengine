@@ -42,7 +42,7 @@ public class DottedLine3DBatch extends Line3DBatch {
     @Override
     public void batchElement(Line3D line) {
         TextureRegion texRgn = new TextureRegion();
-        texRgn.v2 = line.getLength() / mUnitSize;
+        texRgn.v2 = line.getRay().getLength() / mUnitSize;
         line.setTexRgn(texRgn);
         super.batchElement(line);
     }

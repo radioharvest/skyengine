@@ -13,6 +13,8 @@ public class NodeConnectionSocket {
 
     public int endNode;
 
+    private float mRadius;
+
     private Sprite mSprite;
 
     public NodeConnectionSocket(float x, float y, float z, int connId, int endNode) {
@@ -22,6 +24,10 @@ public class NodeConnectionSocket {
 
         this.connectionId = connId;
         this.endNode = endNode;
+
+        this.mRadius = 0.1f;
+
+        this.mSprite = new Sprite(this.getPosV(), mRadius*2, mRadius*2);
     }
 
     public NodeConnectionSocket(Vector3f pos, int connId, int endNode) {
@@ -34,11 +40,19 @@ public class NodeConnectionSocket {
         this.posZ = newPos.z;
     }
 
-    public Vector3f getPos() {
+    public void setRadius(float rad) {
+        this.mRadius = rad;
+    }
+
+    public Vector3f getPosV() {
         return new Vector3f(posX, posY, posZ);
     }
 
     public Sprite getSprite() {
         return this.mSprite;
+    }
+
+    public float getRadius() {
+        return this.mRadius;
     }
 }

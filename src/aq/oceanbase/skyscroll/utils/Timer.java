@@ -1,4 +1,4 @@
-package aq.oceanbase.skyscroll.utils.misc;
+package aq.oceanbase.skyscroll.utils;
 
 import java.util.Date;
 

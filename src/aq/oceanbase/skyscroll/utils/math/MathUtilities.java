@@ -1,7 +1,8 @@
 package aq.oceanbase.skyscroll.utils.math;
 import android.util.Log;
+import aq.oceanbase.skyscroll.graphics.elements.Line3D;
 
-public class MathMisc {
+public class MathUtilities {
     public static float decrementConvergingValue(float value, float decrement) {
         float absValue = Math.abs(value);
         absValue = absValue - decrement;
@@ -34,4 +35,8 @@ public class MathMisc {
         Log.e("Error", new StringBuilder().append(matrix[8]).append(" ").append(matrix[9]).append(" ").append(matrix[10]).append(" ").append(matrix[11]).toString());
         Log.e("Error", new StringBuilder().append(matrix[12]).append(" ").append(matrix[13]).append(" ").append(matrix[14]).append(" ").append(matrix[15]).toString());
     }
+
+    /*public static Vector3f findLinesIntersection(Line3D op1, Line3D op2, float tolerance) {
+
+    }*/
 }

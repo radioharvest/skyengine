@@ -34,6 +34,7 @@ public class SpriteBatch implements Renderable {
     private boolean mInitialized = false;               // Initialization flag
     private boolean mFiltered = false;
     private boolean mIgnoreCamera = false;
+    private boolean mDepthTest = true;
 
     private Camera mCam;                        // Camera instance
 
@@ -100,6 +101,10 @@ public class SpriteBatch implements Renderable {
 
     public void set2DMode(boolean value) {
         this.mIgnoreCamera = value;
+    }
+
+    public void useDepthTest(boolean value) {
+        this.mDepthTest = value;
     }
 
     // -- Begin batching -- //
@@ -355,8 +360,14 @@ public class SpriteBatch implements Renderable {
             GLES20.glDisableVertexAttribArray(colorHandle);
         }
 
+        if (!mDepthTest)
+            GLES20.glDisable(GLES20.GL_DEPTH_TEST);
+
         mIndexBuffer.position(0);
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, mBatchSize * INDICES_PER_SPRITE, GLES20.GL_UNSIGNED_SHORT, mIndexBuffer);
+
+        if (!mDepthTest)
+            GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         GLES20.glDisableVertexAttribArray(positionHandle);
         GLES20.glDisableVertexAttribArray(indexHandle);

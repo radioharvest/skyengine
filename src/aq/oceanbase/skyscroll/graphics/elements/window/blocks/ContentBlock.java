@@ -8,7 +8,7 @@ import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.graphics.elements.window.WindowBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
-import aq.oceanbase.skyscroll.utils.math.MathMisc;
+import aq.oceanbase.skyscroll.utils.math.MathUtilities;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -192,8 +192,8 @@ public class ContentBlock extends WindowBlock {
         contentHeight = (int)(Math.abs(fm.top) + fm.leading) * mTextLines.size();
         if (contentHeight < mPixelMetrics[1]) contentHeight = mPixelMetrics[1];
 
-        int bmpWidth = MathMisc.getClosestPowerOfTwo(mPixelMetrics[0]);
-        int bmpHeight = MathMisc.getClosestPowerOfTwo(contentHeight);
+        int bmpWidth = MathUtilities.getClosestPowerOfTwo(mPixelMetrics[0]);
+        int bmpHeight = MathUtilities.getClosestPowerOfTwo(contentHeight);
 
         mBitmap = Bitmap.createBitmap(bmpWidth, bmpHeight, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(mBitmap);
