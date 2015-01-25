@@ -371,7 +371,7 @@ public class Tree implements Renderable {
 
                 float fraction = nodes[i].getRadius()/intersection.length();
                 float amount = connections[ sockets[k].connectionId ].getLine().getRay().getLength() * fraction;
-                Log.e("Debug", "Fraction: " + fraction);
+                //Log.e("Debug", "Fraction: " + fraction);
 
                 if ( connections[ sockets[k].connectionId ].originNode == i )
                     connections[ sockets[k].connectionId ].getLine().occludeStartPoint( amount );

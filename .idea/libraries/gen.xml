@@ -2,9 +2,6 @@
   <library name="gen">
     <CLASSES />
     <JAVADOC />
-    <SOURCES>
-      <root url="file://$PROJECT_DIR$/libs/facebook/gen" />
-      <root url="file://$PROJECT_DIR$/libs/facebook/src" />
-    </SOURCES>
+    <SOURCES />
   </library>
 </component>

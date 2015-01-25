@@ -9,13 +9,21 @@ import java.util.List;
 
 public class MenuPageBase extends Window {
 
+    private MenuController mMenuController;
+
     protected List<Button> mButtons;
     protected ButtonBlock mButtonBlock;
 
-    public MenuPageBase(int screenX, int screenY, int width, int height, Camera cam, int[] screenMetrics) {
+
+    public MenuPageBase(MenuController controller, int screenX, int screenY, int width, int height, Camera cam, int[] screenMetrics) {
         super(screenX, screenY, 2.0f, width, height, cam, screenMetrics);
 
         layoutSetup();
+    }
+
+
+    public MenuController getController() {
+        return this.mMenuController;
     }
 
 

@@ -14,6 +14,8 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ButtonBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.logic.events.ButtonEvent;
+import aq.oceanbase.skyscroll.logic.events.ButtonEventListener;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
@@ -29,7 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO: add touch handling.
-public class Window extends TouchHandler implements Renderable {
+public class Window extends TouchHandler implements Renderable, ButtonEventListener {
     public static enum ALIGN {
         LEFT, RIGHT, TOP, BOTTOM
     }
@@ -300,7 +302,8 @@ public class Window extends TouchHandler implements Renderable {
         }
     }
 
-    public void onButtonPressed(ButtonBlock buttonBlock, int buttonId) {}
+    @Override
+    public void onButtonPressed(ButtonEvent e) {}
     //</editor-fold>
 
 
@@ -331,14 +334,20 @@ public class Window extends TouchHandler implements Renderable {
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mOrderBuffer);
         GLES20.glBlendFunc(GLES20.GL_ONE, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
+
+    protected void update() {
+        mLayout.update();
+    }
     //</editor-fold>
 
 
+    @Override
     public boolean isInitialized() {
         return this.mInitialized;
     }
 
 
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         float[] windowVertexData = new float[] {
             0.0f, 0.0f, 0.0f,      //TL
@@ -370,6 +379,7 @@ public class Window extends TouchHandler implements Renderable {
         this.mInitialized = true;
     }
 
+    @Override
     public void release() {
         GLES20.glDeleteProgram(mShaderProgram);
         mLayout.release();
@@ -378,10 +388,7 @@ public class Window extends TouchHandler implements Renderable {
     }
 
 
-    protected void update() {
-        mLayout.update();
-    }
-
+    @Override
     public void draw(Camera cam) {
         this.update();
 

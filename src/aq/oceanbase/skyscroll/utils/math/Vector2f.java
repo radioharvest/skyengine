@@ -11,6 +11,11 @@ public class Vector2f {
         this.y = y;
     }
 
+    public Vector2f(Vector2f op) {
+        this.x = op.x;
+        this.y = op.y;
+    }
+
     public float[] getVector() {
         return new float[] {x, y};
     }
@@ -20,8 +25,16 @@ public class Vector2f {
         else return false;
     }
 
+    public Vector2f addV(Vector2f op) {
+        return new Vector2f(this.x + op.x, this.y + op.y);
+    }
+
     public Vector2f subtractV(Vector2f op) {
         return new Vector2f(this.x - op.x, this.y - op.y);
+    }
+
+    public Vector2f multiplySf(float scalar) {
+        return new Vector2f(this.x*scalar, this.y*scalar);
     }
 
     public float crossV(Vector2f op) {

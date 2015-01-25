@@ -7,6 +7,7 @@ import aq.oceanbase.skyscroll.graphics.elements.window.blocks.*;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.logic.Game;
 import aq.oceanbase.skyscroll.logic.Question;
+import aq.oceanbase.skyscroll.logic.events.ButtonEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -46,12 +47,19 @@ public class QuestionWindow extends Window {
     public void addQuestion(Question question) {
         this.mQuestion = question;
 
+        ButtonBlock buttonBlock = new ButtonBlock(this, 9, this.getBorderOffset(), 0.0f, ButtonBlock.BUTTONLAYOUT.GRID);
+        for (String answer : question.getVariants()) {
+            Button button = new Button(answer);
+            button.addButtonEventListener(this);
+            buttonBlock.addButton(button);
+        }
+
         this.mLayout.setLayoutType(WindowLayout.LAYOUT.HORIZONTAL);
 
         WindowLayout rightSide = new WindowLayout(WindowLayout.LAYOUT.VERTICAL, this, 0.95f);
         rightSide.addChild(new NodeDisplayBlock(this, 12, R.drawable.node_display_score_100));
         rightSide.addChild(new ContentBlock(this, 8, mQuestion.getBody(), 27));
-        rightSide.addChild(new ButtonBlock(this, 9, mQuestion.getVariants(), this.getBorderOffset(), 0.0f));
+        rightSide.addChild(buttonBlock);
 
         this.mLayout.addChild(new TimerBarBlock(this, 0.05f));
         this.mLayout.addChild(rightSide);
@@ -71,16 +79,14 @@ public class QuestionWindow extends Window {
 
 
     @Override
-    public void onButtonPressed(ButtonBlock buttonBlock, int buttonId) {
+    public void onButtonPressed(ButtonEvent event) {
         mTimer = new Timer(mCloseTime).start();
         mClosing = true;
 
-        if (buttonId == mQuestion.getAnswer()) {
-            buttonBlock.highlightButton(buttonId, Button.STATE.CORRECT);
+        if (event.getButtonId() == mQuestion.getAnswer()) {
             fireAnswerEvent(Game.ANSWER.CORRECT);
         }
         else {
-            buttonBlock.highlightButton(buttonId, Button.STATE.WRONG);
             fireAnswerEvent(Game.ANSWER.WRONG);
         }
     }
