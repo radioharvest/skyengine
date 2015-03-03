@@ -18,6 +18,9 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        /*Intent intent = new Intent(this, MainRendererActivity.class);
+        Log.e("RunDebug", "Main Activity stage passed");
+        startActivity(intent);*/
     }
 
     public void startRenderOne(View view) {

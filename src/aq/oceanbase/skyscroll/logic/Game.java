@@ -1,6 +1,7 @@
 package aq.oceanbase.skyscroll.logic;
 
 import android.content.Context;
+import android.media.MediaPlayer;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.data.QuestionDBHelper;
@@ -12,6 +13,7 @@ import aq.oceanbase.skyscroll.graphics.render.RenderContainer;
 import aq.oceanbase.skyscroll.graphics.elements.background.Background;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
+import aq.oceanbase.skyscroll.logic.menu.MenuController;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
@@ -33,7 +35,7 @@ public class Game {
         CORRECT, WRONG, NONE
     }
 
-    private MODE mDrawmode = MODE.TREE;
+    private MODE mDrawmode = MODE.MENU;
     private boolean mModeSwitched = false;
 
     private int[] mScreenMetrics;
@@ -45,7 +47,10 @@ public class Game {
     private RenderContainer mWindowRenderables = new RenderContainer();
 
     private RenderContainer mQuestionWindowRenderables = new RenderContainer();
-    private RenderContainer mMenuWindowRenderables = new RenderContainer();
+    private RenderContainer mMenuRenderables = new RenderContainer();
+
+    //Managers
+    private MenuController mMenuController;
 
     //Constraints
     private float mMinHeight = 0.0f;
@@ -83,11 +88,13 @@ public class Game {
     // HUD
     private ScoreBar mScoreBar;
 
+    private MediaPlayer mp;
+
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
     private float mHeight = mMinHeight;
 
-    private Camera mCamera = new Camera(new Vector3f(0.0f, 8.0f, mDistance),
+    private Camera mCamera = new Camera(new Vector3f(0.0f, 0.0f, mDistance),
             new Vector3f(0.0f, 0.0f, -1.0f),
             new Vector3f(0.0f, 1.0f, 0.0f));
 
@@ -145,6 +152,28 @@ public class Game {
             mQuestionWindow.onTap(touch.x, touch.y);
         }
     };
+    private final TouchHandler mMenuTouchHandler = new TouchHandler() {
+        @Override
+        public void onSwipeHorizontal(float amount) {
+            mMenuController.onSwipeHorizontal(amount);
+        }
+
+        @Override
+        public void onSwipeVertical(float amount) {
+            mMenuController.onSwipeVertical(amount);
+        }
+
+        @Override
+        public void onScale(float span) {
+            mMenuController.onScale(span);
+        }
+
+        @Override
+        public void onTap(float x, float y) {
+            mMenuController.onTap(x, y);
+        }
+    };
+
 
 
     //Events
@@ -181,13 +210,14 @@ public class Game {
         mGridBackground = new Background(R.drawable.grid, 1.0f);
 
         //mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
-        switchMode(MODE.TREE);
+        //switchMode(MODE.MENU);
     }
 
 
 
     public void setScreenMetrics(int[] screenMetrics) {
         this.mScreenMetrics = screenMetrics;
+        Log.e("Debug", "Metrics set: " + mScreenMetrics[2] + " " + mScreenMetrics[3]);
         this.onScreenMetricsUpdate();
     }
 
@@ -197,7 +227,25 @@ public class Game {
                         .addRenderable(mGameSession.tree)
                         .addRenderable(mScoreBar);
 
-        switchMode(MODE.TREE);
+        int[] metrics = this.getScreenMetrics();
+        Log.e("Debug", "MenuCrationInputGame: " + metrics[2] + " " + metrics[3]);
+        mMenuController = new MenuController(this);
+        switchMode(MODE.MENU);
+
+        mCamera.getPos().print("Debug", "Cam start pos");
+
+        mp = MediaPlayer.create(mContext, R.raw.wakerep);
+        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                // TODO Auto-generated method stub
+                mp.release();
+            }
+
+        });
+
+        //mp.start();
     }
 
     public void onScreenMetricsUpdate() {
@@ -241,6 +289,10 @@ public class Game {
 
     public RenderContainer getRenderables() {
         return mCurrentRenderables;
+    }
+
+    public int[] getScreenMetrics() {
+        return this.mScreenMetrics;
     }
     //</editor-fold>
 
@@ -485,11 +537,8 @@ public class Game {
     }
 
     private void createMenuWindow() {
-        mMenuWindowRenderables.clear();
-        mMenuWindow = new Window(10, 10, 2.0f, mCamera, mScreenMetrics);
-        mMenuWindow.addWindowEventListener(new WindowListener());
-        mQuestionWindow.setOpacity(0.23f);
-        mWindowRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mMenuWindow);
+        mMenuController.generatePages();
+
     }
 
     private void killWindow() {
@@ -516,6 +565,7 @@ public class Game {
     }
 
     private void switchMode (MODE mode) {
+        Log.e("Debug", "" + mode);
         switch (mode) {
             case TREE:
                 mCurrentRenderables = mTreeRenderables;
@@ -525,10 +575,19 @@ public class Game {
                 mCurrentRenderables = mWindowRenderables;
                 mTouchHandler = mWindowTouchHandler;
                 break;
+            case MENU:
+                mCurrentRenderables = mMenuController.getCurrentMenuRenderables();
+                mTouchHandler = mMenuTouchHandler;
+                break;
         }
 
         mDrawmode = mode;
         //setMode(mode);
+    }
+
+    public void closeMenu() {
+        Log.e("Debug", "menu closed");
+        switchMode(MODE.TREE);
     }
     //</editor-fold>
 

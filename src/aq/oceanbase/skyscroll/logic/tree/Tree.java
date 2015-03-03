@@ -621,7 +621,7 @@ public class Tree implements Renderable {
         mCorrectNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
-        mWrongNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game210);
+        mWrongNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game210, GLES20.GL_LINEAR);
         GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 
         mNodeBatch = new SpriteBatch(SpriteBatch.COLORED_VERTEX_3D, textureDataHandler);

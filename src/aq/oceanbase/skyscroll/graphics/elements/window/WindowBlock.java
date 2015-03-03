@@ -8,6 +8,7 @@ import aq.oceanbase.skyscroll.graphics.render.Renderable;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
+import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 
@@ -45,6 +46,10 @@ public class WindowBlock extends TouchHandler implements Renderable, WindowEvent
 
     public float getFraction() {
         return this.mParentFraction;
+    }
+
+    public Vector3f getPos() {
+        return mPos;
     }
 
 

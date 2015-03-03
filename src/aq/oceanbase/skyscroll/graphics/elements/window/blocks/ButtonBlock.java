@@ -57,6 +57,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
         super(root, fraction);
         this.mInterval = interval;
         this.mOffset = offset;
+        this.mButtonLayout = layout;
 
         this.setupGrid();
     }
@@ -65,6 +66,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
         this(root, fraction, interval, offset, layout);
 
         for (Button newButton: buttons) {
+            newButton.addButtonEventListener(this);
             mButtons.add(newButton);
         }
     }
@@ -84,6 +86,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
         button.addButtonEventListener(this);
         button.setId(mButtons.size());
         this.mButtons.add(button);
+        Log.e("Debug", "Button added");
     }
 
     public int getButtonsAmount() {
@@ -125,6 +128,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
 
     //<editor-fold desc="Metrics and Texture">
     private void setupGrid() {
+        Log.e("Debug", "Buttonlayout: " + mButtonLayout);
         switch (mButtonLayout) {
             case VERTICAL:
                 mGridSettings[0] = 1;
@@ -142,6 +146,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
     }
 
     private void computeButtonsMetrics() {
+        Log.e("Debug", "Computing button metrics");
         if ( this.mButtons.size() <= 0 )
             return;
 
@@ -157,8 +162,11 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
             mGridSettings[1] = (int) Math.ceil( mButtons.size() / mGridSettings[0] );
         }
 
-        float buttonWidth = (1.0f - 2*mOffset - (mGridSettings[0] - 1)*mInterval ) * mWidth / mGridSettings[0];
+        Log.e("Debug", "GRID SETTINGS: " + mGridSettings[0] + " " + mGridSettings[1]);
+        float buttonWidth = ( (1.0f - 2*mOffset ) * mWidth - ( (mGridSettings[0] - 1)*mInterval ) ) / mGridSettings[0] ;
         float buttonHeight = (1.0f - 2*mOffset - (mGridSettings[1] - 1)*mInterval ) * mHeight / mGridSettings[1];
+        Log.e("Debug", "Button settings: offset: " + mOffset + " interval: " + mInterval + " button width: " + buttonWidth + " block width: " + mWidth);
+        Log.e("Debug", "strangestuff: " + (mGridSettings[1] - 1) + " | " + (mGridSettings[1] - 1)*mInterval);
 
         // Width and height are calculated for one single button.
         // The calculation is based on case when there are two buttons on one line
@@ -175,12 +183,19 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
         int[] pixelMetrics = new int[] {buttonPixelWidth, buttonPixelHeight};
         for ( int i = 0; i < mGridSettings[1]; i++ ) {
             current = origin.addV(lineStep.multiplySf(i));
+
             for (int k = 0; k < mGridSettings[0]; k++ ) {
                 if (index >= mButtons.size())
                     break;
 
-                mButtons.get(index).setMetrics( current, metrics, pixelMetrics );
+                current.print("Debug", "Current");
+                mButtons.get(index).setMetrics( new Vector3f(current), metrics, pixelMetrics );
+                mButtons.get(index).getPos().print("Debug", "WHADDAFUCK");
+                this.getPos().print("Debug", "THATDAFUCK");
+                this.mRoot.getPosition().print("Debug", "ROOTDAFUCK");
+                columnStep.print("Debug", "ColumnStep");
                 current = current.addV(columnStep);
+
                 index++;
             }
         }
@@ -229,7 +244,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
 
         mBitmap.eraseColor( 0x30FFFFFF );
 
-        Vector2f origin = new Vector2f( buttonWidth/2 + lineHeight/2 - fm.bottom, buttonHeight/2 );
+        Vector2f origin = new Vector2f( buttonWidth/2, buttonHeight/2 + fm.bottom );
         Vector2f originTexRgn = new Vector2f(0, 0);
         Vector2f lineStep = new Vector2f( 0, buttonHeight );
         Vector2f columnStep = new Vector2f( buttonWidth, 0 );
@@ -376,6 +391,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
 
     @Override
     protected void onMetricsSet() {
+        //mInterval = mInterval * mWidth;
         this.computeButtonsMetrics();
     }
 
@@ -388,22 +404,6 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
         for (Button button : mButtons) {
             button.onTap(x - mPos.x, y - mPos.y);
         }
-
-        /*for ( int i = 0; i < mButtons.size(); i++ ) {
-            pos = mButtons.get(i).getPos().addV(mPos);
-            metrics = mButtons.get(i).getMetrics();
-
-            //pos.print("Draw", "Pos");
-            curX = x - (pos.x - metrics[0]/2);
-            curY = y - (pos.y - metrics[1]/2);
-
-            if ( curX >= 0 && curX <= metrics[0]) {
-                if ( curY >= 0 && curY <= metrics[1]) {
-                    mPressedButton = i;
-                    mRoot.onButtonPressed(this, i);
-                }
-            }
-        }*/
     }
 
 

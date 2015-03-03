@@ -36,24 +36,29 @@ public class TimerBarBlock extends WindowBlock {
         super(root, fraction);
     }
 
-    public void setThickness(float thickness) {
+    public TimerBarBlock setThickness(float thickness) {
         this.mThickness = thickness;
+        return this;
     }
 
-    public void setOffset(float offset) {
+    public TimerBarBlock setOffset(float offset) {
         this.mOffset = offset;
+        return this;
     }
 
-    public void setHorizontal() {
+    public TimerBarBlock setHorizontal() {
         this.mHorizontal = true;
+        return this;
     }
 
-    public void setVertical() {
+    public TimerBarBlock setVertical() {
         this.mHorizontal = false;
+        return this;
     }
 
-    public void setInversed(boolean value) {
+    public TimerBarBlock setInversed(boolean value) {
         this.mInversed = value;
+        return this;
     }
 
 

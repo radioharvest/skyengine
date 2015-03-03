@@ -37,12 +37,12 @@ public class WindowLayout extends WindowBlock {
     public void buildChildrenMetrics() {
         Vector3f currentOrigin = new Vector3f(mPos);
         float blockSize = 0.0f;
-        float unitSize = 1;
+        float unitSize;
 
 
         for (WindowBlock item : mChildren) blockSize += item.getFraction();
 
-        if (blockSize > 1.0f) unitSize = 1 / blockSize; /// mChildren.size();
+        unitSize = 1 / blockSize; /// mChildren.size();
 
         for (WindowBlock item : mChildren) {
             float factor = (item.getFraction() * unitSize);

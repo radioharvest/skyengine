@@ -90,15 +90,18 @@ public class NodeDisplayBlock extends WindowBlock {
                 order(ByteOrder.nativeOrder()).asShortBuffer();
         mOrderBuffer.put(orderData).position(0);
 
-        mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITE);
+        mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.WINDOWCONTENT);
 
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
         //options.inSampleSize = (int)(512 / mPixelMetrics[0] * (mPicSide / mWidth));
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
 
-        mNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.node_display, options, GLES20.GL_LINEAR);
-        mScoreTextureHandle = TextureLoader.loadTexture(context, mScoreResourceId, options);
+        mNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
+        //mNodeTextureHandle = TextureLoader.loadTexture(context, R.drawable.node_display, options, GLES20.GL_LINEAR);
+        //mScoreTextureHandle = TextureLoader.loadTexture(context, R.drawable.game209, options, GLES20.GL_LINEAR);
+        mScoreTextureHandle = TextureLoader.loadTexture(context, R.drawable.game209, GLES20.GL_LINEAR);
+
     }
 
     @Override
@@ -161,7 +164,9 @@ public class NodeDisplayBlock extends WindowBlock {
         GLES20.glVertexAttribPointer(texCoordHandle, 2, GLES20.GL_FLOAT, false, 0, mTextureCoordinateBuffer);
         GLES20.glEnableVertexAttribArray(texCoordHandle);
 
+        //GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, 6, GLES20.GL_UNSIGNED_SHORT, mOrderBuffer);
+        //GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
         GLES20.glDisableVertexAttribArray(positionHandle);
         GLES20.glDisableVertexAttribArray(texCoordHandle);

@@ -50,18 +50,22 @@ public class QuestionWindow extends Window {
         ButtonBlock buttonBlock = new ButtonBlock(this, 9, this.getBorderOffset(), 0.0f, ButtonBlock.BUTTONLAYOUT.GRID);
         for (String answer : question.getVariants()) {
             Button button = new Button(answer);
-            button.addButtonEventListener(this);
+            //button.addButtonEventListener(this);
             buttonBlock.addButton(button);
+            buttonBlock.getButton(buttonBlock.getButtonsAmount()-1).addButtonEventListener(this);
         }
+        addWindowEventListener(buttonBlock);
 
         this.mLayout.setLayoutType(WindowLayout.LAYOUT.HORIZONTAL);
 
         WindowLayout rightSide = new WindowLayout(WindowLayout.LAYOUT.VERTICAL, this, 0.95f);
-        rightSide.addChild(new NodeDisplayBlock(this, 12, R.drawable.node_display_score_100));
+        rightSide.addChild(new NodeDisplayBlock(this, 11, R.drawable.node_display_score_100));
         rightSide.addChild(new ContentBlock(this, 8, mQuestion.getBody(), 27));
+        rightSide.addChild(new TimerBarBlock(this, 1).setHorizontal());
+        //rightSide.addChild(new WindowBlock(this, 0.1f));
         rightSide.addChild(buttonBlock);
 
-        this.mLayout.addChild(new TimerBarBlock(this, 0.05f));
+        //this.mLayout.addChild(new TimerBarBlock(this, 0.05f));
         this.mLayout.addChild(rightSide);
     }
 

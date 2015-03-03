@@ -127,7 +127,7 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mTime = new Date().getTime();
         mFrameCounter = 0;
         mProgramManager.reload();
-        mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
+        //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
         /*mGameInstance.mTreeBackground.initialize(mContext, mShaderFolder);
         mGameInstance.mGameSession.tree.initialize(mContext, mShaderFolder);*/
         Log.e("Debug", new StringBuilder().append("SurfaceCreated").toString());
@@ -148,16 +148,18 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         mScreenHeight = height;
 
         mGameInstance.setScreenMetrics(new int[] {0, 0, mScreenWidth, mScreenHeight});
+
+
+        Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
+
+        mCamera.setProjM(projectionMatrix);
+
         if (mStartedFirstTime) {
             mGameInstance.onRenderStarted();
             //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
             mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
             mStartedFirstTime = false;
         }
-
-        Matrix.frustumM(projectionMatrix, 0, left, right, bottom, top, mNearPlane, mFarPlane);
-
-        mCamera.setProjM(projectionMatrix);
 
         Log.e("Debug", new StringBuilder().append("SurfaceChanged").toString());
     }

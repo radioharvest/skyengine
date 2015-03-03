@@ -80,11 +80,16 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
         int dx = (screenX + width) - screenMetrics[2]/2;           //Bx - Sx/2
         int dy = ((screenY + height) - screenMetrics[3]/2);        //By - Sy/2
 
+        this.mPos.print("Debug", "POSWHY");
+
         float fWidth = ((dx/(screenMetrics[2]/2 - screenX))*(-mPos.x)) - mPos.x;       //calc width
         float fHeight = ((dy/(screenMetrics[3]/2 - screenY))*(-(mPos.y - cam.getPosY()))) - (mPos.y - cam.getPosY());      //calc height
         this.mWindowMetrics = new float[] {Math.abs(fWidth), Math.abs(fHeight)};
         this.mWindowPixelMetrics = new int[] {width, height};
 
+        Log.e("Debug", "TestsWhy: " + (screenMetrics[2]/2 - screenX) + " " + (dx/(screenMetrics[2]/2 - screenX)) + " " + ((dx/(screenMetrics[2]/2 - screenX))*(-mPos.x)));
+
+        Log.e("Debug", "WindowMetrics: " + mWindowMetrics[0] + " " + mWindowMetrics[1]);
         this.setDefaultSettings();
     }
 
@@ -212,6 +217,8 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
         this.mOpacity = 0.3f;
         this.mFontSize = 10;
 
+        Log.e("Debug", "WindowMetricsBeforeLayout: " + mWindowPixelMetrics[0] + " " + mWindowPixelMetrics[1]);
+
         this.addLayout(WindowLayout.LAYOUT.VERTICAL);
     }
 
@@ -252,7 +259,11 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
         float width = mWindowMetrics[0] - 2*mBorderOffset;
         float height = (mWindowMetrics[1] - 2*mBorderOffset);
 
+        Log.e("Debug", "Layout debug windowMetrics: " + mWindowMetrics[0] + " " + mWindowMetrics[1]);
+
         this.mLayout = new WindowLayout(type, this, 1.0f);
+        Log.e("Debug", "Layout params set: " + width + " " + height);
+        pos.print("Debug", "pos");
         this.mLayout.setMetrics(pos, width, height, pixelMetrics);
     }
     //</editor-fold>

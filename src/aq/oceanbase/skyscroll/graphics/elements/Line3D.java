@@ -101,7 +101,8 @@ public class Line3D implements Renderable {
 
     public void setTexRgn(TextureRegion texRgn) {
         this.mTexRgn = texRgn;
-        rebuildVertices();
+        if (!mOccluded)
+            rebuildVertices();
     }
 
     public Line3D setDotted(boolean value) {

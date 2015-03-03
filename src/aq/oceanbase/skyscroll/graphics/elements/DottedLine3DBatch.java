@@ -45,6 +45,8 @@ public class DottedLine3DBatch extends Line3DBatch {
         texRgn.v2 = line.getRay().getLength() / mUnitSize;
         line.setTexRgn(texRgn);
         super.batchElement(line);
+
+        line.checkOcclusion();
     }
 
     @Override
