@@ -3,13 +3,13 @@ package aq.oceanbase.skyscroll.data;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import aq.oceanbase.skyscroll.logic.Game;
-import aq.oceanbase.skyscroll.logic.Question;
+import aq.oceanbase.skyscroll.logic.questions.Question;
 
-import java.sql.SQLDataException;
 import java.sql.SQLException;
 
 public class QuestionDBHelper extends SQLiteOpenHelper {
@@ -69,7 +69,19 @@ public class QuestionDBHelper extends SQLiteOpenHelper {
         this.mDatabase = this.getReadableDatabase();
     }
 
+    public void clearDB() throws SQLException {
+        if ( !mDatabase.isOpen() ) {
+            throw new SQLException("Database invalid");
+        }
+
+        this.mDatabase.delete(TABLE_NAME, null, null);
+    }
+
     public void addQuestion(String text, String correctAnswer, String answers[]) {
+        if (!mDatabase.isOpen()) {
+            return;
+        }
+
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_TEXT, text);
         values.put(COLUMN_NAME_CORRECT_ANSWER, correctAnswer);
@@ -86,10 +98,24 @@ public class QuestionDBHelper extends SQLiteOpenHelper {
     }
 
     public void deleteQuestion(long id) {
-        mDatabase.delete(TABLE_NAME, COLUMN_NAME_ID + " = " + id, null);
+        if (mDatabase.isOpen()) {
+            mDatabase.delete(TABLE_NAME, COLUMN_NAME_ID + " = " + id, null);
+        }
     }
 
-    public Question getQuestion(long id) {
+    public long getEntryCount() throws SQLException{
+        if ( !mDatabase.isOpen() ) {
+            throw new SQLException("Database not open");
+        }
+
+        return DatabaseUtils.queryNumEntries(mDatabase, TABLE_NAME);
+    }
+
+    public Question getQuestion(long id) throws SQLException {
+        if ( !mDatabase.isOpen() ) {
+            throw new SQLException("Database not open");
+        }
+
         Cursor cursor = mDatabase.query(TABLE_NAME, mColumns, COLUMN_NAME_ID + " = " + id, null, null, null, null);
         cursor.moveToFirst();
         String text = cursor.getString(COLUMN_INDEX_TEXT);
@@ -99,7 +125,6 @@ public class QuestionDBHelper extends SQLiteOpenHelper {
             answers[i + 1] = cursor.getString(COLUMN_INDEX_ANSWER + i);
         }
         cursor.close();
-        Log.e("", "");
         return new Question(text, answers, 0);
     }
 }

@@ -1,8 +1,8 @@
-package aq.oceanbase.skyscroll.logic;
+package aq.oceanbase.skyscroll.logic.questions;
 
 import android.util.Log;
+import aq.oceanbase.skyscroll.logic.Game;
 
-import javax.security.auth.login.LoginException;
 import java.util.Date;
 import java.util.Random;
 

@@ -6,7 +6,7 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.window.blocks.*;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
 import aq.oceanbase.skyscroll.logic.Game;
-import aq.oceanbase.skyscroll.logic.Question;
+import aq.oceanbase.skyscroll.logic.questions.Question;
 import aq.oceanbase.skyscroll.logic.events.ButtonEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;

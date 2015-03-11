@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 //TODO: add touch handling.
+//TODO: add game event listener
 public class Window extends TouchHandler implements Renderable, ButtonEventListener {
     public static enum ALIGN {
         LEFT, RIGHT, TOP, BOTTOM

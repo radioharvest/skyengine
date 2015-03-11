@@ -5,6 +5,7 @@ import android.media.MediaPlayer;
 import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.data.QuestionDBHelper;
+import aq.oceanbase.skyscroll.data.SoundManager;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.text.ScoreBar;
 import aq.oceanbase.skyscroll.graphics.elements.window.QuestionWindow;
@@ -14,6 +15,8 @@ import aq.oceanbase.skyscroll.graphics.elements.background.Background;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
 import aq.oceanbase.skyscroll.logic.menu.MenuController;
+import aq.oceanbase.skyscroll.logic.questions.Question;
+import aq.oceanbase.skyscroll.logic.questions.QuestionManager;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
 import aq.oceanbase.skyscroll.touch.TouchRay;
@@ -22,6 +25,7 @@ import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.sql.SQLException;
+import java.util.*;
 
 public class Game {
 
@@ -88,7 +92,10 @@ public class Game {
     // HUD
     private ScoreBar mScoreBar;
 
-    private MediaPlayer mp;
+    private MediaPlayer mMediaPlayer;
+    private SoundManager mSoundManager;
+
+    private QuestionManager mQuestionManager;
 
     //Navigation variables
     private float mDistance = 15.0f;         //cam distance from origin
@@ -122,6 +129,7 @@ public class Game {
 
         @Override
         public void onTap(float x, float y) {
+            mSoundManager.playRandomClick();
             mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
             if (mCurrentNode != -1) {
                 openNodeQuestion(mCurrentNode);
@@ -201,13 +209,16 @@ public class Game {
     public Game(Context context) {
         mGameSession = new GameSession();
         mContext = context;
-        populateQuestionDB();
+        //populateQuestionDB();
         //mCurrentBackground = mTreeBackground;
 
         mGridTiles = 1;
 
         mTreeBackground = new Background(R.drawable.bckgnd2, 0.5f);
         mGridBackground = new Background(R.drawable.grid, 1.0f);
+
+        mSoundManager = new SoundManager(context);
+        mQuestionManager = new QuestionManager(context);
 
         //mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
         //switchMode(MODE.MENU);
@@ -234,8 +245,9 @@ public class Game {
 
         mCamera.getPos().print("Debug", "Cam start pos");
 
-        mp = MediaPlayer.create(mContext, R.raw.wakerep);
-        mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+        mMediaPlayer = MediaPlayer.create(mContext, R.raw.sky_loop);
+        mMediaPlayer.setVolume(0.4f, 0.4f);
+        mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 
             @Override
             public void onCompletion(MediaPlayer mp) {
@@ -245,7 +257,7 @@ public class Game {
 
         });
 
-        //mp.start();
+        //mMediaPlayer.start();
     }
 
     public void onScreenMetricsUpdate() {
@@ -350,7 +362,8 @@ public class Game {
 
     private void openNodeQuestion(int nodeId) {
         if(mGameSession.tree.getNode(nodeId).getState() == Node.NODESTATE.OPEN) {
-            createQuestionWindow(getQuestion(nodeId));
+            //createQuestionWindow(getQuestion(nodeId));
+            createQuestionWindow( mQuestionManager.getUniqueQuestion() );
             switchMode(MODE.QUESTION);
         }
     }
