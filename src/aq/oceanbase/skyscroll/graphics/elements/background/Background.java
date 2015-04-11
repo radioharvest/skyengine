@@ -4,9 +4,8 @@ import android.content.Context;
 import android.opengl.GLES20;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
-import aq.oceanbase.skyscroll.graphics.render.MainRenderer;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
 import java.nio.ByteBuffer;
@@ -14,9 +13,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class Background implements Renderable {
-    private boolean mInitialized = false;
-
+public class Background extends RenderableObject {
     private ShortBuffer mOrderBuffer;
     private FloatBuffer mVertexBuffer;
     private FloatBuffer mTextureCoordinateBuffer;
@@ -106,22 +103,22 @@ public class Background implements Renderable {
         mTextureCoordinateBuffer.flip();
     }
 
-    public boolean isInitialized() {
-        return this.mInitialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.BACKGROUND);
 
         mTextureHandler = TextureLoader.loadTexture(context, mTextureId);
 
-        this.mInitialized = true;
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
         //TODO: FILL
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         GLES20.glDisable(GLES20.GL_DEPTH_TEST);
         GLES20.glUseProgram(mShaderProgram);

@@ -6,7 +6,7 @@ import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -22,7 +22,7 @@ import java.nio.ShortBuffer;
  * If orientation matrix is set - it is a fake preset sprite, oriented relating to the matrix. fastest and weakest
  */
 
-public class Sprite implements Renderable {
+public class Sprite extends RenderableObject {
     public static enum SPRITEMODE {
         FAKE_PRESET,
         TRUE_CYLINDRICAL,
@@ -40,8 +40,6 @@ public class Sprite implements Renderable {
     public final static int VERTICES_PER_SPRITE = 4;        // Quad structure
     public final static int INDICES_PER_SPRITE = 6;         // Two triangles
 
-
-    private boolean mInitialized = false;
     private boolean mFiltered = false;
 
     private int mShaderProgram;
@@ -170,11 +168,7 @@ public class Sprite implements Renderable {
         return this.mTexRgn;
     }
 
-
-    public boolean isInitialized() {
-        return mInitialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         short[] orderData = {
                 0, 1, 3,
@@ -209,13 +203,15 @@ public class Sprite implements Renderable {
 
         mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITE);
 
-        mInitialized = true;
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
-        mInitialized = true;
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         float[] VPMatrix = new float[16];
 

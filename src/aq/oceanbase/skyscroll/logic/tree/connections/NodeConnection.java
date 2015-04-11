@@ -6,6 +6,8 @@ import aq.oceanbase.skyscroll.logic.tree.nodes.NodeConnectionSocket;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 public class NodeConnection {
+    public static float K_LINE_WITDH = 0.05f;
+
     public static enum CONNECTIONSTATE {
         IDLE, OPEN, ACTIVE, INACTIVE
     }
@@ -86,19 +88,19 @@ public class NodeConnection {
     private void updateLineState() {
         switch (state) {
             case IDLE:
-                this.mLine.setWidthAndColor(0.1f,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
+                this.mLine.setWidthAndColor(K_LINE_WITDH,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
                 break;
             case OPEN:
-                this.mLine.setWidthAndColor(0.13f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(true);
+                this.mLine.setWidthAndColor(K_LINE_WITDH * 1.5f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(true);
                 break;
             case ACTIVE:
-                this.mLine.setWidthAndColor(0.18f, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(false);
+                this.mLine.setWidthAndColor(K_LINE_WITDH * 2, new float[] {1.0f, 1.0f, 1.0f, 1.0f}).setDotted(false);
                 break;
             case INACTIVE:
-                this.mLine.setWidthAndColor(0.13f, new float[] {0.8f, 0.0f, 0.0f, 1.0f}).setDotted(false);
+                this.mLine.setWidthAndColor(K_LINE_WITDH * 1.5f, new float[] {0.8f, 0.0f, 0.0f, 1.0f}).setDotted(false);
                 break;
             default:
-                this.mLine.setWidthAndColor(0.1f,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
+                this.mLine.setWidthAndColor(K_LINE_WITDH,  new float[] {0.7f, 0.7f, 0.7f, 1.0f}).setDotted(false);
                 break;
         }
     }

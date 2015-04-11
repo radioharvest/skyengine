@@ -19,7 +19,9 @@ import aq.oceanbase.skyscroll.logic.questions.Question;
 import aq.oceanbase.skyscroll.logic.questions.QuestionManager;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.touch.TouchHandler;
+import aq.oceanbase.skyscroll.touch.TouchHandler2D;
 import aq.oceanbase.skyscroll.touch.TouchRay;
+import aq.oceanbase.skyscroll.touch.Touchable2D;
 import aq.oceanbase.skyscroll.utils.math.MathUtilities;
 import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
@@ -27,8 +29,9 @@ import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import java.sql.SQLException;
 import java.util.*;
 
-public class Game {
+public class Game implements Touchable2D {
 
+    //TODO: check blocks initialization, issue can be over there
     public static final int QUESTIONS_AMOUNT = 4;
 
     public static enum MODE {
@@ -46,12 +49,7 @@ public class Game {
 
     private Context mContext;
 
-    public RenderContainer mCurrentRenderables;
-    private RenderContainer mTreeRenderables = new RenderContainer();
-    private RenderContainer mWindowRenderables = new RenderContainer();
-
-    private RenderContainer mQuestionWindowRenderables = new RenderContainer();
-    private RenderContainer mMenuRenderables = new RenderContainer();
+    public Deque<GameContext> mGameContextStack;
 
     //Managers
     private MenuController mMenuController;
@@ -65,6 +63,9 @@ public class Game {
     private int mBlinkTime = 800;
     private long mTimer = -1;
 
+    private float mDefaultVolume = 0.4f;
+    private float mFadedVolume = 0.25f;
+
     //Tree
     public GameSession mGameSession;
 
@@ -73,9 +74,11 @@ public class Game {
     //Gameplay variables
     private int mScore = 0;
 
-    //Windows
-    public QuestionWindow mQuestionWindow;
-    public Window mMenuWindow;
+    //Contexts
+    private RenderContainer mBackgroundRenderables = new RenderContainer();
+    private RenderContainer mUIRenderables = new RenderContainer();
+
+    private GameContext mTreeContext;
 
     //Backgrounds
     private int mGridTiles;
@@ -84,10 +87,8 @@ public class Game {
     private float mBackgroundShiftFactor = 0.3f / ((mMaxHeight - mMinHeight) + 1.0f);
 
 
-    private Background mCurrentBackground;
     public Background mTreeBackground;
     private Background mGridBackground;
-    private Background mQuestionBackground = mTreeBackground;
 
     // HUD
     private ScoreBar mScoreBar;
@@ -106,7 +107,6 @@ public class Game {
             new Vector3f(0.0f, 1.0f, 0.0f));
 
     //Touch variables
-    public TouchHandler mTouchHandler;
     private Vector2f mMomentum = new Vector2f(0.0f, 0.0f);
 
     private final TouchHandler mTreeTouchHandler = new TouchHandler() {
@@ -128,57 +128,13 @@ public class Game {
         }
 
         @Override
-        public void onTap(float x, float y) {
+        public void onTap(TouchRay touchRay) {
             mSoundManager.playRandomClick();
-            mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+            //mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+            mCurrentNode = mGameSession.tree.performRaySelection(touchRay);
             if (mCurrentNode != -1) {
                 openNodeQuestion(mCurrentNode);
             }
-        }
-    };
-    private final TouchHandler mWindowTouchHandler = new TouchHandler() {
-        @Override
-        public void onSwipeHorizontal(float amount) {
-            mQuestionWindow.onSwipeHorizontal(amount);
-        }
-
-        @Override
-        public void onSwipeVertical(float amount) {
-            mQuestionWindow.onSwipeVertical(amount);
-        }
-
-        @Override
-        public void onScale(float span) {
-            mQuestionWindow.onScale(span);
-        }
-
-        @Override
-        public void onTap(float x, float y) {
-            Vector3f touch = new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics)
-                    .getPointPositionOnRay(mCamera.getPosZ() - mQuestionWindow.getPosition().z);
-
-            mQuestionWindow.onTap(touch.x, touch.y);
-        }
-    };
-    private final TouchHandler mMenuTouchHandler = new TouchHandler() {
-        @Override
-        public void onSwipeHorizontal(float amount) {
-            mMenuController.onSwipeHorizontal(amount);
-        }
-
-        @Override
-        public void onSwipeVertical(float amount) {
-            mMenuController.onSwipeVertical(amount);
-        }
-
-        @Override
-        public void onScale(float span) {
-            mMenuController.onScale(span);
-        }
-
-        @Override
-        public void onTap(float x, float y) {
-            mMenuController.onTap(x, y);
         }
     };
 
@@ -188,8 +144,10 @@ public class Game {
     public class WindowListener implements WindowEventListener {
         @Override
         public void onClose(WindowEvent e) {
-            killWindow();
-            switchMode(MODE.TREE);
+
+            mGameContextStack.pop().onPop();
+            mMediaPlayer.setVolume( mDefaultVolume, mDefaultVolume );
+            //mGameContextStack.push(mTreeContext);
         }
 
         @Override
@@ -204,13 +162,11 @@ public class Game {
     }
 
     ///////////////////////////////////////
-    ///////////// CONSTRUCTOR /////////////
+    //////////// CONSTRUCTOR //////////////
     ///////////////////////////////////////
     public Game(Context context) {
         mGameSession = new GameSession();
         mContext = context;
-        //populateQuestionDB();
-        //mCurrentBackground = mTreeBackground;
 
         mGridTiles = 1;
 
@@ -220,8 +176,23 @@ public class Game {
         mSoundManager = new SoundManager(context);
         mQuestionManager = new QuestionManager(context);
 
-        //mTreeRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mGameSession.tree);
-        //switchMode(MODE.MENU);
+        mBackgroundRenderables.clear();
+        mBackgroundRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground);
+        mBackgroundRenderables.lock();
+
+        mScoreBar = new ScoreBar(ScoreBar.SCOREALIGN.RIGHT);
+        mScoreBar.setScore(mScore);
+
+        mUIRenderables.clear();
+        mUIRenderables.addRenderable(mScoreBar);
+        mUIRenderables.lock();
+
+        mSoundManager = new SoundManager(context);
+        mQuestionManager = new QuestionManager(context);
+
+        createTreeContext();
+
+        mGameContextStack = new ArrayDeque<>();
     }
 
 
@@ -233,31 +204,36 @@ public class Game {
     }
 
     public void onRenderStarted() {
-        mTreeRenderables.addRenderable(mTreeBackground)
-                        .addRenderable(mGridBackground)
-                        .addRenderable(mGameSession.tree)
-                        .addRenderable(mScoreBar);
-
         int[] metrics = this.getScreenMetrics();
         Log.e("Debug", "MenuCrationInputGame: " + metrics[2] + " " + metrics[3]);
         mMenuController = new MenuController(this);
-        switchMode(MODE.MENU);
+
+        GameContext menuContext = new GameContext();
+        menuContext.getRenderContainer().addRenderable(mMenuController.getCurrentMenuRenderContainer());
+
+        mGameContextStack.push( createMenuContext() );
+        //switchMode(MODE.MENU);
 
         mCamera.getPos().print("Debug", "Cam start pos");
 
         mMediaPlayer = MediaPlayer.create(mContext, R.raw.sky_loop);
-        mMediaPlayer.setVolume(0.4f, 0.4f);
+        mMediaPlayer.setVolume( mDefaultVolume, mDefaultVolume );
         mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
 
             @Override
             public void onCompletion(MediaPlayer mp) {
                 // TODO Auto-generated method stub
-                mp.release();
+                mp.start();
             }
 
         });
 
-        //mMediaPlayer.start();
+        mMediaPlayer.start();
+    }
+
+    public void onReinit() {
+        mBackgroundRenderables.lock();
+        mUIRenderables.lock();
     }
 
     public void onScreenMetricsUpdate() {
@@ -266,14 +242,47 @@ public class Game {
         mGridShiftFactor = mGridTiles / (((mMaxHeight - mMinHeight) + 1.0f) * mGridTileSize);
         updateBackground();
 
-        mScoreBar = new ScoreBar(mScreenMetrics[2] - 10, mScreenMetrics[3] + 5, ScoreBar.SCOREALIGN.RIGHT, 70, mScreenMetrics);
-        mScoreBar.setScore(mScore);
+        mScoreBar.onScreenMetricsSet(mScreenMetrics[2] - 10, mScreenMetrics[3] + 5, 70, mScreenMetrics);
 
         Log.e("Debug", "Width: " + mScreenMetrics[2] + "Height: " + mScreenMetrics[3]);
         Log.e("Debug", "Grid Factor " + mGridShiftFactor);
         Log.e("Debug", "Tiles At Screen " + mGridTileSize);
     }
 
+    public void onActivityPause() {
+        if (mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+        }
+    }
+
+    public void onActivityResume() {
+        if (mMediaPlayer == null) {
+            mMediaPlayer = MediaPlayer.create(mContext, R.raw.sky_loop);
+            mMediaPlayer.setVolume( mDefaultVolume, mDefaultVolume );
+            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    // TODO Auto-generated method stub
+                    mp.start();
+                }
+
+            });
+        }
+        else {
+            mMediaPlayer.start();
+        }
+    }
+
+
+    public void changeCurrentContext(GameContext gameContext) {
+        mGameContextStack.pop().onPop();
+        mGameContextStack.push(gameContext);
+    }
+
+    public void addContext(GameContext gameContext) {
+        mGameContextStack.push(gameContext);
+    }
 
 
     //<editor-fold desc="Getters and Setters">
@@ -297,10 +306,6 @@ public class Game {
 
     public void setContext (Context context) {
         this.mContext = context;
-    }
-
-    public RenderContainer getRenderables() {
-        return mCurrentRenderables;
     }
 
     public int[] getScreenMetrics() {
@@ -363,12 +368,68 @@ public class Game {
     private void openNodeQuestion(int nodeId) {
         if(mGameSession.tree.getNode(nodeId).getState() == Node.NODESTATE.OPEN) {
             //createQuestionWindow(getQuestion(nodeId));
-            createQuestionWindow( mQuestionManager.getUniqueQuestion() );
-            switchMode(MODE.QUESTION);
+            //createQuestionWindow( mQuestionManager.getUniqueQuestion() );
+            mGameContextStack.push( createQuestionContext(mQuestionManager.getUniqueQuestion()) );
+            mMediaPlayer.setVolume( mFadedVolume, mFadedVolume );
         }
     }
     //</editor-fold>
 
+
+    private void createTreeContext() {
+        final TouchHandler touchHandler = new TouchHandler() {
+            @Override
+            public void onSwipeHorizontal(float amount) {
+                mMomentum.x = amount;
+            }
+
+            @Override
+            public void onSwipeVertical(float amount) {
+                mMomentum.y = amount;
+            }
+
+            @Override
+            public void onScale(float span) {
+                if (Math.abs(span) > 0.1) mDistance = mDistance - span;
+                if (mDistance <= mMinDist) mDistance = mMinDist;
+                else if (mDistance > mMaxDist) mDistance = mMaxDist;
+            }
+
+            @Override
+            public void onTap(TouchRay touchRay) {
+                mSoundManager.playRandomClick();
+                //mCurrentNode = mGameSession.tree.performRaySelection(new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics));
+                mCurrentNode = mGameSession.tree.performRaySelection(touchRay);
+                if (mCurrentNode != -1) {
+                    openNodeQuestion(mCurrentNode);
+                }
+            }
+        };
+
+        mTreeContext = new GameContext(touchHandler);
+        mTreeContext.getRenderContainer().addRenderable(mBackgroundRenderables).addRenderable(mGameSession.tree).addRenderable(mUIRenderables);
+    }
+
+    private GameContext createMenuContext() {
+        GameContext gameContext = new GameContext();
+        gameContext.getRenderContainer().addRenderable(mBackgroundRenderables).addRenderable(mMenuController.getCurrentPage());
+        gameContext.addTouchable(mMenuController.getCurrentPage());
+
+        return gameContext;
+    }
+
+    private GameContext createQuestionContext(Question question) {
+        QuestionWindow questionWindow = new QuestionWindow(10, 10, 2.0f, mCamera, mScreenMetrics);
+        questionWindow.addQuestion(question);
+        questionWindow.addWindowEventListener(new WindowListener());        //TODO: WTF?
+        questionWindow.setOpacity(0.23f);
+
+        GameContext gameContext = new GameContext();
+        gameContext.getRenderContainer().addRenderable(mBackgroundRenderables).addRenderable(questionWindow);
+        gameContext.addTouchable(questionWindow);
+
+        return gameContext;
+    }
 
     //<editor-fold desc="Questions">
     private void populateQuestionDB() {
@@ -539,70 +600,29 @@ public class Game {
     //</editor-fold>
 
 
-    //<editor-fold desc="Windows">
-    private void createQuestionWindow(Question question) {
-        mQuestionWindowRenderables.clear();
-        mQuestionWindow = new QuestionWindow(10, 10, 2.0f, mCamera, mScreenMetrics);
-        mQuestionWindow.addQuestion(question);
-        mQuestionWindow.addWindowEventListener(new WindowListener());
-        mQuestionWindow.setOpacity(0.23f);
-        mWindowRenderables.addRenderable(mTreeBackground).addRenderable(mGridBackground).addRenderable(mQuestionWindow);
-    }
-
-    private void createMenuWindow() {
-        mMenuController.generatePages();
-
-    }
-
-    private void killWindow() {
-        mQuestionWindow = null;
-        mWindowRenderables.clear();
-    }
-    //</editor-fold>
-
-
-    //<editor-fold desc="Mode handling">
-    private void setMode(MODE mode) {
-        switch (mode) {
-            case TREE:
-                mCurrentRenderables = mTreeRenderables;
-                mTouchHandler = mTreeTouchHandler;
-                break;
-            case QUESTION:
-                mCurrentRenderables = mWindowRenderables;
-                mTouchHandler = mWindowTouchHandler;
-                break;
-        }
-
-        mDrawmode = mode;
-    }
-
-    private void switchMode (MODE mode) {
-        Log.e("Debug", "" + mode);
-        switch (mode) {
-            case TREE:
-                mCurrentRenderables = mTreeRenderables;
-                mTouchHandler = mTreeTouchHandler;
-                break;
-            case QUESTION:
-                mCurrentRenderables = mWindowRenderables;
-                mTouchHandler = mWindowTouchHandler;
-                break;
-            case MENU:
-                mCurrentRenderables = mMenuController.getCurrentMenuRenderables();
-                mTouchHandler = mMenuTouchHandler;
-                break;
-        }
-
-        mDrawmode = mode;
-        //setMode(mode);
-    }
 
     public void closeMenu() {
         Log.e("Debug", "menu closed");
-        switchMode(MODE.TREE);
+        mGameContextStack.push(mTreeContext);
     }
-    //</editor-fold>
+
+
+    public void onSwipeHorizontal(float amount) {
+        mGameContextStack.peek().onSwipeHorizontal(amount);
+    }
+
+    public void onSwipeVertical(float amount) {
+        mGameContextStack.peek().onSwipeVertical(amount);
+    }
+
+    public void onScale(float span) {
+        mGameContextStack.peek().onScale(span);
+    }
+
+    public void onTap(float x, float y) {
+        TouchRay touchRay = new TouchRay(x, y, 1.0f, mCamera, mScreenMetrics);
+        mGameContextStack.peek().onTap(touchRay);
+    }
 
 
     public void update() {

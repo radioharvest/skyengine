@@ -3,6 +3,7 @@ package aq.oceanbase.skyscroll.graphics.elements.window.blocks;
 import android.content.Context;
 import android.graphics.*;
 import android.opengl.GLES20;
+import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.window.Window;
 import aq.oceanbase.skyscroll.graphics.elements.window.WindowBlock;
@@ -128,6 +129,10 @@ public class ContentBlock extends WindowBlock {
     //      paint: Paint object, containing font information
     // Returns: nothing
     private void parseText(String text, Paint paint) {
+        if (!mTextLines.isEmpty()) {
+            return;                                     // this is pretty hacky, investigate when possible
+        }
+
         int linePosition;
         int spaceWidth = (int)paint.measureText(" ");
 
@@ -176,6 +181,8 @@ public class ContentBlock extends WindowBlock {
     // Returns: nothing
     public void generateBitmap(Typeface tf) {
         int contentHeight;                       // Height of the filled region of the texture
+
+        Log.e("Debug", "TEXTUREGENISCALLED");
 
         Paint paint = new Paint();
         paint.setTypeface(tf);
@@ -264,8 +271,8 @@ public class ContentBlock extends WindowBlock {
     public void release() {
         super.release();
 
-        GLES20.glDeleteTextures(1, new int[]{mTextureHandle}, 0);
-        GLES20.glDeleteProgram(mShaderProgram);
+        //GLES20.glDeleteTextures(1, new int[]{mTextureHandle}, 0);
+        //GLES20.glDeleteProgram(mShaderProgram);
     }
 
     @Override

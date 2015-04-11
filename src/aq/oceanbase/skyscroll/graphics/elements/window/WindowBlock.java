@@ -4,15 +4,14 @@ import android.content.Context;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
-import aq.oceanbase.skyscroll.touch.TouchHandler;
-import aq.oceanbase.skyscroll.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.touch.Touchable2D;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 
-public class WindowBlock extends TouchHandler implements Renderable, WindowEventListener {
+public class WindowBlock extends RenderableObject implements WindowEventListener, Touchable2D {
     //TODO: check if fields could really be private and class could be non-abstract
     protected Vector3f mPos;                // position of upper left corner
     protected float mWidth;
@@ -22,8 +21,6 @@ public class WindowBlock extends TouchHandler implements Renderable, WindowEvent
     protected float mParentFraction;
 
     protected Window mRoot;
-
-    protected boolean mInitialized = false;
 
     public WindowBlock (Window root, float fraction) {
         this.mRoot = root;
@@ -64,18 +61,26 @@ public class WindowBlock extends TouchHandler implements Renderable, WindowEvent
 
 
     @Override
-    public boolean isInitialized() {
-        return mInitialized;
-    }
+    public void onSwipeHorizontal(float amount) {}
+
+    @Override
+    public void onSwipeVertical(float amount) {}
+
+    @Override
+    public void onScale(float span) {}
+
+    @Override
+    public void onTap(float x, float y) {}
+
 
     @Override
     public void initialize(Context context, ProgramManager programManager) {
-        mInitialized = true;
+        super.initialize(context, programManager);
     }
 
     @Override
     public void release() {
-        mInitialized = false;
+        super.release();
     }
 
     @Override

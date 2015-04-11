@@ -56,7 +56,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
             float span = scaleGestureDetector.getCurrentSpan();
             float temp = span - lastSpan;
-            mRenderer.mGameInstance.mTouchHandler.onScale(temp * ZOOM_FACTOR);
+            mRenderer.mGameInstance.onScale(temp * ZOOM_FACTOR);
             lastSpan = span;
 
             return true;
@@ -67,7 +67,7 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
 
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
-            mRenderer.mGameInstance.mTouchHandler.onTap(e.getX(), e.getY());
+            mRenderer.mGameInstance.onTap(e.getX(), e.getY());
 
             return true;
         }
@@ -88,6 +88,10 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
         mRenderer = new MainRenderer(context, mShaderFolder);
         setRenderer(mRenderer);
         mRenderer.setGameInstance(mGameInstance);
+    }
+
+    public void requestInit() {
+        mRenderer.requestInit();
     }
 
     @Override
@@ -117,8 +121,8 @@ public class GLSurfaceMainRenderer extends GLSurfaceView {
                     }
 
 
-                    if (mDelta.x != 0) mRenderer.mGameInstance.mTouchHandler.onSwipeHorizontal(mDelta.x);
-                    if (mDelta.y != 0) mRenderer.mGameInstance.mTouchHandler.onSwipeVertical(mDelta.y);
+                    if (mDelta.x != 0) mRenderer.mGameInstance.onSwipeHorizontal(mDelta.x);
+                    if (mDelta.y != 0) mRenderer.mGameInstance.onSwipeVertical(mDelta.y);
                     break;
                 }
 

@@ -258,17 +258,21 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
 
         for (int i = 0; i < mButtons.size(); i++) {
             //draw
-            String[] textLines = breakTextToLines(paint, lineHeight, mButtons.get(i).getText(), new int[] {buttonWidth, buttonHeight});
+            List<String> textLines = breakTextToLines(paint, lineHeight, mButtons.get(i).getText(), new int[] {buttonWidth, buttonHeight});
 
-            if ( textLines.length > 1 ) {
+            if (textLines.size() == 0) {
+                return;
+            }
+
+            if ( textLines.size() > 1 ) {
                 local = new Vector2f(current);
-                local.y -= lineHeight * ( textLines.length - 1 ) / 2;
-                for (int k = 0; k < textLines.length; k++) {
-                    canvas.drawText( textLines[k], local.x, local.y, paint );
+                local.y -= lineHeight * ( textLines.size() - 1 ) / 2;
+                for (int k = 0; k < textLines.size(); k++) {
+                    canvas.drawText( textLines.get(k), local.x, local.y, paint );
                     local.y += lineHeight;
                 }
             } else {
-                canvas.drawText( textLines[0], current.x, current.y, paint );
+                canvas.drawText( textLines.get(0), current.x, current.y, paint );
             }
 
             mButtons.get(i).setTexRgn(new TextureRegion(bmpWidth, bmpHeight, currentTexRgn.x, currentTexRgn.y, buttonWidth, buttonHeight));
@@ -289,14 +293,15 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
 
     }
 
-    private String[] breakTextToLines(Paint paint, int lineHeight, String text, int[] buttonMetrics) {
+    private List<String> breakTextToLines(Paint paint, int lineHeight, String text, int[] buttonMetrics) {
         int totalTextWidth = (int)paint.measureText( text );
         List<String> lines = new ArrayList<>();
         String[] words;
         StringBuilder currentLine = new StringBuilder();
 
         if ( totalTextWidth < buttonMetrics[0] ) {
-            return new String[] {text};
+            lines.add(text);
+            return lines;
         }
 
         words = text.split(" ");
@@ -321,7 +326,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
             currentLine.append( words[i] + " " );
         }
 
-        return (String[])lines.toArray();
+        return lines;
     }
 
     private int[] computeTextureGrid(int buttonWidth, int buttonHeight, int buttonsAmount) {
@@ -439,7 +444,7 @@ public class ButtonBlock extends WindowBlock implements ButtonEventListener {
     @Override
     public void release() {
         super.release();
-        GLES20.glDeleteTextures(1, new int[] {mTextureHandle}, 0);
+        //GLES20.glDeleteTextures(1, new int[] {mTextureHandle}, 0);
         mButtonBatch.release();
     }
 

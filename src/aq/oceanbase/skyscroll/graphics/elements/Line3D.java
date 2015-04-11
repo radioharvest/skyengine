@@ -6,9 +6,8 @@ import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.math.Ray3v;
-import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -16,8 +15,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class Line3D implements Renderable {
-    private boolean mInititialized = false;
+public class Line3D extends RenderableObject {
     private boolean mSmooth = false;
     private boolean mDotted = false;
     private boolean mOccluded = false;
@@ -32,7 +30,7 @@ public class Line3D implements Renderable {
     private float[] mModelMatrix = new float[16];
 
     private Ray3v mRay;
-    private float mWidth = 0.5f;
+    private float mWidth = 1.1f;
 
     private Vertex[] mVertexArray;
 
@@ -174,11 +172,7 @@ public class Line3D implements Renderable {
         }
     }
 
-
-    public boolean isInitialized() {
-        return this.mInititialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         float[] vertexData =
                 new float[] {
@@ -205,13 +199,17 @@ public class Line3D implements Renderable {
         mOrderBuffer.put(orderData).position(0);
 
         mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE3D);
+
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
 
-        this.mInititialized = false;
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         float[] orientationMatrix;
         float[] VPMatrix = new float[16];

@@ -1,6 +1,7 @@
 package aq.oceanbase.skyscroll.graphics.elements.text;
 
 import android.content.Context;
+import android.content.ReceiverCallNotAllowedException;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,10 +12,10 @@ import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 
-public class FontMap implements Renderable {
+public class FontMap extends RenderableObject {
 
     public static int CHAR_START = 32;
     public static int CHAR_END = 126;
@@ -27,8 +28,6 @@ public class FontMap implements Renderable {
     //TODO: why do I need this?
     public static int FONT_SIZE_MIN = 6;
     public static int FONT_SIZE_MAX = 180;
-
-    private boolean mInitialized = false;
 
     private AssetManager mAssets;
     private String mFontFile;
@@ -213,23 +212,23 @@ public class FontMap implements Renderable {
         mSpriteBatch.endBatch();
     }
 
-    public boolean isInitialized() {
-        return this.mInitialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         this.generate();
 
         mSpriteBatch = new SpriteBatch(SpriteBatch.VERTEX_3D, mTextureId);
         mSpriteBatch.initialize(context, programManager);
 
-        this.mInitialized = true;
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
         //TODO: FILL
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         float[] modelMatrix = new float[16];
 

@@ -7,29 +7,41 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RenderContainer implements Renderable {
-
-    private boolean mInitialized = false;
+public class RenderContainer extends RenderableObject {
 
     private List<Object> mRenderList;
     private List<Object> mInitList;
 
     public RenderContainer() {
-        mRenderList = new ArrayList<Object>();
-        mInitList = new ArrayList<Object>();
+        mRenderList = new ArrayList<>();
+        mInitList = new ArrayList<>();
     }
 
-    public RenderContainer addRenderable(Object object) {
+    public RenderContainer addRenderable(RenderableObject object) {
         mRenderList.add(object);
 
-        Renderable rend = (Renderable)object;
-        if (!rend.isInitialized()) {
+        if (!object.isInitialized()) {
             mInitList.add(object);
             Log.e("Debug", new StringBuilder().append("NEW OBJECTS ADDED").toString());
         }
 
-
         return this;        //added for continuous calls
+    }
+
+    public RenderContainer addContainer(RenderContainer container) {
+        for (Object rend : container.mRenderList) {
+            mRenderList.add(rend);
+        }
+
+        for (Object rend : container.mInitList) {
+            mInitList.add(rend);
+        }
+
+        return this;
+    }
+
+    public List<Object> getRenderList() {
+        return mRenderList;
     }
 
     public void initializeNewObjects(Context context, ProgramManager programManager) {
@@ -42,7 +54,7 @@ public class RenderContainer implements Renderable {
 
             }*/
             for (Object object: mInitList) {
-                Renderable rend = (Renderable)object;
+                RenderableObject rend = (RenderableObject)object;
                 rend.initialize(context, programManager);
                 Log.e("Debug", new StringBuilder().append("NEW OBJECTS INITED").toString());
             }
@@ -54,30 +66,50 @@ public class RenderContainer implements Renderable {
 
     public void clear() {
         mInitList.clear();
+        release();
         mRenderList.clear();
     }
 
-    public boolean isInitialized() {
-        return this.mInitialized;
+    @Override
+    public void unlock() {
+        if (!mRenderList.isEmpty()) {
+            for (Object object: mRenderList) {
+                RenderableObject rend = (RenderableObject)object;
+                rend.unlock();
+            }
+        }
     }
 
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         for (Object object: mRenderList) {
-            Renderable rend = (Renderable)object;
+            RenderableObject rend = (RenderableObject)object;
             rend.initialize(context, programManager);
             Log.e("Debug", new StringBuilder().append("ORIG INITED").toString());
         }
-        mInitialized = true;
+
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
+        if (!mRenderList.isEmpty()) {
+            for (Object object: mRenderList) {
+                RenderableObject rend = (RenderableObject)object;
+                if (!rend.isLocked()) {
+                    rend.release();
+                }
+            }
+        }
 
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
-        if (!mRenderList.isEmpty()) {                       // to prevent rare bug
+        if (!mRenderList.isEmpty()) {
             for (Object object: mRenderList) {
-                Renderable rend = (Renderable)object;
+                RenderableObject rend = (RenderableObject)object;
                 rend.draw(cam);
             }
         }

@@ -5,6 +5,7 @@ import android.opengl.*;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.logic.Game;
+import aq.oceanbase.skyscroll.logic.GameContext;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 
@@ -25,6 +26,8 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
     private boolean mResolutionChanged = false;
     private boolean mStartedFirstTime = true;
+
+    private boolean mInitRequested = false;
 
     private ProgramManager mProgramManager;
 
@@ -86,6 +89,9 @@ public class MainRenderer implements GLSurfaceView.Renderer {
         this.mCamera = mGameInstance.getCamera();
     }
 
+    public void requestInit() {
+        mInitRequested = true;
+    }
     //</editor-fold>
 
 
@@ -156,9 +162,20 @@ public class MainRenderer implements GLSurfaceView.Renderer {
 
         if (mStartedFirstTime) {
             mGameInstance.onRenderStarted();
-            //mGameInstance.mCurrentRenderables.initialize(mContext, mProgramManager);
-            mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
+            mGameInstance.mGameContextStack.peek().getRenderContainer().initialize(mContext, mProgramManager);
+            mGameInstance.mGameContextStack.peek().getRenderContainer().initializeNewObjects(mContext, mProgramManager);
             mStartedFirstTime = false;
+        }
+
+        if (mInitRequested) {
+            for(GameContext context: mGameInstance.mGameContextStack) {
+                context.getRenderContainer().unlock();
+                context.getRenderContainer().release();
+                context.getRenderContainer().initialize(mContext, mProgramManager);
+                mGameInstance.onReinit();
+            }
+            //mGameInstance.mGameContextStack.peek().getRenderContainer().initialize(mContext, mProgramManager);
+            mInitRequested = false;
         }
 
         Log.e("Debug", new StringBuilder().append("SurfaceChanged").toString());
@@ -173,9 +190,13 @@ public class MainRenderer implements GLSurfaceView.Renderer {
             this.mResolutionChanged = false;
         }
 
-        mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
-        mGameInstance.mCurrentRenderables.draw(mCamera);
+        /*mGameInstance.mCurrentRenderables.initializeNewObjects(mContext, mProgramManager);
+        mGameInstance.mCurrentRenderables.draw(mCamera);*/
 
+        if ( !mGameInstance.mGameContextStack.isEmpty() ) {
+            mGameInstance.mGameContextStack.peek().getRenderContainer().initializeNewObjects(mContext, mProgramManager);
+            mGameInstance.mGameContextStack.peek().getRenderContainer().draw(mCamera);
+        }
 
         mGameInstance.update();
 

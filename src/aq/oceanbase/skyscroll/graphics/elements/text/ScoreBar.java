@@ -8,17 +8,16 @@ import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.elements.SpriteBatch;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.loaders.TextureLoader;
 import aq.oceanbase.skyscroll.utils.math.MathUtilities;
+import aq.oceanbase.skyscroll.utils.math.Vector2f;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
-public class ScoreBar implements Renderable {
+public class ScoreBar extends RenderableObject {
     public static enum SCOREALIGN {
         LEFT, RIGHT, CENTER
     }
-
-    private boolean mInitialized = false;
 
     private int mScore = 0;
 
@@ -38,17 +37,10 @@ public class ScoreBar implements Renderable {
     private SpriteBatch mBatch;
 
 
-    public ScoreBar(int posX, int posY, SCOREALIGN align, int pixelHeight, int[] screenMetrics) {
-        float x = ( 2 * posX / (float)screenMetrics[2] ) - 1.0f;       // converting pixel position to screen coordinates (-1.0, 1.0)
-        float y = ( 2 * posY / (float)screenMetrics[3] ) - 1.0f;
-
-        mPixelHeight = pixelHeight;
-        mBarHeight = ( 2 * pixelHeight / (float)screenMetrics[3]);
-
+    public ScoreBar(SCOREALIGN align) {
         mAlignment = align;
-        mPos = new Vector3f(x, y - mBarHeight/2.0f, 0.0f);
 
-        Log.e("Debug", "ScoreBar position: " + mPos.x + " " + mPos.y + " " + mPos.z);
+        //Log.e("Debug", "ScoreBar position: " + mPos.x + " " + mPos.y + " " + mPos.z);
     }
 
     public ScoreBar setScore(int score) {
@@ -110,10 +102,18 @@ public class ScoreBar implements Renderable {
         return width;
     }
 
-    public boolean isInitialized() {
-        return mInitialized;
+    public void onScreenMetricsSet(int posX, int posY, int pixelHeight, int[] screenMetrics) {
+        float x = ( 2 * posX / (float)screenMetrics[2] ) - 1.0f;       // converting pixel position to screen coordinates (-1.0, 1.0)
+        float y = ( 2 * posY / (float)screenMetrics[3] ) - 1.0f;
+
+        mPixelHeight = pixelHeight;
+
+        mBarHeight = ( 2 * mPixelHeight / (float)screenMetrics[3]);
+
+        mPos = new Vector3f(x, y - mBarHeight/2.0f, 0.0f);
     }
 
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         Typeface tf = Typeface.createFromAsset(context.getAssets(), "AGENCYB.TTF");
 
@@ -125,13 +125,17 @@ public class ScoreBar implements Renderable {
         mBatch.set2DMode(true);
         mBatch.initialize(context, programManager);
 
-        mInitialized = true;
+        Log.e("Debug", "ScoreBar inited");
+
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
-
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         float cursor;
         float[] spriteMatrix = new float[16];
@@ -150,6 +154,10 @@ public class ScoreBar implements Renderable {
             default:
                 cursor = mPos.x;
                 break;
+        }
+
+        if (mBatch == null) {
+            Log.e("Debug", "SHITHAPPENED, MAN");
         }
 
         mBatch.beginBatch(cam);

@@ -11,14 +11,13 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.Camera;
-import aq.oceanbase.skyscroll.graphics.elements.window.blocks.ButtonBlock;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.logic.events.ButtonEvent;
 import aq.oceanbase.skyscroll.logic.events.ButtonEventListener;
 import aq.oceanbase.skyscroll.logic.events.WindowEvent;
 import aq.oceanbase.skyscroll.logic.events.WindowEventListener;
-import aq.oceanbase.skyscroll.touch.TouchHandler;
+import aq.oceanbase.skyscroll.touch.Touchable;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.utils.Timer;
@@ -32,7 +31,7 @@ import java.util.List;
 
 //TODO: add touch handling.
 //TODO: add game event listener
-public class Window extends TouchHandler implements Renderable, ButtonEventListener {
+public class Window extends RenderableObject implements ButtonEventListener, Touchable {
     public static enum ALIGN {
         LEFT, RIGHT, TOP, BOTTOM
     }
@@ -42,8 +41,6 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
 
     private float[] mModelMatrix = new float[16];
     private float[] mMVPMatrix = new float[16];
-
-    private boolean mInitialized = false;
 
     private int mShaderProgram;
 
@@ -287,9 +284,11 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
     }
 
     @Override
-    public void onTap(float x, float y) {
-        mLayout.onTap(x - mPos.x, y - mPos.y);
-        Log.e("Touch", "WindowTap: " + x + " " + y);
+    public void onTap(TouchRay touchRay) {
+        Vector3f touch = touchRay.getPointPositionOnRay(touchRay.getNearPointV().z - mPos.z);
+
+        mLayout.onTap(touch.x - mPos.x, touch.y - mPos.y);
+        Log.e("Touch", "WindowTap: " + touch.x + " " + touch.y);
     }
     //</editor-fold>
 
@@ -354,12 +353,6 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
 
 
     @Override
-    public boolean isInitialized() {
-        return this.mInitialized;
-    }
-
-
-    @Override
     public void initialize(Context context, ProgramManager programManager) {
         float[] windowVertexData = new float[] {
             0.0f, 0.0f, 0.0f,      //TL
@@ -388,15 +381,15 @@ public class Window extends TouchHandler implements Renderable, ButtonEventListe
 
         mLayout.initialize(context, programManager);
 
-        this.mInitialized = true;
+        super.initialize(context, programManager);
     }
 
     @Override
     public void release() {
-        GLES20.glDeleteProgram(mShaderProgram);
+        //GLES20.glDeleteProgram(mShaderProgram);
         mLayout.release();
 
-        this.mInitialized = false;
+        super.release();
     }
 
 

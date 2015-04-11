@@ -108,8 +108,8 @@ public class NodeDisplayBlock extends WindowBlock {
     public void release() {
         super.release();
 
-        GLES20.glDeleteTextures(1, new int[]{mNodeTextureHandle, mScoreTextureHandle}, 0);
-        GLES20.glDeleteProgram(mShaderProgram);
+        //GLES20.glDeleteTextures(1, new int[]{mNodeTextureHandle, mScoreTextureHandle}, 0);
+        //GLES20.glDeleteProgram(mShaderProgram);
     }
 
     @Override

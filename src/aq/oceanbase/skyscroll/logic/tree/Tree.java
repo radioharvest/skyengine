@@ -3,13 +3,12 @@ package aq.oceanbase.skyscroll.logic.tree;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 import aq.oceanbase.skyscroll.R;
 import aq.oceanbase.skyscroll.graphics.*;
 import aq.oceanbase.skyscroll.graphics.elements.*;
 import aq.oceanbase.skyscroll.graphics.render.OrderUnit;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.logic.generators.TreeGenerator;
 import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnection;
 import aq.oceanbase.skyscroll.logic.tree.connections.NodeConnectionOrderUnit;
@@ -21,7 +20,6 @@ import aq.oceanbase.skyscroll.touch.TouchRay;
 import aq.oceanbase.skyscroll.logic.tree.nodes.Node;
 import aq.oceanbase.skyscroll.logic.tree.nodes.NodeOrderUnit;
 
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
@@ -29,14 +27,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class Tree implements Renderable {
+public class Tree extends RenderableObject {
     public static enum CONNECTIONSTATE {
         IDLE, OPEN, ACTIVE, INACTIVE
     }
 
     public static int posDataSize = 3;
-
-    private boolean initialized = false;
 
     private Node[] nodes;
     public NodeConnection[] connections;
@@ -603,12 +599,7 @@ public class Tree implements Renderable {
     }
 
 
-
-
-    public boolean isInitialized() {
-        return this.initialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         lineShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE);
 
@@ -648,14 +639,17 @@ public class Tree implements Renderable {
             nodes[i].getSprite().setFiltered(true).initialize(context, programManager);
         }
 
-        this.initialized = true;
-
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
         //TODO: FILL
+
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.rotateM(modelMatrix, 0, angle, 0.0f, 1.0f, 0.0f);

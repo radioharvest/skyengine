@@ -6,18 +6,20 @@ import android.content.Context;
 import android.content.pm.ConfigurationInfo;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
 import aq.oceanbase.skyscroll.Core;
 import aq.oceanbase.skyscroll.graphics.render.GLSurfaceMainRenderer;
 
 public class MainRendererActivity extends Activity {
-    private GLSurfaceView mGLSurfaceView;
+    private GLSurfaceMainRenderer mGLSurfaceView;
+    private Core mCore;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Core core = (Core)this.getApplication();
+        mCore = (Core)this.getApplication();
 
-        mGLSurfaceView = new GLSurfaceMainRenderer(this, core.getGameInstance());
+        mGLSurfaceView = new GLSurfaceMainRenderer(this, mCore.getGameInstance());
 
         final ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
         final ConfigurationInfo configurationInfo = activityManager.getDeviceConfigurationInfo();
@@ -32,11 +34,20 @@ public class MainRendererActivity extends Activity {
     protected void onResume() {
         super.onResume();
         mGLSurfaceView.onResume();
+        mGLSurfaceView.requestInit();
+        if (mCore != null) {
+            mCore.getGameInstance().onActivityResume();
+        }
+        Log.e("Debug", "Render On Resume called");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mGLSurfaceView.onPause();
+        if (mCore != null) {
+            mCore.getGameInstance().onActivityPause();
+        }
+        Log.e("Debug", "Render On Pause called");
     }
 }

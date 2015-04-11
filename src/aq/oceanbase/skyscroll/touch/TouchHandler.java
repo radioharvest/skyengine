@@ -15,5 +15,5 @@ public abstract class TouchHandler {
 
     public void onScale(float span) {}
 
-    public void onTap(float x, float y) {}
+    public void onTap(TouchRay touchRay) {}
 }

@@ -146,7 +146,7 @@ public class TimerBarBlock extends WindowBlock {
     public void release() {
         super.release();
 
-        GLES20.glDeleteProgram(mShaderProgram);
+        //GLES20.glDeleteProgram(mShaderProgram);
     }
 
     @Override

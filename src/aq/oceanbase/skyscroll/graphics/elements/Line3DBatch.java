@@ -5,7 +5,7 @@ import android.opengl.GLES20;
 import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.nio.ByteBuffer;
@@ -13,7 +13,7 @@ import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
 
-public class Line3DBatch implements Renderable {
+public class Line3DBatch extends RenderableObject {
     public final static int INDEX_DATA_SIZE = 1;            // Index
 
     public final static int POSITION_DATA_SIZE = 3;         // X, Y, Z
@@ -34,7 +34,6 @@ public class Line3DBatch implements Renderable {
 
     private int mShaderProgram;
     protected int mTextureHandle = 0;
-    private boolean mInitialized = false;
 
     // line type info
     private boolean mSmooth = false;
@@ -236,26 +235,24 @@ public class Line3DBatch implements Renderable {
         mBatchStarted = false;
     }
 
-
-    public boolean isInitialized() {
-        return mInitialized;
-    }
-
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         if (mTextureHandle != 0)
             mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE3D_BATCH_TEXTURED);
         else
             mShaderProgram = programManager.getProgram(ProgramManager.PROGRAM.LINE3D_BATCH);
 
-        mInitialized = true;
+        super.initialize(context, programManager);
     }
 
+    @Override
     public void release() {
         GLES20.glDeleteProgram(mShaderProgram);
 
-        mInitialized = false;
+        super.release();
     }
 
+    @Override
     public void draw(Camera cam) {
         float[] VPMatrix = new float[16];
 

@@ -6,7 +6,7 @@ import android.opengl.Matrix;
 import aq.oceanbase.skyscroll.graphics.Camera;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.graphics.render.ProgramManager;
-import aq.oceanbase.skyscroll.graphics.render.Renderable;
+import aq.oceanbase.skyscroll.graphics.render.RenderableObject;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -17,7 +17,7 @@ import java.nio.ShortBuffer;
 // Firstly initialize(), then beginBatch(), then add elements, then endBatch()
 // Remember, that sprite origin is located in the CENTER of the sprite, not top left corner
 
-public class SpriteBatch implements Renderable {
+public class SpriteBatch extends RenderableObject {
     public final static int POSITION_DATA_SIZE = 3;         // X, Y, Z
     public final static int TEXTURE_DATA_SIZE = 2;          // U, V
     public final static int INDEX_DATA_SIZE = 1;            // Index
@@ -31,7 +31,6 @@ public class SpriteBatch implements Renderable {
     public final static int INDICES_PER_SPRITE = 6;         // Two triangles
     public final static int MAX_BATCHSIZE = 16;             // Maximum size of a batch
 
-    private boolean mInitialized = false;               // Initialization flag
     private boolean mFiltered = false;
     private boolean mIgnoreCamera = false;
     private boolean mDepthTest = true;
@@ -282,28 +281,26 @@ public class SpriteBatch implements Renderable {
     }
 
 
-    public boolean isInitialized() {
-        return this.mInitialized;
-    }
-
-
     // -- Initialize -- //
     // Desc: standard initialize function from Renderable interface. Function initializes program and binds texture.
     // TODO: possible optimization: move buffers initialization here
+    @Override
     public void initialize(Context context, ProgramManager programManager) {
         mProgram = programManager.getProgram(ProgramManager.PROGRAM.SPRITE_BATCH);
 
-        this.mInitialized = true;
+        super.initialize(context, programManager);
     }
 
-
+    @Override
     public void release() {
         //TODO: FILL
+        super.release();
     }
 
 
     // -- Draw batch -- //
     // Desc: Draw the whole batch.
+    @Override
     public void draw(Camera cam) {
         float[] VPMatrix = new float[16];
 

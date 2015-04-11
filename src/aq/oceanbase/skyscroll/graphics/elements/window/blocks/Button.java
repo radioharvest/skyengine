@@ -4,14 +4,14 @@ import android.util.Log;
 import aq.oceanbase.skyscroll.graphics.TextureRegion;
 import aq.oceanbase.skyscroll.logic.events.ButtonEvent;
 import aq.oceanbase.skyscroll.logic.events.ButtonEventListener;
-import aq.oceanbase.skyscroll.touch.TouchHandler;
-import aq.oceanbase.skyscroll.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.touch.Touchable;
+import aq.oceanbase.skyscroll.touch.Touchable2D;
 import aq.oceanbase.skyscroll.utils.math.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Button extends TouchHandler{
+public class Button implements Touchable2D {
     public static final int BUFFER_DATA_SIZE = 5;
     public static final int COLOR_DATA_SIZE = 4;
     public static final int VERTEX_AMOUNT = 4;
@@ -191,6 +191,15 @@ public class Button extends TouchHandler{
         }
     }
 
+
+    @Override
+    public void onSwipeHorizontal(float amount) {}
+
+    @Override
+    public void onSwipeVertical(float amount) {}
+
+    @Override
+    public void onScale(float span) {}
 
     @Override
     public void onTap(float x, float y) {
