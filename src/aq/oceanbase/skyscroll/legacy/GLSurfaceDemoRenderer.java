@@ -5,7 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import aq.oceanbase.skyscroll.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.engine.utils.math.Vector2f;
 
 public class GLSurfaceDemoRenderer extends GLSurfaceView {
 

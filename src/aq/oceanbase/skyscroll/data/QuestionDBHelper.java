@@ -6,9 +6,8 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.util.Log;
-import aq.oceanbase.skyscroll.logic.Game;
-import aq.oceanbase.skyscroll.logic.questions.Question;
+import aq.oceanbase.skyscroll.game.Game;
+import aq.oceanbase.skyscroll.game.questions.Question;
 
 import java.sql.SQLException;
 

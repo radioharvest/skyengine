@@ -5,7 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 import android.util.Log;
-import aq.oceanbase.skyscroll.utils.math.Vector3f;
+import aq.oceanbase.skyscroll.engine.utils.math.Vector3f;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;

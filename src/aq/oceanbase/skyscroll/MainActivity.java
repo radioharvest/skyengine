@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import aq.oceanbase.skyscroll.activities.MainRendererActivity;
+import aq.oceanbase.skyscroll.engine.activities.MainRendererActivity;
 import aq.oceanbase.skyscroll.legacy.DemoRenderActivity;
 import aq.oceanbase.skyscroll.legacy.RenderActivityOne;
 import aq.oceanbase.skyscroll.legacy.RenderActivityTwo;

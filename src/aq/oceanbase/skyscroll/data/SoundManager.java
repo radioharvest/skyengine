@@ -4,7 +4,6 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import aq.oceanbase.skyscroll.R;
-import aq.oceanbase.skyscroll.logic.enums.ESound;
 
 import java.util.HashMap;
 import java.util.Random;

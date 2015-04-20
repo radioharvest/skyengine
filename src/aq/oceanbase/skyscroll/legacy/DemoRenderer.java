@@ -4,9 +4,9 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.util.Log;
-import aq.oceanbase.skyscroll.utils.loaders.ShaderLoader;
-import aq.oceanbase.skyscroll.utils.math.Vector2f;
-import aq.oceanbase.skyscroll.utils.math.Vector3f;
+import aq.oceanbase.skyscroll.engine.utils.loaders.ShaderLoader;
+import aq.oceanbase.skyscroll.engine.utils.math.Vector2f;
+import aq.oceanbase.skyscroll.engine.utils.math.Vector3f;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
